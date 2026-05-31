@@ -578,7 +578,7 @@ if (urlParams.get('admin') === 'true') {
   document.getElementById('adminNavBtn').style.display = 'block';
 }
 
-const ADMIN_PASS = 'Larbar/biycar/1ambar54';
+const ADMIN_PASS = 'Mott-biyc0707';
 
 let words = [
   // ПРИВЕТСТВИЯ
@@ -715,6 +715,8 @@ let words = [
   {chechen:"Йо1аг",russian:"Девочка / Девушка",transcription:"Йо1аг",category:"Семья"},
 ];
 
+const FB_URL = 'https://mott-bu-default-rtdb.firebaseio.com';
+
 async function loadWords() {
   try {
     const res = await fetch(`${FB_URL}/words.json`);
@@ -743,7 +745,6 @@ async function saveWords() {
 }
 
 let leaderboard = [];
-const FB_URL = 'https://mott-bu-default-rtdb.firebaseio.com';
 
 async function loadLeaderboard() {
   try {
