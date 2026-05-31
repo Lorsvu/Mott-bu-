@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Нохчийн Мотт</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Мотт">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="theme-color" content="#070b14">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -325,10 +332,41 @@ select.text-input option { background:var(--surface); }
 .cat-tab { flex-shrink:0; padding:6px 14px; background:var(--surface); border:1px solid var(--border); border-radius:20px; color:var(--muted); font-size:12px; cursor:pointer; transition:all 0.2s; font-weight:600; }
 .cat-tab.active { background:rgba(45,107,228,0.2); border-color:var(--blue); color:var(--blue2); }
 
+/* ORNAMENT */
+.ornament-border {
+  width:100%; height:20px; margin:12px 0;
+  background-image: repeating-linear-gradient(90deg,
+    transparent 0px, transparent 8px,
+    rgba(0,198,255,0.3) 8px, rgba(0,198,255,0.3) 10px,
+    transparent 10px, transparent 18px,
+    rgba(45,107,228,0.4) 18px, rgba(45,107,228,0.4) 20px
+  );
+  position:relative;
+}
+.ornament-svg {
+  width:100%; opacity:0.4; margin:8px 0;
+}
+.greeting-chechen {
+  font-family:'Unbounded',sans-serif;
+  font-size:18px; font-weight:900;
+  color:var(--cyan); text-align:center;
+  letter-spacing:3px; margin-bottom:4px;
+  text-shadow:0 0 20px rgba(0,198,255,0.5);
+  animation: glow 2s ease-in-out infinite;
+}
+.greeting-sub {
+  font-size:12px; color:var(--muted);
+  text-align:center; margin-bottom:16px;
+}
+.app-icon {
+  width:80px; height:80px; margin:0 auto 12px;
+  display:block;
+}
+
 /* ANIMATIONS */
 @keyframes slideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
-@keyframes glow { 0%,100%{box-shadow:0 0 10px rgba(0,198,255,0.2)} 50%{box-shadow:0 0 20px rgba(0,198,255,0.4)} }
+@keyframes glow { 0%,100%{box-shadow:0 0 10px rgba(0,198,255,0.2);text-shadow:0 0 10px rgba(0,198,255,0.3)} 50%{box-shadow:0 0 20px rgba(0,198,255,0.4);text-shadow:0 0 20px rgba(0,198,255,0.7)} }
 .score-value.pop { animation:pop 0.3s ease; }
 </style>
 </head>
@@ -337,10 +375,32 @@ select.text-input option { background:var(--surface); }
 <!-- REGISTER -->
 <div class="container screen active" id="registerScreen">
   <header>
-    <div class="logo-icon">🏔️</div>
-    <div class="logo-text">Нохчийн Мотт</div>
-    <h1>Учи <span>Чеченский</span></h1>
-    <div class="subtitle">Язык горного народа</div>
+    <svg class="app-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+      <rect width="512" height="512" rx="100" fill="#070b14"/>
+      <polygon points="0,380 80,220 160,320 220,200 280,300 340,180 400,280 460,160 512,260 512,512 0,512" fill="#0d1525"/>
+      <polygon points="0,420 60,280 120,350 180,240 256,150 332,240 390,300 450,220 512,300 512,512 0,512" fill="#111d33"/>
+      <rect x="206" y="200" width="100" height="160" fill="#1e3a6e" stroke="#2d6be4" stroke-width="2"/>
+      <polygon points="196,200 256,130 316,200" fill="#2d6be4"/>
+      <rect x="236" y="230" width="40" height="30" rx="20" fill="#070b14"/>
+      <rect x="236" y="280" width="40" height="30" rx="20" fill="#070b14"/>
+      <rect x="231" y="330" width="50" height="30" rx="5" fill="#070b14"/>
+      <circle cx="256" cy="256" r="230" fill="none" stroke="#2d6be4" stroke-width="2" opacity="0.3"/>
+      <path d="M 256 30 C 240 42,218 38,218 54 C 218 70,240 66,256 74 C 272 66,294 70,294 54 C 294 38,272 42,256 30" stroke="#00c6ff" stroke-width="2" fill="rgba(0,198,255,0.15)" opacity="0.8"/>
+      <path d="M 256 482 C 240 470,218 474,218 458 C 218 442,240 446,256 438 C 272 446,294 442,294 458 C 294 474,272 470,256 482" stroke="#00c6ff" stroke-width="2" fill="rgba(0,198,255,0.15)" opacity="0.8"/>
+      <path d="M 30 256 C 42 240,38 218,54 218 C 70 218,66 240,74 256 C 66 272,70 294,54 294 C 38 294,42 272,30 256" stroke="#00c6ff" stroke-width="2" fill="rgba(0,198,255,0.15)" opacity="0.8"/>
+      <path d="M 482 256 C 470 240,474 218,458 218 C 442 218,446 240,438 256 C 446 272,442 294,458 294 C 474 294,470 272,482 256" stroke="#00c6ff" stroke-width="2" fill="rgba(0,198,255,0.15)" opacity="0.8"/>
+      <circle cx="100" cy="100" r="3" fill="#00c6ff" opacity="0.8"/>
+      <circle cx="400" cy="80" r="2" fill="#00c6ff" opacity="0.6"/>
+      <circle cx="420" cy="380" r="3" fill="#00c6ff" opacity="0.7"/>
+      <text x="256" y="478" text-anchor="middle" font-family="serif" font-size="26" font-weight="bold" fill="#00c6ff" letter-spacing="2">МОТТ</text>
+    </svg>
+    <div class="logo-text">MOTT_bu</div>
+    <div class="greeting-chechen">МАРША ДОГ1ИЙЛА!</div>
+    <div class="greeting-sub">Добро пожаловать · Язык горного народа</div>
+    <svg class="ornament-svg" viewBox="0 0 400 20" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,10 Q20,2 40,10 Q60,18 80,10 Q100,2 120,10 Q140,18 160,10 Q180,2 200,10 Q220,18 240,10 Q260,2 280,10 Q300,18 320,10 Q340,2 360,10 Q380,18 400,10" stroke="#2d6be4" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <path d="M0,10 Q20,18 40,10 Q60,2 80,10 Q100,18 120,10 Q140,2 160,10 Q180,18 200,10 Q220,2 240,10 Q260,18 280,10 Q300,2 320,10 Q340,18 360,10 Q380,2 400,10" stroke="#00c6ff" stroke-width="1" fill="none" opacity="0.4"/>
+    </svg>
   </header>
   <div class="register-card">
     <div class="field-label">Твоё имя</div>
@@ -371,9 +431,11 @@ select.text-input option { background:var(--surface); }
 <!-- GAME SCREEN -->
 <div class="container screen" id="gameScreen">
   <header>
-    <div class="logo-icon">🏔️</div>
-    <div class="logo-text">Нохчийн Мотт</div>
+    <div class="logo-text">MOTT_bu</div>
     <h1>Учи <span>Чеченский</span></h1>
+    <svg class="ornament-svg" viewBox="0 0 400 20" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,10 Q20,2 40,10 Q60,18 80,10 Q100,2 120,10 Q140,18 160,10 Q180,2 200,10 Q220,18 240,10 Q260,2 280,10 Q300,18 320,10 Q340,2 360,10 Q380,18 400,10" stroke="#2d6be4" stroke-width="1.5" fill="none" opacity="0.6"/>
+    </svg>
     <div class="subtitle" id="playerGreeting"></div>
   </header>
 
@@ -381,7 +443,7 @@ select.text-input option { background:var(--surface); }
     <button class="nav-btn active" onclick="showTab('game')">🎮 Игра</button>
     <button class="nav-btn" onclick="showTab('leaderboard')">🏆 Топ</button>
     <button class="nav-btn" onclick="showTab('words')">📚 Слова</button>
-    <button class="nav-btn" onclick="showAdminLogin()">⚙️ Админ</button>
+    <button class="nav-btn" id="adminNavBtn" style="display:none" onclick="showAdminLogin()">⚙️ Админ</button>
   </div>
 
   <!-- GAME TAB -->
@@ -510,6 +572,12 @@ select.text-input option { background:var(--surface); }
 </div>
 
 <script>
+// Show admin button only if URL has ?admin=true
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('admin') === 'true') {
+  document.getElementById('adminNavBtn').style.display = 'block';
+}
+
 const ADMIN_PASS = 'Larbar/biycar/1ambar54';
 
 let words = [
@@ -519,8 +587,12 @@ let words = [
   {chechen:"Салам",russian:"Салам",transcription:"Салам",category:"Приветствия"},
   // МЕСТОИМЕНИЯ
   {chechen:"Со",russian:"Я",transcription:"Со",category:"Местоимения"},
-  {chechen:"Iа",russian:"Ты",transcription:"Иа",category:"Местоимения"},
+  {chechen:"Хьо",russian:"Ты",transcription:"Хьо",category:"Местоимения"},
+  {chechen:"Тхо",russian:"Мы (без собеседника)",transcription:"Тхо",category:"Местоимения"},
+  {chechen:"Вай",russian:"Мы (с собеседником)",transcription:"Вай",category:"Местоимения"},
   {chechen:"Оха",russian:"Мы",transcription:"Оха",category:"Местоимения"},
+  {chechen:"Иза",russian:"Он / Она / Оно (далеко)",transcription:"Иза",category:"Местоимения"},
+  {chechen:"Х1ара",russian:"Он / Она / Это (рядом)",transcription:"Х1ара",category:"Местоимения"},
   {chechen:"Сан",russian:"Мой",transcription:"Сан",category:"Местоимения"},
   // ЧИСЛА
   {chechen:"Цхьаъ",russian:"Один",transcription:"Цхьаъ",category:"Числа"},
@@ -613,10 +685,14 @@ let words = [
   // ПРИЛАГАТЕЛЬНЫЕ
   {chechen:"Хаза",russian:"Красивый",transcription:"Хаза",category:"Прилагательные"},
   {chechen:"Доккха",russian:"Большой",transcription:"Доккха",category:"Прилагательные"},
-  {chechen:"КIеза",russian:"Маленький",transcription:"КIеза",category:"Прилагательные"},
+  {chechen:"Жима",russian:"Маленький",transcription:"Жима",category:"Прилагательные"},
   {chechen:"Дика",russian:"Хороший",transcription:"Дика",category:"Прилагательные"},
-  {chechen:"Во",russian:"Плохой",transcription:"Во",category:"Прилагательные"},
-  {chechen:"Сийлахь",russian:"Уважаемый",transcription:"Сийлахь",category:"Прилагательные"},
+  {chechen:"Вон",russian:"Плохой / Плохо",transcription:"Вон",category:"Прилагательные"},
+  {chechen:"Сирла",russian:"Светлый",transcription:"Сирла",category:"Прилагательные"},
+  {chechen:"Самукъане",russian:"Весёлый",transcription:"Самукъане",category:"Прилагательные"},
+  {chechen:"Г1айг1ане",russian:"Грустный",transcription:"Г1айг1ане",category:"Прилагательные"},
+  {chechen:"Лераме",russian:"Уважаемый",transcription:"Лераме",category:"Прилагательные"},
+  {chechen:"Сийлахь",russian:"Великий / Почётный",transcription:"Сийлахь",category:"Прилагательные"},
   // ГЛАГОЛЫ
   {chechen:"Ваг1а",russian:"Идти",transcription:"Ваг1а",category:"Глаголы"},
   {chechen:"Ваха",russian:"Жить",transcription:"Ваха",category:"Глаголы"},
@@ -624,14 +700,47 @@ let words = [
   {chechen:"Хаа",russian:"Знать",transcription:"Хаа",category:"Глаголы"},
   {chechen:"Ловза",russian:"Играть",transcription:"Ловза",category:"Глаголы"},
   {chechen:"Деша",russian:"Читать / Учиться",transcription:"Деша",category:"Глаголы"},
+  {chechen:"Ларар",russian:"Уважать",transcription:"Ларар",category:"Глаголы"},
   // ЦЕННОСТИ
   {chechen:"Маршалла",russian:"Свобода / Мир",transcription:"Маршалла",category:"Ценности"},
   {chechen:"Дош",russian:"Слово / Обещание",transcription:"Дош",category:"Ценности"},
   {chechen:"Нохчалла",russian:"Честь чеченца",transcription:"Нохчалла",category:"Ценности"},
+  {chechen:"Лерам",russian:"Уважение",transcription:"Лерам",category:"Ценности"},
+  // ПРИРОДА (доп)
+  {chechen:"Серло",russian:"Свет",transcription:"Серло",category:"Природа"},
+  {chechen:"Чиркха",russian:"Лампа / Свет",transcription:"Чиркха",category:"Природа"},
+  // ЖИВОТНЫЕ (доп)
+  {chechen:"К1еза",russian:"Щенок",transcription:"К1еза",category:"Животные"},
+  // СЕМЬЯ (доп)
+  {chechen:"Йо1аг",russian:"Девочка / Девушка",transcription:"Йо1аг",category:"Семья"},
 ];
 
-const saved = localStorage.getItem('chechenWords');
-if (saved) words = JSON.parse(saved);
+async function loadWords() {
+  try {
+    const res = await fetch(`${FB_URL}/words.json`);
+    const data = await res.json();
+    if (data && Array.isArray(data) && data.length > 0) {
+      words = data;
+    } else {
+      const saved = localStorage.getItem('chechenWords');
+      if (saved) words = JSON.parse(saved);
+    }
+  } catch(e) {
+    const saved = localStorage.getItem('chechenWords');
+    if (saved) words = JSON.parse(saved);
+  }
+}
+
+async function saveWords() {
+  try {
+    localStorage.setItem('chechenWords', JSON.stringify(words));
+    await fetch(`${FB_URL}/words.json`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(words)
+    });
+  } catch(e) { localStorage.setItem('chechenWords', JSON.stringify(words)); }
+}
 
 let leaderboard = [];
 const FB_URL = 'https://mott-bu-default-rtdb.firebaseio.com';
@@ -655,7 +764,7 @@ let answered = false, adminUnlocked = false;
 let selectedCategory = 'Все';
 
 // ---- REGISTER ----
-function startGame() {
+async function startGame() {
   const name = document.getElementById('regName').value.trim();
   const country = document.getElementById('regCountry').value;
   if (!name) { alert('Введи своё имя!'); return; }
@@ -664,6 +773,7 @@ function startGame() {
   document.getElementById('playerGreeting').textContent = `Привет, ${name}! 👋`;
   document.getElementById('registerScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
+  await loadWords();
   renderCategories();
   renderWordOfDay();
   loadNewWord();
@@ -762,7 +872,7 @@ function addWord() {
   const cat = document.getElementById('newCategory').value.trim();
   if (!ch || !ru) { alert('Заполни хотя бы чеченское и русское!'); return; }
   words.push({chechen:ch,russian:ru,transcription:tr||ch,category:cat||'Другое'});
-  localStorage.setItem('chechenWords', JSON.stringify(words));
+  saveWords();
   document.getElementById('newChechen').value='';
   document.getElementById('newRussian').value='';
   document.getElementById('newTranscription').value='';
@@ -770,7 +880,7 @@ function addWord() {
   renderAdminWords(); renderCategories();
 }
 function deleteWord(idx) {
-  if (confirm('Удалить?')) { words.splice(idx,1); localStorage.setItem('chechenWords',JSON.stringify(words)); renderAdminWords(); renderCategories(); }
+  if (confirm('Удалить?')) { words.splice(idx,1); saveWords(); renderAdminWords(); renderCategories(); }
 }
 function renderAdminWords() {
   document.getElementById('wordCountAdmin').textContent = words.length;
@@ -807,6 +917,69 @@ async function saveToLeaderboard() {
       body: JSON.stringify(entry)
     });
   } catch(e) { console.log('Save error:', e); }
+}
+
+// ---- SOUNDS ----
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+
+function playCorrect() {
+  try {
+    const ctx = getAudioCtx();
+    // Two pleasant ascending notes like Duolingo
+    [0, 0.15].forEach((delay, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(i === 0 ? 523 : 659, ctx.currentTime + delay); // C5 then E5
+      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.3);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.3);
+    });
+  } catch(e) {}
+}
+
+function playWrong() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(300, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(220, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+function playStreak() {
+  try {
+    const ctx = getAudioCtx();
+    // 3 ascending notes for streak
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + i * 0.12 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.25);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.25);
+    });
+  } catch(e) {}
 }
 
 // ---- SPEECH ----
@@ -960,10 +1133,12 @@ function handleResult(ok,correctAnswer) {
     if (streak>bestStreak) bestStreak=streak;
     score+=10+(streak>=3?streak*5:0);
     fb.className='feedback correct';
+    if (streak >= 3) playStreak(); else playCorrect();
     fb.textContent=streak>=3?`🔥 Серия ${streak}! +${10+streak*5} очков`:'✓ Верно! +10 очков';
   } else {
     streak=0; fb.className='feedback wrong';
     fb.textContent=`✗ Правильно: ${correctAnswer}`;
+    playWrong();
   }
   updateStats();
   if (totalAnswered>=20) setTimeout(showResults,1500);
