@@ -1,87 +1,154 @@
-// ===============================
-// TRIAL SYSTEM + ACCESS CONTROL
-// ===============================
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MOTT_bu</title>
 
-const TRIAL_DAYS = 1;
+<style>
+body { font-family: Arial; background:#0f1220; color:white; margin:0; }
+.hidden { display:none; }
+button { cursor:pointer; }
 
-function initTrial() {
-  const firstVisit = localStorage.getItem("firstVisit");
+/* простая стилизация */
+.nav { display:flex; gap:10px; padding:10px; background:#1a1f35; }
+.nav button { padding:8px 12px; border-radius:8px; border:0; }
 
-  if (!firstVisit) {
-    localStorage.setItem("firstVisit", Date.now());
+.card { padding:15px; margin:10px; background:#1b2140; border-radius:12px; }
+input { padding:8px; border-radius:8px; border:1px solid #333; width:100%; margin:5px 0; }
+
+.badge { display:inline-block; padding:4px 8px; background:#2b3566; margin:3px; border-radius:6px; }
+
+.lock { opacity:0.5; pointer-events:none; }
+</style>
+</head>
+
+<body>
+
+<div class="nav">
+<button onclick="showTab('game')">Игра</button>
+<button onclick="showTab('profile')">Профиль</button>
+<button onclick="showTab('settings')">Настройки</button>
+</div>
+
+<!-- GAME -->
+<div id="gameTab" class="card">
+<h2>Игра</h2>
+
+<div id="guestBlock" class="card hidden">
+<h3>Демо режим (1 день)</h3>
+<p>Войдите, чтобы продолжить без ограничений</p>
+<button onclick="signIn()">Войти через Google</button>
+</div>
+
+<div id="gameBlock">
+<div id="word">слово</div>
+<input id="answer" placeholder="ответ"/>
+<button onclick="check()">Проверить</button>
+</div>
+</div>
+
+<!-- PROFILE -->
+<div id="profileTab" class="card hidden">
+<h2>Профиль</h2>
+<div>Имя: <span id="pName"></span></div>
+<div>Страна: <span id="pCountry"></span></div>
+<div>Дата рождения: <span id="pBirth"></span></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settingsTab" class="card hidden">
+<h2>Настройки</h2>
+
+<input id="setName" placeholder="Имя"/>
+<input id="setCountry" placeholder="Страна"/>
+<input id="setBirth" type="date"/>
+
+<button onclick="saveSettings()">Сохранить</button>
+</div>
+
+<script>
+// ---------------- STATE ----------------
+let user = null;
+
+let guestStart = localStorage.getItem("guestStart");
+if(!guestStart){
+  guestStart = Date.now();
+  localStorage.setItem("guestStart", guestStart);
+}
+
+// ---------------- TABS ----------------
+function showTab(t){
+  document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
+  document.getElementById(t+'Tab').classList.remove('hidden');
+}
+
+// ---------------- AUTH MOCK ----------------
+function signIn(){
+  user = { name:"User", country:"RU" };
+  alert("Вход выполнен");
+  renderProfile();
+  checkAccess();
+}
+
+// ---------------- ACCESS RULE ----------------
+function checkAccess(){
+  const now = Date.now();
+  const day = 24*60*60*1000;
+
+  const isGuestExpired = !user && (now - guestStart > day);
+
+  if(isGuestExpired){
+    document.getElementById("gameBlock").classList.add("lock");
+    document.getElementById("guestBlock").classList.remove("hidden");
+  } else {
+    document.getElementById("guestBlock").classList.add("hidden");
   }
 }
 
-function isTrialExpired() {
-  const firstVisit = localStorage.getItem("firstVisit");
+// ---------------- GAME ----------------
+let score = 0;
 
-  if (!firstVisit) return false;
-
-  const diffDays =
-    (Date.now() - Number(firstVisit)) / (1000 * 60 * 60 * 24);
-
-  return diffDays > TRIAL_DAYS;
-}
-
-function isUserLoggedIn() {
-  return !!auth.currentUser;
-}
-
-function checkAccess() {
-  // если пользователь зарегистрирован — полный доступ
-  if (isUserLoggedIn()) return true;
-
-  // если гость — проверяем пробный период
-  if (isTrialExpired()) {
-    lockGame();
-    return false;
+function check(){
+  const val = document.getElementById("answer").value;
+  if(val === "test"){
+    score += 10;
+    alert("верно");
+  } else {
+    alert("неверно");
   }
-
-  return true;
 }
 
-function lockGame() {
-  document.body.innerHTML = `
-    <div style="
-      height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-      text-align:center;
-      background:#0f1220;
-      color:white;
-      font-family:Arial;
-      padding:20px;
-    ">
-      <h1>⛔ Пробный период завершён</h1>
-      <p>Чтобы продолжить пользоваться приложением — войдите через Google</p>
+// ---------------- PROFILE ----------------
+function renderProfile(){
+  const name = localStorage.getItem("name") || (user?.name || "Гость");
+  const country = localStorage.getItem("country") || (user?.country || "-");
+  const birth = localStorage.getItem("birth") || "-";
 
-      <button onclick="signInWithGoogle && signInWithGoogle()" 
-        style="
-          margin-top:15px;
-          padding:12px 20px;
-          border:none;
-          border-radius:10px;
-          cursor:pointer;
-          font-weight:bold;
-        ">
-        Войти
-      </button>
-    </div>
-  `;
+  document.getElementById("pName").innerText = name;
+  document.getElementById("pCountry").innerText = country;
+  document.getElementById("pBirth").innerText = birth;
 }
 
-// ===============================
-// START CHECK ON PAGE LOAD
-// ===============================
+// ---------------- SETTINGS ----------------
+function saveSettings(){
+  const n = document.getElementById("setName").value;
+  const c = document.getElementById("setCountry").value;
+  const b = document.getElementById("setBirth").value;
 
-window.addEventListener("load", () => {
-  initTrial();
+  if(n) localStorage.setItem("name", n);
+  if(c) localStorage.setItem("country", c);
+  if(b) localStorage.setItem("birth", b);
 
-  if (!checkAccess()) return;
+  alert("Сохранено");
+  renderProfile();
+}
 
-  if (typeof loadNewWord === "function") {
-    loadNewWord();
-  }
-});
+// ---------------- INIT ----------------
+renderProfile();
+checkAccess();
+showTab('game');
+</script>
+
+</body>
+</html>
