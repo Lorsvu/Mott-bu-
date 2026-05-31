@@ -3,26 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Нохчийн мотт — Учи чеченский</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<title>Нохчийн Мотт</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0a0f;
-  --surface: #12121a;
-  --card: #1a1a26;
-  --border: #2a2a3e;
-  --gold: #c9a84c;
-  --gold2: #e8c97a;
-  --red: #c0392b;
-  --green: #27ae60;
-  --text: #e8e0d0;
-  --muted: #7a7a9a;
+  --bg: #070b14;
+  --surface: #0d1525;
+  --card: #111d33;
+  --border: #1e2f4a;
+  --blue: #2d6be4;
+  --blue2: #5b8ff9;
+  --cyan: #00c6ff;
+  --white: #e8f0ff;
+  --muted: #5a7090;
+  --red: #e05555;
+  --green: #2ecc71;
+  --gold: #f0c040;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   background: var(--bg);
-  color: var(--text);
-  font-family: 'Crimson Pro', serif;
+  color: var(--white);
+  font-family: 'Manrope', sans-serif;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -33,398 +35,312 @@ body::before {
   content:'';
   position:fixed;
   inset:0;
-  background-image:
-    radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.07) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(192,57,43,0.05) 0%, transparent 50%);
+  background:
+    radial-gradient(ellipse at 10% 10%, rgba(45,107,228,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 90%, rgba(0,198,255,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(13,21,37,0.8) 0%, transparent 100%);
   pointer-events:none;
   z-index:0;
 }
-.container {
-  width:100%;
-  max-width:420px;
-  padding:0 16px 40px;
-  position:relative;
-  z-index:1;
-}
-
-/* SCREENS */
+.container { width:100%; max-width:420px; padding:0 16px 60px; position:relative; z-index:1; }
 .screen { display:none; }
 .screen.active { display:block; }
 
 /* HEADER */
 header {
   text-align:center;
-  padding:32px 0 24px;
+  padding:36px 0 24px;
   border-bottom:1px solid var(--border);
   margin-bottom:24px;
+  position:relative;
 }
+header::after {
+  content:'';
+  position:absolute;
+  bottom:-1px; left:50%; transform:translateX(-50%);
+  width:80px; height:2px;
+  background:linear-gradient(90deg, var(--blue), var(--cyan));
+  border-radius:2px;
+}
+.logo-icon { font-size:32px; margin-bottom:8px; }
 .logo-text {
-  font-family:'Cinzel',serif;
-  font-size:11px;
+  font-family:'Unbounded',sans-serif;
+  font-size:10px;
   letter-spacing:4px;
-  color:var(--gold);
+  color:var(--cyan);
   text-transform:uppercase;
-  margin-bottom:8px;
+  margin-bottom:10px;
 }
-h1 { font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:var(--text); line-height:1.2; }
-h1 span { color:var(--gold); }
-.subtitle { font-size:14px; color:var(--muted); margin-top:6px; font-style:italic; }
+h1 { font-family:'Unbounded',sans-serif; font-size:22px; font-weight:900; color:var(--white); line-height:1.2; }
+h1 span { color:var(--cyan); }
+.subtitle { font-size:13px; color:var(--muted); margin-top:6px; }
 
 /* REGISTER */
 .register-card {
   background:var(--card);
   border:1px solid var(--border);
-  border-radius:16px;
+  border-radius:20px;
   padding:28px 24px;
   margin-bottom:16px;
   position:relative;
+  overflow:hidden;
 }
 .register-card::before {
   content:'';
   position:absolute;
-  top:0;left:0;right:0;
-  height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, var(--blue), var(--cyan));
 }
 .field-label {
-  font-size:11px;
-  letter-spacing:2px;
-  color:var(--muted);
-  text-transform:uppercase;
-  margin-bottom:8px;
-  margin-top:16px;
+  font-size:11px; letter-spacing:2px; color:var(--muted);
+  text-transform:uppercase; margin-bottom:8px; margin-top:20px;
+  font-family:'Unbounded',sans-serif;
 }
 .field-label:first-child { margin-top:0; }
 .text-input {
-  width:100%;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:13px 16px;
-  color:var(--text);
-  font-family:'Crimson Pro',serif;
-  font-size:17px;
-  outline:none;
-  transition:border-color 0.2s;
+  width:100%; background:var(--surface);
+  border:1px solid var(--border); border-radius:12px;
+  padding:13px 16px; color:var(--white);
+  font-family:'Manrope',sans-serif; font-size:16px;
+  outline:none; transition:border-color 0.2s;
 }
-.text-input:focus { border-color:var(--gold); }
-
-select.text-input option { background:var(--surface); color:var(--text); }
+.text-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(45,107,228,0.15); }
+select.text-input option { background:var(--surface); }
 
 /* SCORE BAR */
 .score-bar {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:12px 20px;
-  margin-bottom:20px;
+  display:flex; justify-content:space-between; align-items:center;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:14px 20px; margin-bottom:20px;
 }
 .score-item { text-align:center; }
-.score-label { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
-.score-value { font-family:'Cinzel',serif; font-size:20px; font-weight:700; color:var(--gold); line-height:1.2; }
+.score-label { font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; font-family:'Unbounded',sans-serif; }
+.score-value { font-family:'Unbounded',sans-serif; font-size:20px; font-weight:700; color:var(--cyan); line-height:1.3; margin-top:2px; }
 .score-divider { width:1px; height:36px; background:var(--border); }
+
+/* NAV */
+.nav-bar {
+  display:flex; background:var(--surface);
+  border:1px solid var(--border); border-radius:14px;
+  padding:4px; margin-bottom:20px; gap:4px;
+}
+.nav-btn {
+  flex:1; padding:10px 4px; border:none; background:transparent;
+  color:var(--muted); font-family:'Manrope',sans-serif;
+  font-size:11px; border-radius:10px; cursor:pointer;
+  transition:all 0.2s; text-align:center; font-weight:600;
+}
+.nav-btn.active { background:var(--card); color:var(--cyan); border:1px solid var(--border); }
 
 /* MODE TABS */
 .mode-tabs {
-  display:flex;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:4px;
-  margin-bottom:20px;
-  gap:4px;
+  display:flex; background:var(--surface);
+  border:1px solid var(--border); border-radius:12px;
+  padding:4px; margin-bottom:20px; gap:4px;
 }
 .mode-tab {
-  flex:1;
-  padding:8px 4px;
-  border:none;
-  background:transparent;
-  color:var(--muted);
-  font-family:'Crimson Pro',serif;
-  font-size:13px;
-  border-radius:7px;
-  cursor:pointer;
-  transition:all 0.2s;
-  text-align:center;
+  flex:1; padding:9px 4px; border:none; background:transparent;
+  color:var(--muted); font-family:'Manrope',sans-serif;
+  font-size:13px; border-radius:8px; cursor:pointer;
+  transition:all 0.2s; text-align:center; font-weight:600;
 }
-.mode-tab.active { background:var(--gold); color:var(--bg); font-weight:600; }
+.mode-tab.active { background:linear-gradient(135deg,var(--blue),var(--blue2)); color:#fff; }
 
 /* GAME CARD */
 .game-card {
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:28px 24px;
-  margin-bottom:16px;
-  position:relative;
-  overflow:hidden;
-  animation:slideIn 0.3s ease;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:28px 24px; margin-bottom:16px;
+  position:relative; overflow:hidden; animation:slideIn 0.3s ease;
 }
 .game-card::before {
-  content:'';
-  position:absolute;
-  top:0;left:0;right:0;
-  height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  content:''; position:absolute; top:0;left:0;right:0; height:2px;
+  background:linear-gradient(90deg, var(--blue), var(--cyan));
 }
-.question-label { font-size:10px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:12px; }
-.question-word { font-family:'Cinzel',serif; font-size:34px; font-weight:900; color:var(--text); margin-bottom:8px; line-height:1.1; }
-.question-hint { font-size:13px; color:var(--muted); font-style:italic; margin-bottom:4px; }
+.question-label { font-size:9px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:14px; font-family:'Unbounded',sans-serif; }
+.question-word { font-family:'Unbounded',sans-serif; font-size:32px; font-weight:900; color:var(--white); margin-bottom:8px; line-height:1.2; }
+.question-hint { font-size:13px; color:var(--muted); margin-bottom:4px; }
 .category-badge {
-  display:inline-block;
-  background:rgba(201,168,76,0.1);
-  border:1px solid rgba(201,168,76,0.3);
-  color:var(--gold);
-  font-size:11px;
-  letter-spacing:1px;
-  padding:3px 10px;
-  border-radius:20px;
-  margin-top:8px;
+  display:inline-block; background:rgba(45,107,228,0.15);
+  border:1px solid rgba(45,107,228,0.3); color:var(--blue2);
+  font-size:11px; letter-spacing:1px; padding:4px 12px;
+  border-radius:20px; margin-top:8px; font-family:'Unbounded',sans-serif;
 }
-
-/* SPEAK BUTTON */
 .speak-btn {
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  background:rgba(201,168,76,0.1);
-  border:1px solid rgba(201,168,76,0.3);
-  color:var(--gold);
-  padding:6px 14px;
-  border-radius:20px;
-  font-size:13px;
-  cursor:pointer;
-  margin-top:10px;
-  transition:all 0.2s;
-  font-family:'Crimson Pro',serif;
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(0,198,255,0.1); border:1px solid rgba(0,198,255,0.25);
+  color:var(--cyan); padding:7px 16px; border-radius:20px;
+  font-size:13px; cursor:pointer; margin-top:12px;
+  transition:all 0.2s; font-family:'Manrope',sans-serif; font-weight:600;
 }
-.speak-btn:hover { background:rgba(201,168,76,0.2); }
-.speak-btn.speaking { background:rgba(201,168,76,0.3); animation:pulse 1s infinite; }
+.speak-btn:hover { background:rgba(0,198,255,0.2); }
 
 /* CHOICES */
 .choices { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
 .choice-btn {
-  padding:14px 10px;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:10px;
-  color:var(--text);
-  font-family:'Crimson Pro',serif;
-  font-size:15px;
-  cursor:pointer;
-  transition:all 0.2s;
-  text-align:center;
-  line-height:1.3;
+  padding:14px 10px; background:var(--surface);
+  border:1px solid var(--border); border-radius:12px;
+  color:var(--white); font-family:'Manrope',sans-serif;
+  font-size:14px; cursor:pointer; transition:all 0.2s;
+  text-align:center; line-height:1.3; font-weight:500;
 }
-.choice-btn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.05); }
-.choice-btn.correct { background:rgba(39,174,96,0.15); border-color:var(--green); color:var(--green); }
-.choice-btn.wrong { background:rgba(192,57,43,0.15); border-color:var(--red); color:var(--red); }
+.choice-btn:hover:not(:disabled) { border-color:var(--blue); color:var(--blue2); background:rgba(45,107,228,0.08); }
+.choice-btn.correct { background:rgba(46,204,113,0.15); border-color:var(--green); color:var(--green); }
+.choice-btn.wrong { background:rgba(224,85,85,0.15); border-color:var(--red); color:var(--red); }
 
 /* INPUT */
 .translation-input {
-  width:100%;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:14px 16px;
-  color:var(--text);
-  font-family:'Crimson Pro',serif;
-  font-size:18px;
-  margin-top:16px;
-  outline:none;
-  transition:border-color 0.2s;
+  width:100%; background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:14px 16px; color:var(--white);
+  font-family:'Manrope',sans-serif; font-size:17px; margin-top:16px;
+  outline:none; transition:all 0.2s;
 }
-.translation-input:focus { border-color:var(--gold); }
-.translation-input.correct { border-color:var(--green); background:rgba(39,174,96,0.08); }
-.translation-input.wrong { border-color:var(--red); background:rgba(192,57,43,0.08); }
+.translation-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(45,107,228,0.15); }
+.translation-input.correct { border-color:var(--green); background:rgba(46,204,113,0.08); }
+.translation-input.wrong { border-color:var(--red); background:rgba(224,85,85,0.08); }
 
 /* SCRAMBLE */
+.scramble-area { margin-top:16px; }
 .answer-slots {
   display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
-  margin-bottom:16px; min-height:52px;
-  background:rgba(255,255,255,0.02);
-  border:1px dashed var(--border);
-  border-radius:10px; padding:10px; align-items:center;
+  margin-bottom:14px; min-height:50px;
+  background:rgba(255,255,255,0.02); border:1px dashed var(--border);
+  border-radius:12px; padding:10px; align-items:center;
 }
 .letter-slot {
-  width:36px; height:36px;
-  background:var(--gold); color:var(--bg);
-  border:none; border-radius:8px;
-  font-family:'Cinzel',serif; font-size:15px; font-weight:700;
-  cursor:pointer; transition:all 0.15s;
-  display:flex; align-items:center; justify-content:center;
+  width:36px; height:36px; background:linear-gradient(135deg,var(--blue),var(--blue2));
+  color:#fff; border:none; border-radius:8px;
+  font-family:'Unbounded',sans-serif; font-size:14px; font-weight:700;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
 .letter-pool { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
 .letter-btn {
-  width:36px; height:36px;
-  background:var(--surface); color:var(--text);
+  width:36px; height:36px; background:var(--surface); color:var(--white);
   border:1px solid var(--border); border-radius:8px;
-  font-family:'Cinzel',serif; font-size:15px; font-weight:700;
-  cursor:pointer; transition:all 0.15s;
-  display:flex; align-items:center; justify-content:center;
+  font-family:'Unbounded',sans-serif; font-size:14px; font-weight:700;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s;
 }
-.letter-btn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
+.letter-btn:hover:not(:disabled) { border-color:var(--blue); color:var(--cyan); }
 .letter-btn:disabled { opacity:0.2; cursor:default; }
 
 /* FEEDBACK */
-.feedback {
-  text-align:center; padding:12px; border-radius:10px;
-  font-size:15px; margin-bottom:16px; display:none;
-}
-.feedback.correct { background:rgba(39,174,96,0.1); border:1px solid rgba(39,174,96,0.3); color:var(--green); display:block; }
-.feedback.wrong { background:rgba(192,57,43,0.1); border:1px solid rgba(192,57,43,0.3); color:#e74c3c; display:block; }
+.feedback { text-align:center; padding:12px; border-radius:12px; font-size:15px; margin-bottom:16px; display:none; font-weight:600; }
+.feedback.correct { background:rgba(46,204,113,0.1); border:1px solid rgba(46,204,113,0.3); color:var(--green); display:block; }
+.feedback.wrong { background:rgba(224,85,85,0.1); border:1px solid rgba(224,85,85,0.3); color:var(--red); display:block; }
 
 /* BUTTONS */
 .btn-primary {
   width:100%; padding:15px;
-  background:linear-gradient(135deg,var(--gold),var(--gold2));
-  color:var(--bg); border:none; border-radius:12px;
-  font-family:'Cinzel',serif; font-size:14px; font-weight:700;
-  letter-spacing:2px; cursor:pointer; transition:all 0.2s;
+  background:linear-gradient(135deg, var(--blue), var(--blue2));
+  color:#fff; border:none; border-radius:14px;
+  font-family:'Unbounded',sans-serif; font-size:12px; font-weight:700;
+  letter-spacing:1px; cursor:pointer; transition:all 0.2s;
   text-transform:uppercase; margin-bottom:10px;
+  box-shadow:0 4px 20px rgba(45,107,228,0.3);
 }
-.btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(201,168,76,0.3); }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(45,107,228,0.4); }
 .btn-secondary {
-  width:100%; padding:12px;
-  background:transparent; color:var(--muted);
-  border:1px solid var(--border); border-radius:12px;
-  font-family:'Crimson Pro',serif; font-size:14px;
-  cursor:pointer; transition:all 0.2s; margin-bottom:10px;
+  width:100%; padding:13px; background:transparent; color:var(--muted);
+  border:1px solid var(--border); border-radius:14px;
+  font-family:'Manrope',sans-serif; font-size:14px;
+  cursor:pointer; transition:all 0.2s; margin-bottom:10px; font-weight:600;
 }
-.btn-secondary:hover { border-color:var(--muted); color:var(--text); }
+.btn-secondary:hover { border-color:var(--blue); color:var(--white); }
 
 /* PROGRESS */
-.progress-bar { height:3px; background:var(--border); border-radius:2px; margin-bottom:20px; overflow:hidden; }
-.progress-fill { height:100%; background:linear-gradient(90deg,var(--gold),var(--gold2)); border-radius:2px; transition:width 0.4s ease; }
+.progress-wrap { margin-bottom:20px; }
+.progress-info { display:flex; justify-content:space-between; margin-bottom:6px; }
+.progress-label { font-size:11px; color:var(--muted); font-family:'Unbounded',sans-serif; letter-spacing:1px; }
+.progress-bar { height:4px; background:var(--border); border-radius:4px; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--cyan)); border-radius:4px; transition:width 0.4s ease; }
 
 /* LEADERBOARD */
-.leaderboard-card {
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:16px;
-  overflow:hidden;
-  margin-bottom:16px;
-}
+.leaderboard-card { background:var(--card); border:1px solid var(--border); border-radius:20px; overflow:hidden; margin-bottom:16px; }
 .lb-header {
-  background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));
-  padding:16px 20px;
-  border-bottom:1px solid var(--border);
-  font-family:'Cinzel',serif;
-  font-size:14px;
-  letter-spacing:2px;
-  color:var(--gold);
+  background:linear-gradient(135deg,rgba(45,107,228,0.2),rgba(0,198,255,0.1));
+  padding:16px 20px; border-bottom:1px solid var(--border);
+  font-family:'Unbounded',sans-serif; font-size:12px;
+  letter-spacing:2px; color:var(--cyan); text-transform:uppercase;
 }
-.lb-row {
-  display:flex;
-  align-items:center;
-  padding:12px 20px;
-  border-bottom:1px solid rgba(42,42,62,0.5);
-  gap:12px;
-}
+.lb-row { display:flex; align-items:center; padding:13px 20px; border-bottom:1px solid rgba(30,47,74,0.5); gap:12px; }
 .lb-row:last-child { border-bottom:none; }
-.lb-rank { font-family:'Cinzel',serif; font-size:16px; font-weight:700; color:var(--muted); width:24px; }
-.lb-rank.gold { color:#FFD700; }
-.lb-rank.silver { color:#C0C0C0; }
-.lb-rank.bronze { color:#CD7F32; }
-.lb-flag { font-size:20px; }
+.lb-rank { font-family:'Unbounded',sans-serif; font-size:14px; font-weight:700; color:var(--muted); width:28px; }
+.lb-flag { font-size:22px; }
 .lb-info { flex:1; }
-.lb-name { font-size:15px; color:var(--text); }
-.lb-country { font-size:12px; color:var(--muted); }
-.lb-score { font-family:'Cinzel',serif; font-size:16px; color:var(--gold); font-weight:700; }
+.lb-name { font-size:15px; color:var(--white); font-weight:600; }
+.lb-country { font-size:11px; color:var(--muted); margin-top:2px; }
+.lb-score { font-family:'Unbounded',sans-serif; font-size:15px; color:var(--cyan); font-weight:700; }
 
 /* RESULT */
 .result-screen { text-align:center; padding:40px 24px; }
-.result-emoji { font-size:60px; margin-bottom:16px; }
-.result-title { font-family:'Cinzel',serif; font-size:24px; color:var(--gold); margin-bottom:8px; }
+.result-emoji { font-size:64px; margin-bottom:16px; }
+.result-title { font-family:'Unbounded',sans-serif; font-size:22px; color:var(--cyan); margin-bottom:8px; }
 .result-stats { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:24px 0; }
-.result-stat { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; }
-.result-stat-value { font-family:'Cinzel',serif; font-size:28px; color:var(--gold); }
-.result-stat-label { font-size:12px; color:var(--muted); margin-top:4px; }
+.result-stat { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; }
+.result-stat-value { font-family:'Unbounded',sans-serif; font-size:26px; color:var(--cyan); }
+.result-stat-label { font-size:11px; color:var(--muted); margin-top:4px; }
 
-/* NAV */
-.nav-bar {
-  display:flex;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:4px;
-  margin-bottom:20px;
-  gap:4px;
+/* WORD OF DAY */
+.wod-card {
+  background:linear-gradient(135deg, rgba(45,107,228,0.2), rgba(0,198,255,0.1));
+  border:1px solid rgba(0,198,255,0.25); border-radius:20px;
+  padding:20px 24px; margin-bottom:20px; position:relative; overflow:hidden;
 }
-.nav-btn {
-  flex:1; padding:10px 4px;
-  border:none; background:transparent;
-  color:var(--muted); font-family:'Crimson Pro',serif;
-  font-size:12px; border-radius:8px;
-  cursor:pointer; transition:all 0.2s; text-align:center;
+.wod-card::before {
+  content:''; position:absolute; top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
 }
-.nav-btn.active { background:var(--card); color:var(--gold); border:1px solid var(--border); }
+.wod-label { font-family:'Unbounded',sans-serif; font-size:9px; letter-spacing:3px; color:var(--cyan); text-transform:uppercase; margin-bottom:10px; }
+.wod-word { font-family:'Unbounded',sans-serif; font-size:28px; font-weight:900; color:var(--white); }
+.wod-translation { font-size:15px; color:var(--muted); margin-top:4px; }
 
 /* ADMIN */
 .admin-section { margin-bottom:24px; }
-.admin-title {
-  font-family:'Cinzel',serif; font-size:13px;
-  letter-spacing:2px; color:var(--gold);
-  margin-bottom:12px; text-transform:uppercase;
-}
-.word-row {
-  display:flex; align-items:center; gap:8px;
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:10px; padding:10px 14px; margin-bottom:8px;
-}
-.word-row-text { flex:1; font-size:14px; }
-.word-row-ch { color:var(--gold); font-weight:600; }
-.word-row-ru { color:var(--muted); font-size:12px; }
-.delete-btn {
-  background:rgba(192,57,43,0.2); border:1px solid rgba(192,57,43,0.3);
-  color:#e74c3c; border-radius:6px; padding:4px 10px;
-  font-size:12px; cursor:pointer;
-}
-.add-word-form {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:12px; padding:16px; margin-bottom:16px;
-}
+.admin-title { font-family:'Unbounded',sans-serif; font-size:11px; letter-spacing:2px; color:var(--cyan); margin-bottom:12px; text-transform:uppercase; }
+.color-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.color-item { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+.color-item label { font-size:13px; color:var(--muted); flex:1; }
+.color-item input[type=color] { width:36px; height:28px; border:none; border-radius:6px; cursor:pointer; background:none; }
+.word-row { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin-bottom:8px; }
+.word-row-text { flex:1; }
+.word-row-ch { color:var(--cyan); font-weight:700; font-size:15px; }
+.word-row-ru { color:var(--muted); font-size:12px; margin-top:2px; }
+.delete-btn { background:rgba(224,85,85,0.15); border:1px solid rgba(224,85,85,0.3); color:var(--red); border-radius:8px; padding:5px 12px; font-size:12px; cursor:pointer; font-weight:600; }
+.add-word-form { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px; }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
-.small-input {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:8px; padding:10px 12px; color:var(--text);
-  font-family:'Crimson Pro',serif; font-size:15px; outline:none; width:100%;
-}
-.small-input:focus { border-color:var(--gold); }
+.small-input { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; color:var(--white); font-family:'Manrope',sans-serif; font-size:14px; outline:none; width:100%; }
+.small-input:focus { border-color:var(--blue); }
 
 /* MODAL */
-.modal-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.8);
-  display:flex; align-items:center; justify-content:center;
-  z-index:100; padding:20px;
-}
-.modal { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px 24px; width:100%; max-width:340px; }
-.modal-title { font-family:'Cinzel',serif; font-size:18px; color:var(--gold); margin-bottom:16px; text-align:center; }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px; backdrop-filter:blur(4px); }
+.modal { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:28px 24px; width:100%; max-width:340px; position:relative; overflow:hidden; }
+.modal::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; background:linear-gradient(90deg,var(--blue),var(--cyan)); }
+.modal-title { font-family:'Unbounded',sans-serif; font-size:16px; color:var(--cyan); margin-bottom:16px; text-align:center; }
 
-/* COLOR PICKERS */
-.color-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
-.color-item { display:flex; align-items:center; gap:8px; }
-.color-item label { font-size:13px; color:var(--muted); flex:1; }
-.color-item input[type=color] { width:40px; height:32px; border:none; border-radius:6px; cursor:pointer; background:none; }
+/* STREAK BADGE */
+.streak-display { display:inline-flex; align-items:center; gap:6px; background:rgba(240,192,64,0.1); border:1px solid rgba(240,192,64,0.25); color:var(--gold); padding:6px 14px; border-radius:20px; font-size:13px; font-weight:700; margin-bottom:16px; }
+
+/* CATEGORIES */
+.category-tabs { display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:16px; scrollbar-width:none; }
+.category-tabs::-webkit-scrollbar { display:none; }
+.cat-tab { flex-shrink:0; padding:6px 14px; background:var(--surface); border:1px solid var(--border); border-radius:20px; color:var(--muted); font-size:12px; cursor:pointer; transition:all 0.2s; font-weight:600; }
+.cat-tab.active { background:rgba(45,107,228,0.2); border-color:var(--blue); color:var(--blue2); }
 
 /* ANIMATIONS */
-@keyframes slideIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-@keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+@keyframes slideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+@keyframes glow { 0%,100%{box-shadow:0 0 10px rgba(0,198,255,0.2)} 50%{box-shadow:0 0 20px rgba(0,198,255,0.4)} }
 .score-value.pop { animation:pop 0.3s ease; }
 </style>
 </head>
 <body>
 
-<!-- REGISTER SCREEN -->
+<!-- REGISTER -->
 <div class="container screen active" id="registerScreen">
   <header>
-    <div class="logo-text">Нохчийн мотт</div>
+    <div class="logo-icon">🏔️</div>
+    <div class="logo-text">Нохчийн Мотт</div>
     <h1>Учи <span>Чеченский</span></h1>
-    <div class="subtitle">Слова горного народа</div>
+    <div class="subtitle">Язык горного народа</div>
   </header>
   <div class="register-card">
     <div class="field-label">Твоё имя</div>
@@ -444,28 +360,34 @@ select.text-input option { background:var(--surface); color:var(--text); }
       <option value="🇰🇿 Казахстан">🇰🇿 Казахстан</option>
       <option value="🇺🇸 США">🇺🇸 США</option>
       <option value="🇬🇧 Великобритания">🇬🇧 Великобритания</option>
+      <option value="🇸🇦 Саудовская Аравия">🇸🇦 Саудовская Аравия</option>
       <option value="🌍 Другая">🌍 Другая</option>
     </select>
   </div>
-  <button class="btn-primary" onclick="startGame()">Начать игру →</button>
+  <br>
+  <button class="btn-primary" onclick="startGame()">Начать →</button>
 </div>
 
-<!-- MAIN GAME SCREEN -->
+<!-- GAME SCREEN -->
 <div class="container screen" id="gameScreen">
   <header>
-    <div class="logo-text">Нохчийн мотт</div>
+    <div class="logo-icon">🏔️</div>
+    <div class="logo-text">Нохчийн Мотт</div>
     <h1>Учи <span>Чеченский</span></h1>
-    <div class="subtitle" id="playerGreeting">Привет!</div>
+    <div class="subtitle" id="playerGreeting"></div>
   </header>
 
   <div class="nav-bar">
     <button class="nav-btn active" onclick="showTab('game')">🎮 Игра</button>
-    <button class="nav-btn" onclick="showTab('leaderboard')">🏆 Лидеры</button>
+    <button class="nav-btn" onclick="showTab('leaderboard')">🏆 Топ</button>
+    <button class="nav-btn" onclick="showTab('words')">📚 Слова</button>
     <button class="nav-btn" onclick="showAdminLogin()">⚙️ Админ</button>
   </div>
 
   <!-- GAME TAB -->
   <div id="gameTab">
+    <div id="wordOfDay"></div>
+
     <div class="score-bar">
       <div class="score-item">
         <div class="score-label">Очки</div>
@@ -489,8 +411,14 @@ select.text-input option { background:var(--surface); color:var(--text); }
       <button class="mode-tab" onclick="setMode('scramble')">Буквы</button>
     </div>
 
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    <div class="category-tabs" id="categoryTabs"></div>
+
+    <div class="progress-wrap">
+      <div class="progress-info">
+        <span class="progress-label">Прогресс</span>
+        <span class="progress-label" id="progressText">0 / 20</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     </div>
 
     <div id="gameArea">
@@ -503,16 +431,16 @@ select.text-input option { background:var(--surface); color:var(--text); }
     <div id="resultArea" style="display:none">
       <div class="result-screen">
         <div class="result-emoji" id="resultEmoji">🏆</div>
-        <div class="result-title" id="resultTitle">Молодец!</div>
-        <p style="color:var(--muted);font-size:15px" id="resultMsg"></p>
+        <div class="result-title" id="resultTitle"></div>
+        <p style="color:var(--muted);font-size:15px;margin-bottom:4px" id="resultMsg"></p>
         <div class="result-stats">
           <div class="result-stat"><div class="result-stat-value" id="finalScore">0</div><div class="result-stat-label">Очков</div></div>
           <div class="result-stat"><div class="result-stat-value" id="finalAccuracy">0%</div><div class="result-stat-label">Точность</div></div>
           <div class="result-stat"><div class="result-stat-value" id="finalCorrect">0</div><div class="result-stat-label">Правильно</div></div>
-          <div class="result-stat"><div class="result-stat-value" id="finalStreak">0</div><div class="result-stat-label">Лучшая серия</div></div>
+          <div class="result-stat"><div class="result-stat-value" id="finalStreak">0</div><div class="result-stat-label">Серия</div></div>
         </div>
         <button class="btn-primary" onclick="restartGame()">Играть снова</button>
-        <button class="btn-secondary" onclick="showTab('leaderboard')">Таблица лидеров 🏆</button>
+        <button class="btn-secondary" onclick="showTab('leaderboard')">🏆 Таблица лидеров</button>
       </div>
     </div>
   </div>
@@ -520,26 +448,36 @@ select.text-input option { background:var(--surface); color:var(--text); }
   <!-- LEADERBOARD TAB -->
   <div id="leaderboardTab" style="display:none">
     <div class="leaderboard-card">
-      <div class="lb-header">🏆 ТАБЛИЦА ЛИДЕРОВ</div>
+      <div class="lb-header">🏆 Таблица лидеров</div>
       <div id="lbList"></div>
     </div>
-    <button class="btn-secondary" onclick="showTab('game')">← Назад к игре</button>
+    <button class="btn-secondary" onclick="showTab('game')">← Назад</button>
+  </div>
+
+  <!-- WORDS TAB -->
+  <div id="wordsTab" style="display:none">
+    <div style="margin-bottom:16px">
+      <input class="text-input" id="wordSearch" placeholder="🔍 Поиск слова..." oninput="renderWordsList()">
+    </div>
+    <div id="wordsListDisplay"></div>
+    <button class="btn-secondary" onclick="showTab('game')">← Назад</button>
   </div>
 
   <!-- ADMIN TAB -->
   <div id="adminTab" style="display:none">
     <div class="admin-section">
-      <div class="admin-title">🎨 Цвета приложения</div>
+      <div class="admin-title">🎨 Цвета</div>
       <div class="color-grid">
-        <div class="color-item"><label>Фон</label><input type="color" value="#0a0a0f" onchange="changeColor('--bg',this.value)"></div>
-        <div class="color-item"><label>Акцент</label><input type="color" value="#c9a84c" onchange="changeColor('--gold',this.value)"></div>
-        <div class="color-item"><label>Карточки</label><input type="color" value="#1a1a26" onchange="changeColor('--card',this.value)"></div>
-        <div class="color-item"><label>Текст</label><input type="color" value="#e8e0d0" onchange="changeColor('--text',this.value)"></div>
+        <div class="color-item"><label>Фон</label><input type="color" value="#070b14" onchange="changeColor('--bg',this.value)"></div>
+        <div class="color-item"><label>Акцент</label><input type="color" value="#00c6ff" onchange="changeColor('--cyan',this.value)"></div>
+        <div class="color-item"><label>Синий</label><input type="color" value="#2d6be4" onchange="changeColor('--blue',this.value)"></div>
+        <div class="color-item"><label>Текст</label><input type="color" value="#e8f0ff" onchange="changeColor('--white',this.value)"></div>
+        <div class="color-item"><label>Карточки</label><input type="color" value="#111d33" onchange="changeColor('--card',this.value)"></div>
+        <div class="color-item"><label>Золото</label><input type="color" value="#f0c040" onchange="changeColor('--gold',this.value)"></div>
       </div>
     </div>
-
     <div class="admin-section">
-      <div class="admin-title">📝 Добавить слово</div>
+      <div class="admin-title">➕ Добавить слово</div>
       <div class="add-word-form">
         <div class="form-row">
           <input class="small-input" id="newChechen" placeholder="Чеченское">
@@ -549,24 +487,22 @@ select.text-input option { background:var(--surface); color:var(--text); }
           <input class="small-input" id="newTranscription" placeholder="Произношение">
           <input class="small-input" id="newCategory" placeholder="Категория">
         </div>
-        <button class="btn-primary" onclick="addWord()" style="margin-bottom:0">Добавить слово</button>
+        <button class="btn-primary" onclick="addWord()" style="margin-bottom:0">Добавить</button>
       </div>
     </div>
-
     <div class="admin-section">
       <div class="admin-title">📚 Все слова (<span id="wordCountAdmin">0</span>)</div>
       <div id="wordList"></div>
     </div>
-
-    <button class="btn-secondary" onclick="showTab('game')">← Назад к игре</button>
+    <button class="btn-secondary" onclick="showTab('game')">← Назад</button>
   </div>
 </div>
 
-<!-- ADMIN LOGIN MODAL -->
+<!-- ADMIN MODAL -->
 <div class="modal-overlay" id="adminModal" style="display:none">
   <div class="modal">
     <div class="modal-title">🔐 Вход для админа</div>
-    <input type="password" class="text-input" id="adminPassword" placeholder="Введи пароль..." onkeydown="if(event.key==='Enter') checkAdmin()">
+    <input type="password" class="text-input" id="adminPassword" placeholder="Пароль..." onkeydown="if(event.key==='Enter') checkAdmin()">
     <br><br>
     <button class="btn-primary" onclick="checkAdmin()">Войти</button>
     <button class="btn-secondary" onclick="closeAdminModal()">Отмена</button>
@@ -574,262 +510,367 @@ select.text-input option { background:var(--surface); color:var(--text); }
 </div>
 
 <script>
-// =================== DATA ===================
+const ADMIN_PASS = 'Larbar/biycar/1ambar54';
+
 let words = [
-  { chechen:"Iа", russian:"Ты", transcription:"Иа", category:"Местоимения" },
-  { chechen:"Со", russian:"Я", transcription:"Со", category:"Местоимения" },
-  { chechen:"Оха", russian:"Мы", transcription:"Оха", category:"Местоимения" },
-  { chechen:"Сан", russian:"Мой", transcription:"Сан", category:"Местоимения" },
-  { chechen:"Хаза", russian:"Красивый", transcription:"Хаза", category:"Прилагательные" },
-  { chechen:"Доккха", russian:"Большой", transcription:"Доккха", category:"Прилагательные" },
-  { chechen:"КIеза", russian:"Маленький", transcription:"КIеза", category:"Прилагательные" },
-  { chechen:"Дика", russian:"Хороший", transcription:"Дика", category:"Прилагательные" },
-  { chechen:"Во", russian:"Плохой", transcription:"Во", category:"Прилагательные" },
-  { chechen:"Сийлахь", russian:"Уважаемый", transcription:"Сийлахь", category:"Прилагательные" },
-  { chechen:"Буьйса", russian:"Ночь", transcription:"Буьйса", category:"Время" },
-  { chechen:"Де", russian:"День", transcription:"Де", category:"Время" },
-  { chechen:"Шо", russian:"Год", transcription:"Шо", category:"Время" },
-  { chechen:"Бутт", russian:"Месяц", transcription:"Бутт", category:"Время" },
-  { chechen:"Хи", russian:"Вода", transcription:"Хи", category:"Природа" },
-  { chechen:"Сирла", russian:"Свет", transcription:"Сирла", category:"Природа" },
-  { chechen:"Лам", russian:"Гора", transcription:"Лам", category:"Природа" },
-  { chechen:"Хьун", russian:"Лес", transcription:"Хьун", category:"Природа" },
-  { chechen:"Зуда", russian:"Женщина", transcription:"Зуда", category:"Люди" },
-  { chechen:"КIант", russian:"Парень", transcription:"КIант", category:"Люди" },
-  { chechen:"ЙоI", russian:"Девушка", transcription:"ЙоI", category:"Люди" },
-  { chechen:"Да", russian:"Отец", transcription:"Да", category:"Семья" },
-  { chechen:"Нана", russian:"Мать", transcription:"Нана", category:"Семья" },
-  { chechen:"Ваша", russian:"Брат", transcription:"Ваша", category:"Семья" },
-  { chechen:"Йиша", russian:"Сестра", transcription:"Йиша", category:"Семья" },
-  { chechen:"Дош", russian:"Слово", transcription:"Дош", category:"Речь" },
-  { chechen:"Маршалла", russian:"Свобода", transcription:"Маршалла", category:"Ценности" },
-  { chechen:"Ловзар", russian:"Игра", transcription:"Ловзар", category:"Жизнь" },
-  { chechen:"Хlинца", russian:"Сейчас", transcription:"Хlинца", category:"Наречия" },
-  { chechen:"ДIа", russian:"Туда", transcription:"ДIа", category:"Наречия" },
+  // ПРИВЕТСТВИЯ
+  {chechen:"Маршалла",russian:"Привет / Мир",transcription:"Маршалла",category:"Приветствия"},
+  {chechen:"Дела реза хийла",russian:"Спасибо",transcription:"Дела реза хийла",category:"Приветствия"},
+  {chechen:"Салам",russian:"Салам",transcription:"Салам",category:"Приветствия"},
+  // МЕСТОИМЕНИЯ
+  {chechen:"Со",russian:"Я",transcription:"Со",category:"Местоимения"},
+  {chechen:"Iа",russian:"Ты",transcription:"Иа",category:"Местоимения"},
+  {chechen:"Оха",russian:"Мы",transcription:"Оха",category:"Местоимения"},
+  {chechen:"Сан",russian:"Мой",transcription:"Сан",category:"Местоимения"},
+  // ЧИСЛА
+  {chechen:"Цхьаъ",russian:"Один",transcription:"Цхьаъ",category:"Числа"},
+  {chechen:"ШиъА",russian:"Два",transcription:"ШиъА",category:"Числа"},
+  {chechen:"Кхоъ",russian:"Три",transcription:"Кхоъ",category:"Числа"},
+  {chechen:"ДиъА",russian:"Четыре",transcription:"ДиъА",category:"Числа"},
+  {chechen:"Пхиъ",russian:"Пять",transcription:"Пхиъ",category:"Числа"},
+  {chechen:"Ялх",russian:"Шесть",transcription:"Ялх",category:"Числа"},
+  {chechen:"Ворх1",russian:"Семь",transcription:"Ворх1",category:"Числа"},
+  {chechen:"Барх1",russian:"Восемь",transcription:"Барх1",category:"Числа"},
+  {chechen:"Исс",russian:"Девять",transcription:"Исс",category:"Числа"},
+  {chechen:"Итт",russian:"Десять",transcription:"Итт",category:"Числа"},
+  // ЦВЕТА
+  {chechen:"КIайн",russian:"Белый",transcription:"КIайн",category:"Цвета"},
+  {chechen:"Iаьржа",russian:"Чёрный",transcription:"Iаьржа",category:"Цвета"},
+  {chechen:"Цlен",russian:"Красный",transcription:"Цlен",category:"Цвета"},
+  {chechen:"Можа",russian:"Жёлтый",transcription:"Можа",category:"Цвета"},
+  {chechen:"Сийна",russian:"Синий",transcription:"Сийна",category:"Цвета"},
+  {chechen:"Баьццара",russian:"Зелёный",transcription:"Баьццара",category:"Цвета"},
+  {chechen:"Боьмаша",russian:"Коричневый",transcription:"Боьмаша",category:"Цвета"},
+  // ДНИ НЕДЕЛИ
+  {chechen:"Оршот",russian:"Понедельник",transcription:"Оршот",category:"Дни недели"},
+  {chechen:"Шинара",russian:"Вторник",transcription:"Шинара",category:"Дни недели"},
+  {chechen:"Кхаара",russian:"Среда",transcription:"Кхаара",category:"Дни недели"},
+  {chechen:"Еара",russian:"Четверг",transcription:"Еара",category:"Дни недели"},
+  {chechen:"Пlераска",russian:"Пятница",transcription:"Пlераска",category:"Дни недели"},
+  {chechen:"Шот",russian:"Суббота",transcription:"Шот",category:"Дни недели"},
+  {chechen:"Кlиранде",russian:"Воскресенье",transcription:"Кlиранде",category:"Дни недели"},
+  // ВРЕМЯ
+  {chechen:"Де",russian:"День",transcription:"Де",category:"Время"},
+  {chechen:"Буьйса",russian:"Ночь",transcription:"Буьйса",category:"Время"},
+  {chechen:"Шо",russian:"Год",transcription:"Шо",category:"Время"},
+  {chechen:"Бутт",russian:"Месяц / Луна",transcription:"Бутт",category:"Время"},
+  {chechen:"Хlинца",russian:"Сейчас",transcription:"Хlинца",category:"Время"},
+  // ПРИРОДА
+  {chechen:"Малх",russian:"Солнце",transcription:"Малх",category:"Природа"},
+  {chechen:"Ткъес",russian:"Гром",transcription:"Ткъес",category:"Природа"},
+  {chechen:"Луо",russian:"Снег",transcription:"Луо",category:"Природа"},
+  {chechen:"Дог1а",russian:"Дождь",transcription:"Дог1а",category:"Природа"},
+  {chechen:"Мох",russian:"Ветер",transcription:"Мох",category:"Природа"},
+  {chechen:"Хи",russian:"Вода",transcription:"Хи",category:"Природа"},
+  {chechen:"Лам",russian:"Гора",transcription:"Лам",category:"Природа"},
+  {chechen:"Хьун",russian:"Лес",transcription:"Хьун",category:"Природа"},
+  {chechen:"Сирла",russian:"Свет",transcription:"Сирла",category:"Природа"},
+  // ЖИВОТНЫЕ
+  {chechen:"Жий",russian:"Овца",transcription:"Жий",category:"Животные"},
+  {chechen:"Говр",russian:"Лошадь",transcription:"Говр",category:"Животные"},
+  {chechen:"Ж1ала",russian:"Собака",transcription:"Ж1ала",category:"Животные"},
+  {chechen:"Цициг",russian:"Кошка",transcription:"Цициг",category:"Животные"},
+  {chechen:"Ча",russian:"Медведь",transcription:"Ча",category:"Животные"},
+  // СЕМЬЯ
+  {chechen:"Да",russian:"Отец",transcription:"Да",category:"Семья"},
+  {chechen:"Нана",russian:"Мать",transcription:"Нана",category:"Семья"},
+  {chechen:"Ваша",russian:"Брат",transcription:"Ваша",category:"Семья"},
+  {chechen:"Йиша",russian:"Сестра",transcription:"Йиша",category:"Семья"},
+  {chechen:"КIант",russian:"Сын / Парень",transcription:"КIант",category:"Семья"},
+  {chechen:"ЙоI",russian:"Дочь / Девушка",transcription:"ЙоI",category:"Семья"},
+  // ЛЮДИ
+  {chechen:"Зуда",russian:"Женщина",transcription:"Зуда",category:"Люди"},
+  {chechen:"Стаг",russian:"Человек",transcription:"Стаг",category:"Люди"},
+  // ТЕ ЛО
+  {chechen:"Корта",russian:"Голова",transcription:"Корта",category:"Тело"},
+  {chechen:"Куьг",russian:"Рука",transcription:"Куьг",category:"Тело"},
+  {chechen:"Ког",russian:"Нога",transcription:"Kog",category:"Тело"},
+  {chechen:"БIаьрг",russian:"Глаз",transcription:"БIаьрг",category:"Тело"},
+  {chechen:"ПIелг",russian:"Палец",transcription:"ПIелг",category:"Тело"},
+  {chechen:"Церг",russian:"Зуб",transcription:"Церг",category:"Тело"},
+  // ДОМ
+  {chechen:"Цlа",russian:"Дом",transcription:"Цlа",category:"Дом"},
+  {chechen:"Наь1а",russian:"Дверь",transcription:"Наь1а",category:"Дом"},
+  {chechen:"Кор",russian:"Окно",transcription:"Кор",category:"Дом"},
+  {chechen:"Шун",russian:"Стол",transcription:"Шун",category:"Дом"},
+  {chechen:"Г1ант",russian:"Стул",transcription:"Г1ант",category:"Дом"},
+  {chechen:"Пен",russian:"Стена",transcription:"Пен",category:"Дом"},
+  // ЕДА
+  {chechen:"Жижиг",russian:"Мясо",transcription:"Жижиг",category:"Еда"},
+  {chechen:"Шура",russian:"Молоко",transcription:"Шура",category:"Еда"},
+  {chechen:"Беппиг",russian:"Хлеб",transcription:"Беппиг",category:"Еда"},
+  {chechen:"Даьтта",russian:"Масло",transcription:"Даьтта",category:"Еда"},
+  {chechen:"Х1оъ",russian:"Яйцо",transcription:"Х1оъ",category:"Еда"},
+  {chechen:"Картол",russian:"Картошка",transcription:"Картол",category:"Еда"},
+  {chechen:"Дама",russian:"Мука",transcription:"Дама",category:"Еда"},
+  {chechen:"Туьха",russian:"Соль",transcription:"Туьха",category:"Еда"},
+  // ОДЕЖДА
+  {chechen:"Коч",russian:"Рубашка",transcription:"Коч",category:"Одежда"},
+  {chechen:"Хеча",russian:"Брюки",transcription:"Хеча",category:"Одежда"},
+  {chechen:"Мача",russian:"Обувь",transcription:"Мача",category:"Одежда"},
+  {chechen:"Куй",russian:"Шапка",transcription:"Куй",category:"Одежда"},
+  {chechen:"Пальто",russian:"Пальто",transcription:"Пальто",category:"Одежда"},
+  // ПРИЛАГАТЕЛЬНЫЕ
+  {chechen:"Хаза",russian:"Красивый",transcription:"Хаза",category:"Прилагательные"},
+  {chechen:"Доккха",russian:"Большой",transcription:"Доккха",category:"Прилагательные"},
+  {chechen:"КIеза",russian:"Маленький",transcription:"КIеза",category:"Прилагательные"},
+  {chechen:"Дика",russian:"Хороший",transcription:"Дика",category:"Прилагательные"},
+  {chechen:"Во",russian:"Плохой",transcription:"Во",category:"Прилагательные"},
+  {chechen:"Сийлахь",russian:"Уважаемый",transcription:"Сийлахь",category:"Прилагательные"},
+  // ГЛАГОЛЫ
+  {chechen:"Ваг1а",russian:"Идти",transcription:"Ваг1а",category:"Глаголы"},
+  {chechen:"Ваха",russian:"Жить",transcription:"Ваха",category:"Глаголы"},
+  {chechen:"Ала",russian:"Сказать",transcription:"Ала",category:"Глаголы"},
+  {chechen:"Хаа",russian:"Знать",transcription:"Хаа",category:"Глаголы"},
+  {chechen:"Ловза",russian:"Играть",transcription:"Ловза",category:"Глаголы"},
+  {chechen:"Деша",russian:"Читать / Учиться",transcription:"Деша",category:"Глаголы"},
+  // ЦЕННОСТИ
+  {chechen:"Маршалла",russian:"Свобода / Мир",transcription:"Маршалла",category:"Ценности"},
+  {chechen:"Дош",russian:"Слово / Обещание",transcription:"Дош",category:"Ценности"},
+  {chechen:"Нохчалла",russian:"Честь чеченца",transcription:"Нохчалла",category:"Ценности"},
 ];
 
-// Load saved words
-const savedWords = localStorage.getItem('chechenWords');
-if (savedWords) words = JSON.parse(savedWords);
+const saved = localStorage.getItem('chechenWords');
+if (saved) words = JSON.parse(saved);
 
-// Leaderboard
 let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-
-// Player
 let playerName = '', playerCountry = '';
 let currentMode = 'translate';
 let currentWord = null;
 let score = 0, streak = 0, bestStreak = 0;
 let totalAnswered = 0, correctAnswers = 0;
-let usedWords = [];
-let scrambleSelected = [];
-let answered = false;
-let adminUnlocked = false;
+let usedWords = [], scrambleSelected = [];
+let answered = false, adminUnlocked = false;
+let selectedCategory = 'Все';
 
-const ADMIN_PASS = 'Larbar/biycar/1ambar54';
-
-// =================== REGISTER ===================
+// ---- REGISTER ----
 function startGame() {
   const name = document.getElementById('regName').value.trim();
   const country = document.getElementById('regCountry').value;
   if (!name) { alert('Введи своё имя!'); return; }
   if (!country) { alert('Выбери страну!'); return; }
-  playerName = name;
-  playerCountry = country;
+  playerName = name; playerCountry = country;
   document.getElementById('playerGreeting').textContent = `Привет, ${name}! 👋`;
   document.getElementById('registerScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
+  renderCategories();
+  renderWordOfDay();
   loadNewWord();
 }
 
-// =================== NAVIGATION ===================
-function showTab(tab) {
-  document.querySelectorAll('.nav-btn').forEach((b,i) => {
-    b.classList.toggle('active', ['game','leaderboard','admin'][i] === tab);
-  });
-  document.getElementById('gameTab').style.display = tab==='game' ? 'block' : 'none';
-  document.getElementById('leaderboardTab').style.display = tab==='leaderboard' ? 'block' : 'none';
-  document.getElementById('adminTab').style.display = tab==='admin' ? 'block' : 'none';
-  if (tab === 'leaderboard') renderLeaderboard();
-  if (tab === 'admin') renderAdminWords();
+// ---- WORD OF DAY ----
+function renderWordOfDay() {
+  const idx = new Date().getDate() % words.length;
+  const w = words[idx];
+  document.getElementById('wordOfDay').innerHTML = `
+    <div class="wod-card">
+      <div class="wod-label">⭐ Слово дня</div>
+      <div class="wod-word">${w.chechen}</div>
+      <div class="wod-translation">${w.russian} · ${w.category}</div>
+      <button class="speak-btn" onclick="speak('${w.transcription}')">🔊 Слушать</button>
+    </div>
+  `;
 }
 
-// =================== ADMIN ===================
+// ---- CATEGORIES ----
+function renderCategories() {
+  const cats = ['Все', ...new Set(words.map(w => w.category))];
+  document.getElementById('categoryTabs').innerHTML = cats.map(c => `
+    <button class="cat-tab ${c===selectedCategory?'active':''}" onclick="selectCategory('${c}')">${c}</button>
+  `).join('');
+}
+
+function selectCategory(cat) {
+  selectedCategory = cat;
+  renderCategories();
+  usedWords = [];
+  loadNewWord();
+}
+
+function getWordPool() {
+  return selectedCategory === 'Все' ? words : words.filter(w => w.category === selectedCategory);
+}
+
+// ---- NAV ----
+function showTab(tab) {
+  ['game','leaderboard','words','admin'].forEach(t => {
+    document.getElementById(t+'Tab').style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['game','leaderboard','words','admin'][i] === tab);
+  });
+  if (tab==='leaderboard') renderLeaderboard();
+  if (tab==='admin') renderAdminWords();
+  if (tab==='words') renderWordsList();
+}
+
+// ---- WORDS LIST ----
+function renderWordsList() {
+  const q = document.getElementById('wordSearch').value.toLowerCase();
+  const filtered = words.filter(w =>
+    w.chechen.toLowerCase().includes(q) || w.russian.toLowerCase().includes(q)
+  );
+  const grouped = {};
+  filtered.forEach(w => { if (!grouped[w.category]) grouped[w.category]=[]; grouped[w.category].push(w); });
+  document.getElementById('wordsListDisplay').innerHTML = Object.entries(grouped).map(([cat, ws]) => `
+    <div style="margin-bottom:16px">
+      <div style="font-family:'Unbounded',sans-serif;font-size:10px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;margin-bottom:8px">${cat}</div>
+      ${ws.map(w => `
+        <div class="word-row">
+          <div class="word-row-text">
+            <div class="word-row-ch">${w.chechen}</div>
+            <div class="word-row-ru">${w.russian}</div>
+          </div>
+          <button class="speak-btn" style="margin-top:0;padding:5px 12px;font-size:12px" onclick="speak('${w.transcription}')">🔊</button>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+// ---- ADMIN ----
 function showAdminLogin() {
   if (adminUnlocked) { showTab('admin'); return; }
   document.getElementById('adminModal').style.display = 'flex';
   setTimeout(() => document.getElementById('adminPassword').focus(), 100);
 }
-
 function checkAdmin() {
-  const pass = document.getElementById('adminPassword').value;
-  if (pass === ADMIN_PASS) {
+  if (document.getElementById('adminPassword').value === ADMIN_PASS) {
     adminUnlocked = true;
     document.getElementById('adminModal').style.display = 'none';
     document.getElementById('adminPassword').value = '';
     showTab('admin');
-  } else {
-    alert('Неверный пароль!');
-    document.getElementById('adminPassword').value = '';
-  }
+  } else { alert('Неверный пароль!'); document.getElementById('adminPassword').value = ''; }
 }
-
-function closeAdminModal() {
-  document.getElementById('adminModal').style.display = 'none';
-  document.getElementById('adminPassword').value = '';
-}
-
-function changeColor(variable, value) {
-  document.documentElement.style.setProperty(variable, value);
-}
-
+function closeAdminModal() { document.getElementById('adminModal').style.display = 'none'; }
+function changeColor(v, val) { document.documentElement.style.setProperty(v, val); }
 function addWord() {
   const ch = document.getElementById('newChechen').value.trim();
   const ru = document.getElementById('newRussian').value.trim();
   const tr = document.getElementById('newTranscription').value.trim();
   const cat = document.getElementById('newCategory').value.trim();
-  if (!ch || !ru) { alert('Заполни хотя бы чеченское и русское слово!'); return; }
-  words.push({ chechen:ch, russian:ru, transcription:tr||ch, category:cat||'Другое' });
+  if (!ch || !ru) { alert('Заполни хотя бы чеченское и русское!'); return; }
+  words.push({chechen:ch,russian:ru,transcription:tr||ch,category:cat||'Другое'});
   localStorage.setItem('chechenWords', JSON.stringify(words));
-  document.getElementById('newChechen').value = '';
-  document.getElementById('newRussian').value = '';
-  document.getElementById('newTranscription').value = '';
-  document.getElementById('newCategory').value = '';
-  renderAdminWords();
+  document.getElementById('newChechen').value='';
+  document.getElementById('newRussian').value='';
+  document.getElementById('newTranscription').value='';
+  document.getElementById('newCategory').value='';
+  renderAdminWords(); renderCategories();
 }
-
 function deleteWord(idx) {
-  if (confirm('Удалить слово?')) {
-    words.splice(idx, 1);
-    localStorage.setItem('chechenWords', JSON.stringify(words));
-    renderAdminWords();
-  }
+  if (confirm('Удалить?')) { words.splice(idx,1); localStorage.setItem('chechenWords',JSON.stringify(words)); renderAdminWords(); renderCategories(); }
 }
-
 function renderAdminWords() {
   document.getElementById('wordCountAdmin').textContent = words.length;
   document.getElementById('wordList').innerHTML = words.map((w,i) => `
     <div class="word-row">
-      <div class="word-row-text">
-        <div class="word-row-ch">${w.chechen}</div>
-        <div class="word-row-ru">${w.russian} · ${w.category}</div>
-      </div>
+      <div class="word-row-text"><div class="word-row-ch">${w.chechen}</div><div class="word-row-ru">${w.russian} · ${w.category}</div></div>
       <button class="delete-btn" onclick="deleteWord(${i})">✕</button>
     </div>
   `).join('');
 }
 
-// =================== LEADERBOARD ===================
+// ---- LEADERBOARD ----
 function renderLeaderboard() {
-  const sorted = [...leaderboard].sort((a,b) => b.score - a.score).slice(0, 10);
-  const medals = ['gold','silver','bronze'];
-  document.getElementById('lbList').innerHTML = sorted.length === 0
-    ? '<div style="padding:20px;text-align:center;color:var(--muted)">Пока никого нет. Будь первым! 🏆</div>'
-    : sorted.map((p,i) => `
+  const sorted = [...leaderboard].sort((a,b)=>b.score-a.score).slice(0,10);
+  document.getElementById('lbList').innerHTML = sorted.length===0
+    ? '<div style="padding:24px;text-align:center;color:var(--muted)">Пока никого нет. Будь первым! 🏆</div>'
+    : sorted.map((p,i)=>`
       <div class="lb-row">
-        <div class="lb-rank ${medals[i]||''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+        <div class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
         <div class="lb-flag">${p.country.split(' ')[0]}</div>
-        <div class="lb-info">
-          <div class="lb-name">${p.name}</div>
-          <div class="lb-country">${p.country}</div>
-        </div>
+        <div class="lb-info"><div class="lb-name">${p.name}</div><div class="lb-country">${p.country}</div></div>
         <div class="lb-score">${p.score}</div>
       </div>
     `).join('');
 }
-
 function saveToLeaderboard() {
-  leaderboard.push({ name:playerName, country:playerCountry, score });
-  leaderboard.sort((a,b) => b.score - a.score);
-  if (leaderboard.length > 50) leaderboard = leaderboard.slice(0, 50);
-  localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+  leaderboard.push({name:playerName,country:playerCountry,score});
+  leaderboard.sort((a,b)=>b.score-a.score);
+  if (leaderboard.length>50) leaderboard=leaderboard.slice(0,50);
+  localStorage.setItem('leaderboard',JSON.stringify(leaderboard));
 }
 
-// =================== SPEECH ===================
+// ---- SPEECH ----
 function speak(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'ru-RU';
-  utt.rate = 0.8;
-  utt.pitch = 1;
-  window.speechSynthesis.speak(utt);
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang='ru-RU'; u.rate=0.8; u.pitch=1;
+  window.speechSynthesis.speak(u);
 }
 
-// =================== GAME ===================
+// ---- GAME ----
 function setMode(mode) {
   currentMode = mode;
-  document.querySelectorAll('.mode-tab').forEach((t,i) => {
-    t.classList.toggle('active', ['translate','choice','scramble'][i] === mode);
-  });
+  document.querySelectorAll('.mode-tab').forEach((t,i)=>t.classList.toggle('active',['translate','choice','scramble'][i]===mode));
   loadNewWord();
 }
 
-function getWrongChoices(correct) {
-  return words.filter(w => w !== correct).sort(() => Math.random() - 0.5).slice(0, 3);
-}
-
 function loadNewWord() {
-  answered = false;
-  document.getElementById('feedback').className = 'feedback';
-  document.getElementById('actionBtn').textContent = 'Проверить';
-  document.getElementById('actionBtn').disabled = false;
-  document.getElementById('actionBtn').onclick = handleAction;
-  document.getElementById('gameArea').style.display = 'block';
-  document.getElementById('resultArea').style.display = 'none';
+  answered=false;
+  document.getElementById('feedback').className='feedback';
+  document.getElementById('actionBtn').textContent='Проверить';
+  document.getElementById('actionBtn').disabled=false;
+  document.getElementById('actionBtn').onclick=handleAction;
+  document.getElementById('gameArea').style.display='block';
+  document.getElementById('resultArea').style.display='none';
 
-  const available = words.filter(w => !usedWords.includes(w));
-  if (available.length === 0) usedWords = [];
-  const pool = words.filter(w => !usedWords.includes(w));
-  currentWord = pool[Math.floor(Math.random() * pool.length)];
+  const pool = getWordPool().filter(w=>!usedWords.includes(w));
+  if (pool.length===0) usedWords=[];
+  const p2 = getWordPool().filter(w=>!usedWords.includes(w));
+  if (p2.length===0) return;
+  currentWord = p2[Math.floor(Math.random()*p2.length)];
   usedWords.push(currentWord);
-  if (usedWords.length > 5) usedWords.shift();
+  if (usedWords.length>5) usedWords.shift();
 
-  document.getElementById('progressFill').style.width = Math.min((totalAnswered/20)*100,100)+'%';
+  const pct = Math.min((totalAnswered/20)*100,100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressText').textContent=totalAnswered+' / 20';
   renderCard();
 }
 
 function renderCard() {
   const card = document.getElementById('gameCard');
-  const askChechen = Math.random() > 0.4;
+  const askChechen = Math.random()>0.4;
 
-  if (currentMode === 'translate') {
-    const question = askChechen ? currentWord.chechen : currentWord.russian;
-    card.innerHTML = `
-      <div class="question-label">${askChechen ? 'Чеченское слово' : 'Русское слово'}</div>
-      <div class="question-word">${question}</div>
-      <div class="question-hint">${askChechen ? 'произносится: '+currentWord.transcription : 'переведи на чеченский'}</div>
+  if (currentMode==='translate') {
+    card.innerHTML=`
+      <div class="question-label">${askChechen?'Чеченское слово':'Русское слово'}</div>
+      <div class="question-word">${askChechen?currentWord.chechen:currentWord.russian}</div>
+      <div class="question-hint">${askChechen?'произносится: '+currentWord.transcription:'переведи на чеченский'}</div>
       <div class="category-badge">${currentWord.category}</div>
       <button class="speak-btn" onclick="speak('${currentWord.transcription}')">🔊 Слушать</button>
       <input type="text" class="translation-input" id="answerInput"
-        placeholder="${askChechen ? 'Перевод на русский...' : 'Перевод на чеченский...'}"
+        placeholder="${askChechen?'Перевод на русский...':'Перевод на чеченский...'}"
         onkeydown="if(event.key==='Enter') handleAction()">
     `;
-    card.dataset.askChechen = askChechen;
-    card.dataset.mode = 'translate';
-    document.getElementById('actionBtn').style.display = 'block';
-    setTimeout(() => document.getElementById('answerInput')?.focus(), 100);
+    card.dataset.askChechen=askChechen; card.dataset.mode='translate';
+    document.getElementById('actionBtn').style.display='block';
+    setTimeout(()=>document.getElementById('answerInput')?.focus(),100);
 
-  } else if (currentMode === 'choice') {
-    const wrong = getWrongChoices(currentWord);
-    const all = [currentWord, ...wrong].sort(() => Math.random() - 0.5);
-    card.innerHTML = `
-      <div class="question-label">${askChechen ? 'Переведи на русский' : 'Переведи на чеченский'}</div>
-      <div class="question-word">${askChechen ? currentWord.chechen : currentWord.russian}</div>
-      ${askChechen ? `<div class="question-hint">произносится: ${currentWord.transcription}</div>` : ''}
+  } else if (currentMode==='choice') {
+    const pool = getWordPool();
+    const wrong = pool.filter(w=>w!==currentWord).sort(()=>Math.random()-0.5).slice(0,3);
+    const all = [currentWord,...wrong].sort(()=>Math.random()-0.5);
+    card.innerHTML=`
+      <div class="question-label">${askChechen?'Переведи на русский':'Переведи на чеченский'}</div>
+      <div class="question-word">${askChechen?currentWord.chechen:currentWord.russian}</div>
+      ${askChechen?`<div class="question-hint">произносится: ${currentWord.transcription}</div>`:''}
       <div class="category-badge">${currentWord.category}</div>
       <button class="speak-btn" onclick="speak('${currentWord.transcription}')">🔊 Слушать</button>
       <div class="choices">
-        ${all.map(w => `<button class="choice-btn" onclick="checkChoice(this,'${w.chechen}')">${askChechen ? w.russian : w.chechen}</button>`).join('')}
+        ${all.map(w=>`<button class="choice-btn" onclick="checkChoice(this,'${w.chechen}')">${askChechen?w.russian:w.chechen}</button>`).join('')}
       </div>
     `;
-    card.dataset.mode = 'choice';
-    document.getElementById('actionBtn').style.display = 'none';
+    card.dataset.mode='choice';
+    document.getElementById('actionBtn').style.display='none';
 
   } else {
-    const letters = currentWord.russian.split('').sort(() => Math.random() - 0.5);
-    scrambleSelected = [];
-    card.innerHTML = `
+    const letters = currentWord.russian.split('').sort(()=>Math.random()-0.5);
+    scrambleSelected=[];
+    card.innerHTML=`
       <div class="question-label">Составь слово по-русски</div>
       <div class="question-word">${currentWord.chechen}</div>
       <div class="question-hint">произносится: ${currentWord.transcription}</div>
@@ -838,116 +879,108 @@ function renderCard() {
       <div class="scramble-area">
         <div class="answer-slots" id="answerSlots"></div>
         <div class="letter-pool">
-          ${letters.map((l,i) => `<button class="letter-btn" id="lbtn${i}" onclick="addLetter('${l}',${i})">${l}</button>`).join('')}
+          ${letters.map((l,i)=>`<button class="letter-btn" id="lbtn${i}" onclick="addLetter('${l}',${i})">${l}</button>`).join('')}
         </div>
       </div>
     `;
-    card.dataset.mode = 'scramble';
-    document.getElementById('actionBtn').style.display = 'block';
+    card.dataset.mode='scramble';
+    document.getElementById('actionBtn').style.display='block';
   }
 }
 
-function addLetter(letter, idx) {
+function addLetter(letter,idx) {
   scrambleSelected.push({letter,idx});
-  document.getElementById(`lbtn${idx}`).disabled = true;
-  const btn = document.createElement('button');
-  btn.className = 'letter-slot';
-  btn.textContent = letter;
-  btn.onclick = () => {
-    btn.remove();
-    document.getElementById(`lbtn${idx}`).disabled = false;
-    scrambleSelected = scrambleSelected.filter(s => s.idx !== idx);
-  };
+  document.getElementById(`lbtn${idx}`).disabled=true;
+  const btn=document.createElement('button');
+  btn.className='letter-slot'; btn.textContent=letter;
+  btn.onclick=()=>{btn.remove();document.getElementById(`lbtn${idx}`).disabled=false;scrambleSelected=scrambleSelected.filter(s=>s.idx!==idx);};
   document.getElementById('answerSlots').appendChild(btn);
 }
 
-function checkChoice(btn, chechenKey) {
-  if (answered) return;
-  answered = true;
-  const isCorrect = chechenKey === currentWord.chechen;
-  document.querySelectorAll('.choice-btn').forEach(b => {
-    const k = b.getAttribute('onclick').match(/'([^']+)'\)/)[1];
-    if (k === currentWord.chechen) b.classList.add('correct');
-    else if (b === btn && !isCorrect) b.classList.add('wrong');
-    b.disabled = true;
+function checkChoice(btn,chechenKey) {
+  if (answered) return; answered=true;
+  const isCorrect=chechenKey===currentWord.chechen;
+  document.querySelectorAll('.choice-btn').forEach(b=>{
+    const k=b.getAttribute('onclick').match(/'([^']+)'\)/)[1];
+    if(k===currentWord.chechen) b.classList.add('correct');
+    else if(b===btn&&!isCorrect) b.classList.add('wrong');
+    b.disabled=true;
   });
-  handleResult(isCorrect, currentWord.russian);
-  document.getElementById('actionBtn').style.display = 'block';
-  document.getElementById('actionBtn').textContent = 'Следующее →';
-  document.getElementById('actionBtn').onclick = () => { document.getElementById('actionBtn').onclick = handleAction; loadNewWord(); };
+  handleResult(isCorrect,currentWord.russian);
+  document.getElementById('actionBtn').style.display='block';
+  document.getElementById('actionBtn').textContent='Следующее →';
+  document.getElementById('actionBtn').onclick=()=>{document.getElementById('actionBtn').onclick=handleAction;loadNewWord();};
 }
 
 function handleAction() {
-  if (answered) { loadNewWord(); return; }
-  const card = document.getElementById('gameCard');
-  if (card.dataset.mode === 'translate') {
-    const input = document.getElementById('answerInput');
-    const userAnswer = input.value.trim().toLowerCase();
-    if (!userAnswer) return;
-    const askChechen = card.dataset.askChechen === 'true';
-    const correct = askChechen ? currentWord.russian.toLowerCase() : currentWord.chechen.toLowerCase();
-    const isCorrect = userAnswer === correct;
-    input.className = 'translation-input '+(isCorrect?'correct':'wrong');
-    handleResult(isCorrect, askChechen ? currentWord.russian : currentWord.chechen);
-    answered = true;
-    document.getElementById('actionBtn').textContent = 'Следующее →';
-  } else if (card.dataset.mode === 'scramble') {
-    const userAnswer = scrambleSelected.map(s=>s.letter).join('');
-    const isCorrect = userAnswer.toLowerCase() === currentWord.russian.toLowerCase();
-    handleResult(isCorrect, currentWord.russian);
-    answered = true;
-    document.getElementById('actionBtn').textContent = 'Следующее →';
+  if (answered) {loadNewWord();return;}
+  const card=document.getElementById('gameCard');
+  if (card.dataset.mode==='translate') {
+    const input=document.getElementById('answerInput');
+    const ua=input.value.trim().toLowerCase();
+    if (!ua) return;
+    const ask=card.dataset.askChechen==='true';
+    const correct=ask?currentWord.russian.toLowerCase():currentWord.chechen.toLowerCase();
+    const ok=ua===correct;
+    input.className='translation-input '+(ok?'correct':'wrong');
+    handleResult(ok,ask?currentWord.russian:currentWord.chechen);
+    answered=true;
+    document.getElementById('actionBtn').textContent='Следующее →';
+  } else if (card.dataset.mode==='scramble') {
+    const ua=scrambleSelected.map(s=>s.letter).join('');
+    const ok=ua.toLowerCase()===currentWord.russian.toLowerCase();
+    handleResult(ok,currentWord.russian);
+    answered=true;
+    document.getElementById('actionBtn').textContent='Следующее →';
   }
 }
 
-function handleResult(isCorrect, correctAnswer) {
+function handleResult(ok,correctAnswer) {
   totalAnswered++;
-  const feedback = document.getElementById('feedback');
-  if (isCorrect) {
-    correctAnswers++;
-    streak++;
-    if (streak > bestStreak) bestStreak = streak;
-    score += 10 + (streak >= 3 ? streak*5 : 0);
-    feedback.className = 'feedback correct';
-    feedback.textContent = streak >= 3 ? `🔥 Серия ${streak}! +${10+streak*5} очков` : '✓ Верно! +10 очков';
+  const fb=document.getElementById('feedback');
+  if (ok) {
+    correctAnswers++; streak++;
+    if (streak>bestStreak) bestStreak=streak;
+    score+=10+(streak>=3?streak*5:0);
+    fb.className='feedback correct';
+    fb.textContent=streak>=3?`🔥 Серия ${streak}! +${10+streak*5} очков`:'✓ Верно! +10 очков';
   } else {
-    streak = 0;
-    feedback.className = 'feedback wrong';
-    feedback.textContent = `✗ Правильно: ${correctAnswer}`;
+    streak=0; fb.className='feedback wrong';
+    fb.textContent=`✗ Правильно: ${correctAnswer}`;
   }
   updateStats();
-  if (totalAnswered >= 20) setTimeout(showResults, 1500);
+  if (totalAnswered>=20) setTimeout(showResults,1500);
 }
 
 function updateStats() {
-  const el = document.getElementById('score');
-  el.textContent = score;
-  el.classList.add('pop');
-  setTimeout(() => el.classList.remove('pop'), 300);
-  document.getElementById('streak').textContent = streak > 0 ? `${streak}🔥` : '0';
-  document.getElementById('wordCount').textContent = totalAnswered;
+  const el=document.getElementById('score');
+  el.textContent=score; el.classList.add('pop');
+  setTimeout(()=>el.classList.remove('pop'),300);
+  document.getElementById('streak').textContent=streak>0?`${streak}🔥`:'0';
+  document.getElementById('wordCount').textContent=totalAnswered;
 }
 
-function skipWord() { streak = 0; updateStats(); loadNewWord(); }
+function skipWord() {streak=0;updateStats();loadNewWord();}
 
 function showResults() {
   saveToLeaderboard();
-  document.getElementById('gameArea').style.display = 'none';
-  document.getElementById('resultArea').style.display = 'block';
-  const acc = Math.round((correctAnswers/totalAnswered)*100);
-  document.getElementById('finalScore').textContent = score;
-  document.getElementById('finalAccuracy').textContent = acc+'%';
-  document.getElementById('finalCorrect').textContent = correctAnswers;
-  document.getElementById('finalStreak').textContent = bestStreak;
-  document.getElementById('resultEmoji').textContent = acc>=80?'🏆':acc>=50?'⭐':'📚';
-  document.getElementById('resultTitle').textContent = acc>=80?'Отлично!':acc>=50?'Хороший результат!':'Учись дальше!';
-  document.getElementById('resultMsg').textContent = acc>=80?'Ты хорошо знаешь чеченский язык!':acc>=50?'Продолжай практиковаться!':'Повторяй слова — и всё получится!';
+  document.getElementById('gameArea').style.display='none';
+  document.getElementById('resultArea').style.display='block';
+  const acc=Math.round((correctAnswers/totalAnswered)*100);
+  document.getElementById('finalScore').textContent=score;
+  document.getElementById('finalAccuracy').textContent=acc+'%';
+  document.getElementById('finalCorrect').textContent=correctAnswers;
+  document.getElementById('finalStreak').textContent=bestStreak;
+  document.getElementById('resultEmoji').textContent=acc>=80?'🏆':acc>=50?'⭐':'📚';
+  document.getElementById('resultTitle').textContent=acc>=80?'Отлично!':acc>=50?'Хороший результат!':'Учись дальше!';
+  document.getElementById('resultMsg').textContent=acc>=80?'Ты хорошо знаешь чеченский язык!':acc>=50?'Продолжай практиковаться!':'Повторяй слова — и всё получится!';
 }
 
 function restartGame() {
   score=0;streak=0;bestStreak=0;totalAnswered=0;correctAnswers=0;usedWords=[];
   updateStats();
   document.getElementById('progressFill').style.width='0%';
+  document.getElementById('progressText').textContent='0 / 20';
   document.getElementById('gameArea').style.display='block';
   document.getElementById('resultArea').style.display='none';
   loadNewWord();
