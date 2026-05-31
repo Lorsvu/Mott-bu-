@@ -493,7 +493,57 @@ select.text-input option { background:var(--surface); }
 }
 .tg-card:hover { background:rgba(0,136,255,0.2); }
 
-.league-card {
+/* TOGGLE SWITCH */
+.toggle-switch { position:relative; display:inline-block; width:50px; height:28px; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider {
+  position:absolute; cursor:pointer; inset:0;
+  background:#ccc; border-radius:28px; transition:0.3s;
+}
+.toggle-slider:before {
+  content:''; position:absolute;
+  width:22px; height:22px; left:3px; bottom:3px;
+  background:white; border-radius:50%; transition:0.3s;
+  box-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+.toggle-switch input:checked + .toggle-slider { background:var(--blue); }
+.toggle-switch input:checked + .toggle-slider:before { transform:translateX(22px); }
+
+.goal-mini {
+  padding:10px 6px; background:var(--surface);
+  border:2px solid var(--border); border-radius:10px;
+  font-family:'Unbounded',sans-serif; font-size:13px;
+  font-weight:700; cursor:pointer; color:var(--white);
+  box-shadow:0 3px 0 var(--border); transition:all 0.15s;
+}
+.goal-mini.active { background:var(--blue); color:white; border-color:var(--blue); box-shadow:0 3px 0 #0090d0; }
+.goal-mini:active { transform:translateY(2px); box-shadow:none; }
+
+/* 3D BUTTONS */
+.btn-primary {
+  width:100%; padding:16px;
+  background:var(--blue);
+  color:#fff; border:none; border-radius:14px;
+  font-family:'Unbounded',sans-serif; font-size:13px; font-weight:700;
+  letter-spacing:1px; cursor:pointer; transition:all 0.15s;
+  text-transform:uppercase; margin-bottom:10px;
+  box-shadow:0 5px 0 #0090d0;
+  position:relative; top:0;
+}
+.btn-primary:active { top:3px; box-shadow:0 2px 0 #0090d0; }
+.btn-primary:hover { background:#1aa8ec; }
+
+.btn-secondary {
+  width:100%; padding:14px; background:var(--surface);
+  color:var(--white); border:2px solid var(--border);
+  border-radius:14px; font-family:'Manrope',sans-serif;
+  font-size:14px; cursor:pointer; transition:all 0.15s;
+  margin-bottom:10px; font-weight:700;
+  box-shadow:0 4px 0 var(--border); position:relative; top:0;
+}
+.btn-secondary:active { top:2px; box-shadow:0 2px 0 var(--border); }
+
+/* LEAGUE CSS */
   background:var(--card); border:2px solid var(--border);
   border-radius:14px; padding:12px 8px; text-align:center;
   cursor:pointer; transition:all 0.2s; box-shadow:var(--shadow);
@@ -837,23 +887,138 @@ select.text-input option { background:var(--surface); }
       <div style="color:var(--cyan);font-size:20px">→</div>
     </div>
 
-    <!-- Account -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:24px">
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-        <div style="font-family:'Unbounded',sans-serif;font-size:12px;color:var(--white);letter-spacing:1px">⚙️ АККАУНТ</div>
+    <!-- Account & Settings -->
+    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">⚙️ НАСТРОЙКИ И АККАУНТ</div>
+      <div onclick="showTab('settings')" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:22px">⚙️</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Настройки</div>
+        <div style="color:var(--muted);font-size:18px">›</div>
       </div>
-      <div onclick="switchAccount()" style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer">
-        <div style="font-size:20px">🔄</div>
-        <div style="flex:1;font-size:15px;color:var(--white)">Сменить аккаунт</div>
-        <div style="color:var(--muted)">→</div>
+      <div onclick="openEditProfile()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:22px">✏️</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Редактировать профиль</div>
+        <div style="color:var(--muted);font-size:18px">›</div>
       </div>
-      <div onclick="deleteAccount()" style="padding:16px 20px;display:flex;align-items:center;gap:12px;cursor:pointer">
-        <div style="font-size:20px">🗑️</div>
-        <div style="flex:1;font-size:15px;color:var(--red)">Удалить аккаунт</div>
-        <div style="color:var(--muted)">→</div>
+      <div onclick="inviteFriend()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:22px">🔗</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Пригласить друга</div>
+        <div style="color:var(--muted);font-size:18px">›</div>
+      </div>
+      <div onclick="window.open('https://t.me/+fgWORPG9sbhmYmIy','_blank')" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:22px">✈️</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Сообщество Telegram</div>
+        <div style="color:var(--muted);font-size:18px">›</div>
+      </div>
+      <div onclick="switchAccount()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:22px">🔄</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Сменить аккаунт</div>
+        <div style="color:var(--muted);font-size:18px">›</div>
+      </div>
+      <div onclick="deleteAccount()" style="padding:15px 20px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:22px">🗑️</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--red)">Удалить аккаунт</div>
+        <div style="color:var(--muted);font-size:18px">›</div>
       </div>
     </div>
 
+    <div style="text-align:center;color:var(--muted);font-size:11px;padding-bottom:20px">MOTT_bu v1.0 · Нохчийн Мотт</div>
+
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div id="settingsTab" style="display:none">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <button onclick="showTab('profile')" style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:8px 14px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
+      <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--white)">НАСТРОЙКИ</div>
+    </div>
+
+    <!-- Sound settings -->
+    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">🔊 ЗВУК</div>
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--white)">Звуковые эффекты</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Звук при ответе</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="soundToggle" checked onchange="toggleSound(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--white)">Произношение</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Голосовое чтение слов</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="speechToggle" checked onchange="toggleSpeech(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Learning settings -->
+    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">📚 ОБУЧЕНИЕ</div>
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+        <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:10px">Ежедневная цель</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <button onclick="setDailyGoal(5,this)" class="goal-mini ${dailyGoal===5?'active':''}">5</button>
+          <button onclick="setDailyGoal(10,this)" class="goal-mini ${dailyGoal===10?'active':''}">10</button>
+          <button onclick="setDailyGoal(20,this)" class="goal-mini ${dailyGoal===20?'active':''}">20</button>
+          <button onclick="setDailyGoal(30,this)" class="goal-mini ${dailyGoal===30?'active':''}">30</button>
+        </div>
+      </div>
+      <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--white)">AI подсказки</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">При неправильном ответе</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="aiToggle" checked onchange="localStorage.setItem('aiEnabled',this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- App info -->
+    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">ℹ️ О ПРИЛОЖЕНИИ</div>
+      <div onclick="showPrivacyPolicy()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:20px">🔒</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Политика конфиденциальности</div>
+        <div style="color:var(--muted)">›</div>
+      </div>
+      <div onclick="showHelp()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:20px">❓</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Справка</div>
+        <div style="color:var(--muted)">›</div>
+      </div>
+      <div onclick="rateApp()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:20px">⭐</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Оценить приложение</div>
+        <div style="color:var(--muted)">›</div>
+      </div>
+      <div onclick="shareApp()" style="padding:15px 20px;display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
+        <div style="font-size:20px">📢</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Помочь в продвижении</div>
+        <div style="color:var(--muted)">›</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;color:var(--muted);font-size:11px;padding-bottom:20px">MOTT_bu v1.0 · Нохчийн Мотт</div>
+  </div>
+
+  <!-- PLAYER PROFILE MODAL -->
+  <div class="modal-overlay" id="playerProfileModal" style="display:none;align-items:flex-start;padding:0">
+    <div style="width:100%;min-height:100vh;background:var(--bg);padding:20px 16px;max-width:420px;margin:0 auto">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <button onclick="document.getElementById('playerProfileModal').style.display='none'" style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:8px 14px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
+        <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--white)">ПРОФИЛЬ</div>
+      </div>
+      <div id="playerProfileContent"></div>
+    </div>
   </div>
 
   <!-- LEAGUES TAB -->
@@ -1517,12 +1682,12 @@ function getWordPool() {
 
 // ---- NAV ----
 function showTab(tab) {
-  ['game','leaderboard','words','leagues','search','profile','admin'].forEach(t => {
+  ['game','leaderboard','words','leagues','search','profile','settings','admin'].forEach(t => {
     const el = document.getElementById(t+'Tab');
     if (el) el.style.display = t===tab ? 'block' : 'none';
   });
   document.querySelectorAll('.nav-btn').forEach((b,i) => {
-    b.classList.toggle('active', ['game','leaderboard','words','leagues','search','profile','admin'][i] === tab);
+    b.classList.toggle('active', ['game','leaderboard','words','leagues','search','profile','settings','admin'][i] === tab);
   });
   if (tab==='leaderboard') renderLeaderboard();
   if (tab==='admin') renderAdminWords();
@@ -1771,7 +1936,198 @@ async function saveGameStats() {
   }
 }
 
-// ---- LEAGUES ----
+// ---- SETTINGS ----
+let soundEnabled = true;
+let speechEnabled = true;
+
+function toggleSound(enabled) {
+  soundEnabled = enabled;
+  localStorage.setItem('soundEnabled', enabled);
+}
+
+function toggleSpeech(enabled) {
+  speechEnabled = enabled;
+  localStorage.setItem('speechEnabled', enabled);
+}
+
+function setDailyGoal(goal, btn) {
+  dailyGoal = goal;
+  document.querySelectorAll('.goal-mini').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  localStorage.setItem('dailyGoal', goal);
+}
+
+function showPrivacyPolicy() {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding:20px 16px;max-width:420px;margin:0 auto';
+  modal.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <button onclick="this.closest('[style]').remove()" style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:8px 14px;font-size:16px;cursor:pointer">←</button>
+      <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--white)">КОНФИДЕНЦИАЛЬНОСТЬ</div>
+    </div>
+    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:20px;font-size:14px;line-height:1.7;color:var(--white)">
+      <p><b>MOTT_bu</b> — приложение для изучения чеченского языка.</p><br>
+      <p><b>Какие данные мы собираем:</b><br>• Имя и страна (которые вы указали)<br>• Статистика игр (очки, серии)<br>• Google аккаунт (только ID и имя)</p><br>
+      <p><b>Как мы используем данные:</b><br>• Сохранение прогресса<br>• Таблица лидеров<br>• Профиль игрока</p><br>
+      <p><b>Мы НЕ:</b><br>• Не продаём данные<br>• Не используем для рекламы<br>• Не храним пароли</p><br>
+      <p><b>Удаление данных:</b><br>Профиль → Удалить аккаунт.</p><br>
+      <p style="color:var(--muted);font-size:12px">Дата обновления: 2025</p>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function showHelp() {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding:20px 16px;max-width:420px;margin:0 auto';
+  modal.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <button onclick="this.closest('[style]').remove()" style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:8px 14px;font-size:16px;cursor:pointer">←</button>
+      <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--white)">СПРАВКА</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${[
+        ['🎮','Как играть','Выбирай режим (Перевод, Выбор или Буквы) и угадывай чеченские слова. Набирай очки и строй серии!'],
+        ['🔥','Серия дней','Играй каждый день чтобы не сломать серию. Как в Duolingo!'],
+        ['🏆','Таблица лидеров','Здесь видны лучшие игроки. Нужна регистрация через Google.'],
+        ['🥇','Лиги','Набирай очки чтобы переходить из Бронзы в Серебро, Золото и Бриллиант.'],
+        ['⚔️','Режим Бой','60 секунд против бота — кто быстрее ответит на больше вопросов!'],
+        ['🤖','AI подсказки','При неправильном ответе AI объясняет слово и помогает запомнить.'],
+        ['👥','Друзья','Ищи других игроков по имени и подписывайся на них.'],
+      ].map(([icon,title,desc]) => `
+        <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;display:flex;gap:12px">
+          <div style="font-size:28px">${icon}</div>
+          <div><div style="font-weight:700;color:var(--white);margin-bottom:4px">${title}</div><div style="font-size:13px;color:var(--muted)">${desc}</div></div>
+        </div>
+      `).join('')}
+      <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;text-align:center">
+        <div style="font-size:14px;color:var(--muted)">Остались вопросы?</div>
+        <button onclick="window.open('https://t.me/+fgWORPG9sbhmYmIy','_blank')" style="margin-top:8px;background:var(--blue);color:white;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;">Написать в Telegram</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function rateApp() {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:var(--card);border:2px solid var(--border);border-radius:24px;padding:28px 24px;text-align:center;max-width:340px;width:100%">
+      <div style="font-size:48px;margin-bottom:12px">⭐</div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--white);margin-bottom:8px">НРАВИТСЯ MOTT_bu?</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:20px">Твоя оценка помогает нам развиваться!</div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;font-size:36px">
+        ${[1,2,3,4,5].map(n => `<span onclick="selectStar(${n})" id="star${n}" style="cursor:pointer;transition:transform 0.1s" onmouseover="highlightStars(${n})" onmouseout="resetStars()">☆</span>`).join('')}
+      </div>
+      <button onclick="submitRating()" class="btn-primary" style="margin-bottom:8px">Оценить</button>
+      <button onclick="this.closest('[style]').remove()" class="btn-secondary">Позже</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+let selectedRating = 0;
+function selectStar(n) { selectedRating = n; highlightStars(n); }
+function highlightStars(n) {
+  for(let i=1;i<=5;i++) {
+    const s = document.getElementById('star'+i);
+    if(s) s.textContent = i<=n ? '⭐' : '☆';
+  }
+}
+function resetStars() { if(selectedRating>0) highlightStars(selectedRating); else for(let i=1;i<=5;i++){const s=document.getElementById('star'+i);if(s)s.textContent='☆';} }
+async function submitRating() {
+  if (selectedRating === 0) { alert('Выбери оценку!'); return; }
+  const user = auth.currentUser;
+  if (user) await db.ref(`ratings/${user.uid}`).set({ rating: selectedRating, date: Date.now() });
+  document.querySelector('[style*="rgba(0,0,0,0.5)"]').remove();
+  alert(`Спасибо за оценку ${selectedRating}⭐! Это очень помогает 🙏`);
+}
+
+function shareApp() {
+  const text = `🏔️ Учу чеченский язык в MOTT_bu!\nПрисоединяйся: https://lorsvu.github.io/Mott-bu-`;
+  if (navigator.share) {
+    navigator.share({ title:'MOTT_bu — Нохчийн Мотт', text, url:'https://lorsvu.github.io/Mott-bu-' });
+  } else {
+    navigator.clipboard.writeText(text).then(() => alert('Ссылка скопирована! Поделись с друзьями 😊'));
+  }
+}
+
+// ---- PLAYER PROFILE VIEWER ----
+async function viewPlayerProfile(uid) {
+  document.getElementById('playerProfileModal').style.display = 'flex';
+  document.getElementById('playerProfileContent').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Загрузка...</div>';
+  try {
+    const snap = await db.ref(`users/${uid}`).get();
+    if (!snap.exists()) return;
+    const u = snap.val();
+    const myUid = auth.currentUser?.uid;
+    const followSnap = myUid ? await db.ref(`users/${myUid}/following/${uid}`).get() : null;
+    const isFollowing = followSnap?.exists();
+    const league = LEAGUES.find(l => (u.stats?.totalScore||0) >= l.min && (u.stats?.totalScore||0) <= l.max) || LEAGUES[0];
+
+    document.getElementById('playerProfileContent').innerHTML = `
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue2));display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto;overflow:hidden;border:3px solid var(--border)">
+          ${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}
+        </div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--white);margin-top:12px">${u.name||'Игрок'}</div>
+        <div style="font-size:14px;color:var(--muted);margin-top:4px">${u.country||''}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:2px">${league.icon} ${league.name}</div>
+        ${myUid && myUid !== uid ? `
+          <button onclick="toggleFollow('${uid}','${myUid}',this)" class="follow-btn ${isFollowing?'following':''}" style="margin-top:12px;padding:10px 24px;font-size:14px">
+            ${isFollowing ? '✓ Подписан' : '+ Подписаться'}
+          </button>
+        ` : ''}
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+        <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:20px">⚡</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${u.stats?.totalScore||0}</div>
+          <div style="font-size:10px;color:var(--muted)">ОЧКОВ</div>
+        </div>
+        <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:20px">🎮</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${u.stats?.games||0}</div>
+          <div style="font-size:10px;color:var(--muted)">ИГР</div>
+        </div>
+        <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:20px">🔥</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--gold);font-weight:700">${u.stats?.dayStreak||0}</div>
+          <div style="font-size:10px;color:var(--muted)">СЕРИЯ</div>
+        </div>
+      </div>
+
+      <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow)">
+        <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:12px">🏅 ДОСТИЖЕНИЯ</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          ${BADGES.map(b => {
+            const earned = b.id === 'first' ? (u.stats?.games||0)>=1
+              : b.id === 'games5' ? (u.stats?.games||0)>=5
+              : b.id === 'score100' ? (u.stats?.totalScore||0)>=100
+              : b.id === 'score500' ? (u.stats?.totalScore||0)>=500
+              : false;
+            return `<div style="text-align:center;padding:8px;border-radius:10px;background:${earned?'#fff9e6':'var(--surface)'};border:1px solid ${earned?'var(--gold)':'var(--border)'};${earned?'':'filter:grayscale(1);opacity:0.5'}">
+              <div style="font-size:22px">${b.icon}</div>
+              <div style="font-size:8px;color:var(--muted);font-family:'Unbounded',sans-serif">${b.name}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } catch(e) { document.getElementById('playerProfileContent').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Ошибка загрузки</div>'; }
+}
+
+// Load saved settings
+(function loadSettings() {
+  const sound = localStorage.getItem('soundEnabled');
+  const speech = localStorage.getItem('speechEnabled');
+  const goal = localStorage.getItem('dailyGoal');
+  if (sound === 'false') soundEnabled = false;
+  if (speech === 'false') speechEnabled = false;
+  if (goal) dailyGoal = parseInt(goal);
+})();
 const LEAGUES = [
   { id:'bronze', name:'БРОНЗА', icon:'🥉', color:'#cd7f32', min:0, max:499 },
   { id:'silver', name:'СЕРЕБРО', icon:'🥈', color:'#c0c0c0', min:500, max:1999 },
@@ -1843,13 +2199,13 @@ async function renderSearchTab() {
 function renderPlayerCards(players, following, myUid, containerId) {
   document.getElementById(containerId).innerHTML = players.map(([uid, u]) => `
     <div class="player-card">
-      <div class="player-avatar">${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
-      <div class="player-info">
+      <div class="player-avatar" onclick="viewPlayerProfile('${uid}')" style="cursor:pointer">${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
+      <div class="player-info" onclick="viewPlayerProfile('${uid}')" style="cursor:pointer">
         <div class="player-name">${u.name||'Игрок'}</div>
         <div class="player-stats">${u.country||''} · ${u.stats?.totalScore||0} очков · ${u.stats?.games||0} игр</div>
       </div>
       <button class="follow-btn ${following[uid]?'following':''}" id="follow-${uid}" onclick="toggleFollow('${uid}','${myUid}',this)">
-        ${following[uid] ? '✓ Подписан' : '+ Подписаться'}
+        ${following[uid] ? '✓' : '+'}
       </button>
     </div>
   `).join('') || '<div style="padding:20px;text-align:center;color:var(--muted)">Игроков не найдено</div>';
@@ -2013,6 +2369,7 @@ function getAudioCtx() {
 }
 
 function playNote(freq, startTime, duration, vol=0.3, type='sine') {
+  if (!soundEnabled) return;
   try {
     const ctx = getAudioCtx();
     const osc = ctx.createOscillator();
@@ -2241,7 +2598,7 @@ function getWordEmoji(russianWord) {
   return key ? wordEmojis[key] : null;
 }
 function speak(text) {
-  if (!window.speechSynthesis) return;
+  if (!speechEnabled || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang='ru-RU'; u.rate=0.8; u.pitch=1;
