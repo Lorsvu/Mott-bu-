@@ -633,7 +633,18 @@ let words = [
 const saved = localStorage.getItem('chechenWords');
 if (saved) words = JSON.parse(saved);
 
-let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+let leaderboard = [];
+const FB_URL = 'https://mott-bu-default-rtdb.firebaseio.com';
+
+async function loadLeaderboard() {
+  try {
+    const res = await fetch(`${FB_URL}/leaderboard.json`);
+    const data = await res.json();
+    if (data) {
+      leaderboard = Object.values(data).sort((a,b)=>b.score-a.score);
+    }
+  } catch(e) { console.log('Firebase error:', e); }
+}
 let playerName = '', playerCountry = '';
 let currentMode = 'translate';
 let currentWord = null;
@@ -772,8 +783,10 @@ function renderAdminWords() {
 }
 
 // ---- LEADERBOARD ----
-function renderLeaderboard() {
-  const sorted = [...leaderboard].sort((a,b)=>b.score-a.score).slice(0,10);
+async function renderLeaderboard() {
+  document.getElementById('lbList').innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted)">Загрузка... ⏳</div>';
+  await loadLeaderboard();
+  const sorted = leaderboard.slice(0,10);
   document.getElementById('lbList').innerHTML = sorted.length===0
     ? '<div style="padding:24px;text-align:center;color:var(--muted)">Пока никого нет. Будь первым! 🏆</div>'
     : sorted.map((p,i)=>`
@@ -785,11 +798,15 @@ function renderLeaderboard() {
       </div>
     `).join('');
 }
-function saveToLeaderboard() {
-  leaderboard.push({name:playerName,country:playerCountry,score});
-  leaderboard.sort((a,b)=>b.score-a.score);
-  if (leaderboard.length>50) leaderboard=leaderboard.slice(0,50);
-  localStorage.setItem('leaderboard',JSON.stringify(leaderboard));
+async function saveToLeaderboard() {
+  try {
+    const entry = {name:playerName, country:playerCountry, score, date: Date.now()};
+    await fetch(`${FB_URL}/leaderboard.json`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(entry)
+    });
+  } catch(e) { console.log('Save error:', e); }
 }
 
 // ---- SPEECH ----
