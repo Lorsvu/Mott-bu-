@@ -493,6 +493,37 @@ select.text-input option { background:var(--surface); }
 }
 .tg-card:hover { background:rgba(0,136,255,0.2); }
 
+.league-card {
+  background:var(--card); border:2px solid var(--border);
+  border-radius:14px; padding:12px 8px; text-align:center;
+  cursor:pointer; transition:all 0.2s; box-shadow:var(--shadow);
+  color:var(--white);
+}
+.league-card.active { border-color:var(--gold); background:#fffbe6; }
+.league-card:hover { transform:translateY(-2px); }
+.player-card {
+  display:flex; align-items:center; gap:12px;
+  background:var(--card); border:2px solid var(--border);
+  border-radius:14px; padding:12px 16px; margin-bottom:10px;
+  box-shadow:var(--shadow);
+}
+.player-avatar {
+  width:44px; height:44px; border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--blue2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; overflow:hidden; flex-shrink:0;
+}
+.player-info { flex:1; }
+.player-name { font-size:15px; font-weight:700; color:var(--white); }
+.player-stats { font-size:12px; color:var(--muted); margin-top:2px; }
+.follow-btn {
+  background:var(--blue); color:white; border:none;
+  border-radius:20px; padding:6px 16px; font-size:12px;
+  font-family:'Manrope',sans-serif; font-weight:700; cursor:pointer;
+  transition:all 0.2s;
+}
+.follow-btn.following { background:var(--surface); color:var(--muted); border:2px solid var(--border); }
+
 /* ANIMATIONS */
 @keyframes slideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
@@ -609,12 +640,14 @@ select.text-input option { background:var(--surface); }
     <div class="subtitle" id="playerGreeting"></div>
   </header>
 
-  <div class="nav-bar" id="mainNavBar">
-    <button class="nav-btn active" onclick="showTab('game')">🎮 Игра</button>
-    <button class="nav-btn" id="navLeaderboard" onclick="showTab('leaderboard')">🏆 Топ</button>
-    <button class="nav-btn" onclick="showTab('words')">📚 Слова</button>
-    <button class="nav-btn" id="navProfile" onclick="showTab('profile')">👤 Профиль</button>
-    <button class="nav-btn" id="adminNavBtn" style="display:none" onclick="showAdminLogin()">⚙️ Админ</button>
+  <div class="nav-bar" id="mainNavBar" style="overflow-x:auto;scrollbar-width:none">
+    <button class="nav-btn active" onclick="showTab('game')">🎮</button>
+    <button class="nav-btn" id="navLeaderboard" onclick="showTab('leaderboard')">🏆</button>
+    <button class="nav-btn" onclick="showTab('words')">📚</button>
+    <button class="nav-btn" id="navLeagues" onclick="showTab('leagues')">🥇</button>
+    <button class="nav-btn" id="navSearch" onclick="showTab('search')">🔍</button>
+    <button class="nav-btn" id="navProfile" onclick="showTab('profile')">👤</button>
+    <button class="nav-btn" id="adminNavBtn" style="display:none" onclick="showAdminLogin()">⚙️</button>
   </div>
 
   <!-- GAME TAB -->
@@ -821,6 +854,58 @@ select.text-input option { background:var(--surface); }
       </div>
     </div>
 
+  </div>
+
+  <!-- LEAGUES TAB -->
+  <div id="leaguesTab" style="display:none">
+    <div style="text-align:center;padding:20px 0">
+      <div style="font-size:56px" id="leagueIcon">🥉</div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:22px;font-weight:900;color:var(--white);margin-top:8px" id="leagueName">БРОНЗА</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">Набери очки чтобы подняться в лигу</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+      <div class="league-card" id="league-bronze" onclick="showLeagueInfo('bronze')">
+        <div style="font-size:28px">🥉</div>
+        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">БРОНЗА</div>
+        <div style="font-size:10px;color:var(--muted)">0+</div>
+      </div>
+      <div class="league-card" id="league-silver" onclick="showLeagueInfo('silver')">
+        <div style="font-size:28px">🥈</div>
+        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">СЕРЕБРО</div>
+        <div style="font-size:10px;color:var(--muted)">500+</div>
+      </div>
+      <div class="league-card" id="league-gold" onclick="showLeagueInfo('gold')">
+        <div style="font-size:28px">🥇</div>
+        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">ЗОЛОТО</div>
+        <div style="font-size:10px;color:var(--muted)">2000+</div>
+      </div>
+      <div class="league-card" id="league-diamond" onclick="showLeagueInfo('diamond')">
+        <div style="font-size:28px">💎</div>
+        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">БРИЛЛИАНТ</div>
+        <div style="font-size:10px;color:var(--muted)">5000+</div>
+      </div>
+    </div>
+    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:12px;color:var(--white)">🏆 ТОП ЛИГИ</div>
+      <div id="leagueList"></div>
+    </div>
+    <button class="btn-secondary" onclick="showTab('game')">← Назад</button>
+  </div>
+
+  <!-- SEARCH TAB -->
+  <div id="searchTab" style="display:none">
+    <div style="margin-bottom:16px">
+      <input class="text-input" id="playerSearch" placeholder="🔍 Найти игрока по имени..." oninput="searchPlayers(this.value)" style="border:2px solid var(--border)">
+    </div>
+    <div id="onlinePlayers" style="margin-bottom:20px">
+      <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px">🌍 ИГРОКИ МИРА</div>
+      <div id="playersList"></div>
+    </div>
+    <div id="followingSection">
+      <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px">👥 МОИ ПОДПИСКИ</div>
+      <div id="followingList"></div>
+    </div>
+    <button class="btn-secondary" onclick="showTab('game')" style="margin-top:16px">← Назад</button>
   </div>
 
   <!-- ADMIN TAB -->
@@ -1147,9 +1232,13 @@ function enterGame() {
   if (!user) {
     document.getElementById('navProfile').style.display = 'none';
     document.getElementById('navLeaderboard').style.display = 'none';
+    document.getElementById('navLeagues').style.display = 'none';
+    document.getElementById('navSearch').style.display = 'none';
   } else {
     document.getElementById('navProfile').style.display = '';
     document.getElementById('navLeaderboard').style.display = '';
+    document.getElementById('navLeagues').style.display = '';
+    document.getElementById('navSearch').style.display = '';
   }
   if (!user) {
     const trialStart = localStorage.getItem('trialStart');
@@ -1428,16 +1517,19 @@ function getWordPool() {
 
 // ---- NAV ----
 function showTab(tab) {
-  ['game','leaderboard','words','profile','admin'].forEach(t => {
-    document.getElementById(t+'Tab').style.display = t===tab ? 'block' : 'none';
+  ['game','leaderboard','words','leagues','search','profile','admin'].forEach(t => {
+    const el = document.getElementById(t+'Tab');
+    if (el) el.style.display = t===tab ? 'block' : 'none';
   });
   document.querySelectorAll('.nav-btn').forEach((b,i) => {
-    b.classList.toggle('active', ['game','leaderboard','words','profile','admin'][i] === tab);
+    b.classList.toggle('active', ['game','leaderboard','words','leagues','search','profile','admin'][i] === tab);
   });
   if (tab==='leaderboard') renderLeaderboard();
   if (tab==='admin') renderAdminWords();
   if (tab==='words') renderWordsList();
   if (tab==='profile') renderProfile();
+  if (tab==='leagues') renderLeagues();
+  if (tab==='search') renderSearchTab();
 }
 
 // ---- PROFILE ----
@@ -1679,7 +1771,137 @@ async function saveGameStats() {
   }
 }
 
-// ---- WORDS LIST ----
+// ---- LEAGUES ----
+const LEAGUES = [
+  { id:'bronze', name:'БРОНЗА', icon:'🥉', color:'#cd7f32', min:0, max:499 },
+  { id:'silver', name:'СЕРЕБРО', icon:'🥈', color:'#c0c0c0', min:500, max:1999 },
+  { id:'gold', name:'ЗОЛОТО', icon:'🥇', color:'#ffd700', min:2000, max:4999 },
+  { id:'diamond', name:'БРИЛЛИАНТ', icon:'💎', color:'#b9f2ff', min:5000, max:Infinity },
+];
+
+function getCurrentLeague() {
+  return LEAGUES.find(l => totalScoreAll >= l.min && totalScoreAll <= l.max) || LEAGUES[0];
+}
+
+async function renderLeagues() {
+  const league = getCurrentLeague();
+  document.getElementById('leagueIcon').textContent = league.icon;
+  document.getElementById('leagueName').textContent = league.name;
+
+  // Highlight current league card
+  LEAGUES.forEach(l => {
+    const el = document.getElementById('league-'+l.id);
+    if (el) el.classList.toggle('active', l.id === league.id);
+  });
+
+  // Load top players for current league
+  try {
+    const res = await fetch(`${FB_URL}/leaderboard.json`);
+    const data = await res.json();
+    if (!data) { document.getElementById('leagueList').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">Пока никого нет</div>'; return; }
+    const players = Object.values(data)
+      .filter(p => p.score >= league.min && p.score <= league.max)
+      .sort((a,b) => b.score - a.score)
+      .slice(0, 10);
+    document.getElementById('leagueList').innerHTML = players.length === 0
+      ? '<div style="padding:20px;text-align:center;color:var(--muted)">В этой лиге пока никого нет</div>'
+      : players.map((p,i) => `
+        <div class="lb-row">
+          <div class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+          <div class="lb-flag">${p.country?.split(' ')[0]||'🌍'}</div>
+          <div class="lb-info"><div class="lb-name">${p.name}</div><div class="lb-country">${p.country||''}</div></div>
+          <div class="lb-score">${p.score}</div>
+        </div>
+      `).join('');
+  } catch(e) {}
+}
+
+// ---- SEARCH & FOLLOW ----
+async function renderSearchTab() {
+  const user = auth.currentUser;
+  if (!user) {
+    document.getElementById('playersList').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">Войди через Google чтобы искать игроков</div>';
+    return;
+  }
+  // Load all players
+  try {
+    const snap = await db.ref('users').get();
+    if (!snap.exists()) return;
+    const users = snap.val();
+    const followSnap = await db.ref(`users/${user.uid}/following`).get();
+    const following = followSnap.exists() ? followSnap.val() : {};
+
+    const players = Object.entries(users)
+      .filter(([uid]) => uid !== user.uid)
+      .slice(0, 20);
+
+    renderPlayerCards(players, following, user.uid, 'playersList');
+    renderFollowing(players, following, user.uid);
+  } catch(e) {}
+}
+
+function renderPlayerCards(players, following, myUid, containerId) {
+  document.getElementById(containerId).innerHTML = players.map(([uid, u]) => `
+    <div class="player-card">
+      <div class="player-avatar">${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
+      <div class="player-info">
+        <div class="player-name">${u.name||'Игрок'}</div>
+        <div class="player-stats">${u.country||''} · ${u.stats?.totalScore||0} очков · ${u.stats?.games||0} игр</div>
+      </div>
+      <button class="follow-btn ${following[uid]?'following':''}" id="follow-${uid}" onclick="toggleFollow('${uid}','${myUid}',this)">
+        ${following[uid] ? '✓ Подписан' : '+ Подписаться'}
+      </button>
+    </div>
+  `).join('') || '<div style="padding:20px;text-align:center;color:var(--muted)">Игроков не найдено</div>';
+}
+
+function renderFollowing(players, following, myUid) {
+  const followingPlayers = players.filter(([uid]) => following[uid]);
+  document.getElementById('followingList').innerHTML = followingPlayers.length === 0
+    ? '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px">Ты пока ни на кого не подписан</div>'
+    : followingPlayers.map(([uid, u]) => `
+      <div class="player-card">
+        <div class="player-avatar">${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
+        <div class="player-info">
+          <div class="player-name">${u.name||'Игрок'}</div>
+          <div class="player-stats">${u.country||''} · ${u.stats?.totalScore||0} очков</div>
+        </div>
+        <button class="follow-btn following" onclick="toggleFollow('${uid}','${myUid}',this)">✓ Подписан</button>
+      </div>
+    `).join('');
+}
+
+async function toggleFollow(targetUid, myUid, btn) {
+  const isFollowing = btn.classList.contains('following');
+  try {
+    if (isFollowing) {
+      await db.ref(`users/${myUid}/following/${targetUid}`).remove();
+      btn.classList.remove('following');
+      btn.textContent = '+ Подписаться';
+    } else {
+      await db.ref(`users/${myUid}/following/${targetUid}`).set(true);
+      btn.classList.add('following');
+      btn.textContent = '✓ Подписан';
+      playCorrect();
+    }
+  } catch(e) {}
+}
+
+async function searchPlayers(query) {
+  const user = auth.currentUser;
+  if (!user) return;
+  if (!query.trim()) { renderSearchTab(); return; }
+  try {
+    const snap = await db.ref('users').get();
+    if (!snap.exists()) return;
+    const users = snap.val();
+    const followSnap = await db.ref(`users/${user.uid}/following`).get();
+    const following = followSnap.exists() ? followSnap.val() : {};
+    const filtered = Object.entries(users)
+      .filter(([uid, u]) => uid !== user.uid && u.name?.toLowerCase().includes(query.toLowerCase()));
+    renderPlayerCards(filtered, following, user.uid, 'playersList');
+  } catch(e) {}
+}
 function renderWordsList() {
   const q = document.getElementById('wordSearch').value.toLowerCase();
   const filtered = words.filter(w =>
@@ -1781,7 +2003,7 @@ async function saveToLeaderboard() {
   } catch(e) { console.log('Save error:', e); }
 }
 
-// ---- SOUNDS ----
+// ---- SOUNDS (Duolingo-style) ----
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 
@@ -1790,58 +2012,42 @@ function getAudioCtx() {
   return audioCtx;
 }
 
-function playCorrect() {
-  try {
-    const ctx = getAudioCtx();
-    // Two pleasant ascending notes like Duolingo
-    [0, 0.15].forEach((delay, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(i === 0 ? 523 : 659, ctx.currentTime + delay); // C5 then E5
-      gain.gain.setValueAtTime(0, ctx.currentTime + delay);
-      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + delay + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.3);
-      osc.start(ctx.currentTime + delay);
-      osc.stop(ctx.currentTime + delay + 0.3);
-    });
-  } catch(e) {}
-}
-
-function playWrong() {
+function playNote(freq, startTime, duration, vol=0.3, type='sine') {
   try {
     const ctx = getAudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(300, ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(220, ctx.currentTime + 0.2);
-    gain.gain.setValueAtTime(0.25, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.3);
+    const compressor = ctx.createDynamicsCompressor();
+    osc.connect(gain); gain.connect(compressor); compressor.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, ctx.currentTime + startTime);
+    gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + startTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
+    osc.start(ctx.currentTime + startTime);
+    osc.stop(ctx.currentTime + startTime + duration + 0.01);
   } catch(e) {}
 }
 
+function playCorrect() {
+  // Duolingo correct sound - bright cheerful ascending
+  playNote(523, 0, 0.15, 0.25);    // C5
+  playNote(659, 0.1, 0.15, 0.25);  // E5
+  playNote(784, 0.2, 0.25, 0.3);   // G5
+}
+
+function playWrong() {
+  // Duolingo wrong sound - low dull thud
+  playNote(196, 0, 0.1, 0.3, 'square');
+  playNote(185, 0.1, 0.2, 0.2, 'square');
+}
+
 function playStreak() {
-  try {
-    const ctx = getAudioCtx();
-    // 3 ascending notes for streak
-    [523, 659, 784].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
-      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + i * 0.12 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.25);
-      osc.start(ctx.currentTime + i * 0.12);
-      osc.stop(ctx.currentTime + i * 0.12 + 0.25);
-    });
-  } catch(e) {}
+  // Duolingo streak - triumphant fanfare
+  playNote(523, 0, 0.1, 0.25);
+  playNote(659, 0.1, 0.1, 0.25);
+  playNote(784, 0.2, 0.1, 0.25);
+  playNote(1047, 0.3, 0.3, 0.35);
 }
 
 // ---- AI HINTS ----
