@@ -606,6 +606,13 @@ select.text-input option { background:var(--surface); }
 </div>
 
 <script>
+// Check admin access - save to sessionStorage to survive redirects
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('admin') === 'true') {
+  sessionStorage.setItem('isAdmin', 'true');
+}
+const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+
 const ADMIN_PASS = 'Mott-biyc0707';
 
 let words = [
@@ -782,8 +789,7 @@ function enterGame() {
   document.getElementById('playerGreeting').textContent = `Привет, ${playerName}! 👋`;
   document.getElementById('registerScreen').classList.remove('active');
   document.getElementById('gameScreen').classList.add('active');
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('admin') === 'true') {
+  if (isAdmin) {
     document.getElementById('adminNavBtn').style.display = 'block';
   }
   loadWords().then(() => { renderCategories(); renderWordOfDay(); loadNewWord(); });
