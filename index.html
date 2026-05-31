@@ -381,6 +381,17 @@ select.text-input option { background:var(--surface); }
   display:block;
 }
 
+.goal-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+.goal-item {
+  background:var(--surface); border:2px solid var(--border);
+  border-radius:14px; padding:14px 10px; text-align:center;
+  cursor:pointer; transition:all 0.2s;
+}
+.goal-item.active { border-color:var(--cyan); background:rgba(0,198,255,0.08); }
+.goal-icon { font-size:24px; margin-bottom:6px; }
+.goal-name { font-family:'Unbounded',sans-serif; font-size:11px; color:var(--white); font-weight:700; }
+.goal-desc { font-size:12px; color:var(--muted); margin-top:3px; }
+
 /* PROFILE */
 .profile-header {
   display:flex; align-items:center; gap:16px;
@@ -555,9 +566,33 @@ select.text-input option { background:var(--surface); }
       <option value="🇸🇦 Саудовская Аравия">🇸🇦 Саудовская Аравия</option>
       <option value="🌍 Другая">🌍 Другая</option>
     </select>
+
+    <div class="field-label">Ежедневная цель</div>
+    <div class="goal-grid">
+      <div class="goal-item active" onclick="selectGoal(this,5)">
+        <div class="goal-icon">🌱</div>
+        <div class="goal-name">Легко</div>
+        <div class="goal-desc">5 слов</div>
+      </div>
+      <div class="goal-item" onclick="selectGoal(this,10)">
+        <div class="goal-icon">⚡</div>
+        <div class="goal-name">Обычно</div>
+        <div class="goal-desc">10 слов</div>
+      </div>
+      <div class="goal-item" onclick="selectGoal(this,20)">
+        <div class="goal-icon">🔥</div>
+        <div class="goal-name">Серьёзно</div>
+        <div class="goal-desc">20 слов</div>
+      </div>
+      <div class="goal-item" onclick="selectGoal(this,30)">
+        <div class="goal-icon">👑</div>
+        <div class="goal-name">Интенсив</div>
+        <div class="goal-desc">30 слов</div>
+      </div>
+    </div>
   </div>
   <br>
-  <button class="btn-primary" onclick="startGame()">Начать без аккаунта →</button>
+  <button class="btn-primary" onclick="startGame()">Начать →</button>
 </div>
 
 <!-- GAME SCREEN -->
@@ -784,6 +819,24 @@ if (urlParams.get('admin') === 'true') {
 }
 const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
 
+// Auto-login check on page load
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    const snap = await db.ref(`users/${user.uid}`).get();
+    if (snap.exists()) {
+      const data = snap.val();
+      playerName = data.name || user.displayName || 'Игрок';
+      playerCountry = data.country || '';
+      if (playerCountry) {
+        enterGame();
+        return;
+      }
+    }
+    // Has Google account but no country yet
+    document.getElementById('regName').value = user.displayName || '';
+  }
+});
+
 const ADMIN_PASS = 'Mott-biyc0707';
 
 let words = [
@@ -1005,6 +1058,7 @@ async function loadLeaderboard() {
   } catch(e) { console.log('Firebase error:', e); }
 }
 let playerName = '', playerCountry = '';
+let dailyGoal = 5;
 let currentMode = 'translate';
 let currentWord = null;
 let score = 0, streak = 0, bestStreak = 0;
@@ -1012,6 +1066,12 @@ let totalAnswered = 0, correctAnswers = 0;
 let usedWords = [], scrambleSelected = [];
 let answered = false, adminUnlocked = false;
 let selectedCategory = 'Все';
+
+function selectGoal(el, goal) {
+  document.querySelectorAll('.goal-item').forEach(g => g.classList.remove('active'));
+  el.classList.add('active');
+  dailyGoal = goal;
+}
 
 // ---- REGISTER ----
 async function startGame() {
@@ -1441,9 +1501,9 @@ function loadNewWord() {
   usedWords.push(currentWord);
   if (usedWords.length>5) usedWords.shift();
 
-  const pct = Math.min((totalAnswered/20)*100,100);
+  const pct = Math.min((totalAnswered/dailyGoal)*100,100);
   document.getElementById('progressFill').style.width=pct+'%';
-  document.getElementById('progressText').textContent=totalAnswered+' / 20';
+  document.getElementById('progressText').textContent=totalAnswered+' / '+dailyGoal;
   renderCard();
 }
 
@@ -1567,7 +1627,7 @@ function handleResult(ok,correctAnswer) {
     playWrong();
   }
   updateStats();
-  if (totalAnswered>=20) setTimeout(showResults,1500);
+  if (totalAnswered>=dailyGoal) setTimeout(showResults,1500);
 }
 
 function updateStats() {
@@ -1599,7 +1659,7 @@ function restartGame() {
   score=0;streak=0;bestStreak=0;totalAnswered=0;correctAnswers=0;usedWords=[];
   updateStats();
   document.getElementById('progressFill').style.width='0%';
-  document.getElementById('progressText').textContent='0 / 20';
+  document.getElementById('progressText').textContent='0 / '+dailyGoal;
   document.getElementById('gameArea').style.display='block';
   document.getElementById('resultArea').style.display='none';
   loadNewWord();
