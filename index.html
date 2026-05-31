@@ -47,29 +47,124 @@
   --shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 * { margin:0; padding:0; box-sizing:border-box; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
-html { touch-action:manipulation; }
-body { overscroll-behavior:none; }
+html, body { height:100%; overflow:hidden; touch-action:manipulation; }
 body {
   background: var(--bg);
   color: var(--white);
   font-family: 'Manrope', sans-serif;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow-x: hidden;
+  overscroll-behavior:none;
 }
-body::before {
-  content:'';
-  position:fixed;
-  inset:0;
-  background: linear-gradient(180deg, #f0f9ff 0%, #f7f7f7 100%);
-  pointer-events:none;
-  z-index:0;
+
+/* APP SHELL */
+#appShell {
+  position:fixed; inset:0;
+  display:flex; flex-direction:column;
+  max-width:420px; margin:0 auto;
+  background:var(--bg);
 }
-.container { width:100%; max-width:420px; padding:0 16px 60px; position:relative; z-index:1; }
-.screen { display:none; }
-.screen.active { display:block; }
+
+/* FIXED TOP HEADER */
+#topBar {
+  flex-shrink:0;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+  z-index:10;
+}
+.top-bar-title {
+  font-family:'Unbounded',sans-serif;
+  font-size:15px; font-weight:900; color:var(--white);
+}
+.top-bar-logo {
+  font-family:'Unbounded',sans-serif;
+  font-size:18px; font-weight:900; color:var(--blue);
+}
+
+/* SCROLLABLE CONTENT */
+#contentArea {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+}
+.tab-page {
+  display:none;
+  padding:16px 16px 16px;
+  min-height:100%;
+  animation:pageIn 0.25s ease;
+}
+.tab-page.active { display:block; }
+
+/* SLIDE-IN SCREENS (full screen overlays) */
+.slide-screen {
+  position:fixed; inset:0; z-index:50;
+  background:var(--bg);
+  transform:translateX(100%);
+  transition:transform 0.3s ease;
+  overflow-y:auto;
+  max-width:420px; margin:0 auto;
+}
+.slide-screen.open { transform:translateX(0); }
+.slide-header {
+  position:sticky; top:0; z-index:5;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:14px 16px;
+  display:flex; align-items:center; gap:12px;
+}
+.slide-header-title {
+  font-family:'Unbounded',sans-serif;
+  font-size:15px; font-weight:900; color:var(--white);
+}
+.back-btn {
+  background:var(--bg); border:2px solid var(--border);
+  border-radius:10px; padding:8px 12px;
+  font-size:18px; cursor:pointer;
+  box-shadow:0 2px 0 var(--border);
+  line-height:1;
+}
+.slide-content { padding:16px; }
+
+/* FIXED BOTTOM NAV (like Duolingo) */
+#bottomNav {
+  flex-shrink:0;
+  background:var(--surface);
+  border-top:2px solid var(--border);
+  display:flex; align-items:center;
+  padding:8px 4px 12px;
+  z-index:10;
+  padding-bottom:max(12px, env(safe-area-inset-bottom));
+}
+.bottom-nav-btn {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; gap:3px;
+  padding:6px 4px; border:none; background:transparent;
+  cursor:pointer; border-radius:10px; transition:all 0.15s;
+  color:var(--muted);
+}
+.bottom-nav-btn.active { color:var(--blue); }
+.bottom-nav-btn .nav-icon { font-size:22px; line-height:1; }
+.bottom-nav-btn .nav-label {
+  font-family:'Unbounded',sans-serif;
+  font-size:9px; letter-spacing:0.5px; font-weight:700;
+}
+
+/* REGISTER SCREEN */
+#registerScreen {
+  position:fixed; inset:0; z-index:100;
+  background:var(--bg);
+  overflow-y:auto;
+  display:none;
+  max-width:420px; margin:0 auto;
+}
+#registerScreen.active { display:block; }
+.reg-content { padding:20px 16px 40px; }
+
+@keyframes pageIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
+
+/* SWIPE TO GO BACK */
+.slide-screen { user-select:none; }
 
 /* HEADER */
 header {
@@ -679,435 +774,194 @@ select.text-input option { background:var(--surface); }
   <button class="btn-primary" onclick="startGame()">Начать →</button>
 </div>
 
-<!-- GAME SCREEN -->
-<div class="container screen" id="gameScreen">
-  <header>
-    <div class="logo-text">MOTT_bu</div>
-    <h1>Учи <span>Чеченский</span></h1>
-    <div style="font-size:13px;color:var(--muted);margin-top:4px;font-style:italic">Марша йог1ийла — Яха!</div>
-    <svg class="ornament-svg" viewBox="0 0 400 20" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,10 Q20,2 40,10 Q60,18 80,10 Q100,2 120,10 Q140,18 160,10 Q180,2 200,10 Q220,18 240,10 Q260,2 280,10 Q300,18 320,10 Q340,2 360,10 Q380,18 400,10" stroke="#2d6be4" stroke-width="1.5" fill="none" opacity="0.6"/>
-    </svg>
-    <div class="subtitle" id="playerGreeting"></div>
-  </header>
+<!-- GAME SCREEN - NEW APP SHELL -->
+<div id="appShell" style="display:none">
 
-  <div class="nav-bar" id="mainNavBar" style="overflow-x:auto;scrollbar-width:none">
-    <button class="nav-btn active" onclick="showTab('game')">🎮</button>
-    <button class="nav-btn" id="navLeaderboard" onclick="showTab('leaderboard')">🏆</button>
-    <button class="nav-btn" onclick="showTab('words')">📚</button>
-    <button class="nav-btn" id="navLeagues" onclick="showTab('leagues')">🥇</button>
-    <button class="nav-btn" id="navSearch" onclick="showTab('search')">🔍</button>
-    <button class="nav-btn" id="navProfile" onclick="showTab('profile')">👤</button>
-    <button class="nav-btn" id="adminNavBtn" style="display:none" onclick="showAdminLogin()">⚙️</button>
+  <!-- FIXED TOP BAR -->
+  <div id="topBar">
+    <div class="top-bar-logo">MOTT_bu</div>
+    <div style="font-size:11px;color:var(--muted);font-family:'Unbounded',sans-serif" id="playerGreeting"></div>
+    <div id="topBarRight" style="display:flex;align-items:center;gap:8px">
+      <div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--blue)" id="topScore">0⚡</div>
+    </div>
   </div>
 
-  <!-- GAME TAB -->
-  <div id="gameTab">
-    <div id="wordOfDay"></div>
+  <!-- SCROLLABLE CONTENT -->
+  <div id="contentArea">
 
-    <div class="score-bar">
-      <div class="score-item">
-        <div class="score-label">Очки</div>
-        <div class="score-value" id="score">0</div>
-      </div>
-      <div class="score-divider"></div>
-      <div class="score-item">
-        <div class="score-label">Серия</div>
-        <div class="score-value" id="streak">0🔥</div>
-      </div>
-      <div class="score-divider"></div>
-      <div class="score-item">
-        <div class="score-label">Слов</div>
-        <div class="score-value" id="wordCount">0</div>
-      </div>
-    </div>
-
-    <div class="mode-tabs">
-      <button class="mode-tab active" onclick="setMode('translate')">Перевод</button>
-      <button class="mode-tab" onclick="setMode('choice')">Выбор</button>
-      <button class="mode-tab" onclick="setMode('scramble')">Буквы</button>
-    </div>
-
-    <div class="category-tabs" id="categoryTabs"></div>
-
-    <div class="progress-wrap">
-      <div class="progress-info">
-        <span class="progress-label">Прогресс</span>
-        <span class="progress-label" id="progressText">0 / 20</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-    </div>
-
-    <div id="gameArea">
-      <div class="game-card" id="gameCard"></div>
-      <div class="feedback" id="feedback"></div>
-      <div id="aiHint" style="display:none"></div>
-      <button class="btn-primary" id="actionBtn" onclick="handleAction()">Проверить</button>
-      <button class="btn-secondary" onclick="skipWord()">Пропустить →</button>
-      <button onclick="startBattle()" style="
-        width:100%;padding:12px;
-        background:linear-gradient(135deg,rgba(224,85,85,0.2),rgba(224,85,85,0.1));
-        border:1px solid rgba(224,85,85,0.4);border-radius:14px;
-        color:var(--red);font-family:'Unbounded',sans-serif;
-        font-size:11px;cursor:pointer;letter-spacing:1px;margin-top:4px;
-      ">⚔️ СЫГРАТЬ БОЙ</button>
-    </div>
-
-    <div id="resultArea" style="display:none">
-      <div class="result-screen">
-        <div class="result-emoji" id="resultEmoji">🏆</div>
-        <div class="result-title" id="resultTitle"></div>
-        <p style="color:var(--muted);font-size:15px;margin-bottom:4px" id="resultMsg"></p>
-        <div class="result-stats">
-          <div class="result-stat"><div class="result-stat-value" id="finalScore">0</div><div class="result-stat-label">Очков</div></div>
-          <div class="result-stat"><div class="result-stat-value" id="finalAccuracy">0%</div><div class="result-stat-label">Точность</div></div>
-          <div class="result-stat"><div class="result-stat-value" id="finalCorrect">0</div><div class="result-stat-label">Правильно</div></div>
-          <div class="result-stat"><div class="result-stat-value" id="finalStreak">0</div><div class="result-stat-label">Серия</div></div>
+    <!-- GAME TAB -->
+    <div class="tab-page active" id="gameTab">
+      <div id="wordOfDay"></div>
+      <div class="score-bar">
+        <div class="score-item">
+          <div class="score-label">Очки</div>
+          <div class="score-value" id="score">0</div>
         </div>
-        <button class="btn-primary" onclick="restartGame()">Играть снова</button>
-        <button class="btn-secondary" onclick="showTab('leaderboard')">🏆 Таблица лидеров</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- LEADERBOARD TAB -->
-  <div id="leaderboardTab" style="display:none">
-    <div class="leaderboard-card">
-      <div class="lb-header">🏆 Таблица лидеров</div>
-      <div id="lbList"></div>
-    </div>
-    <button class="btn-secondary" onclick="showTab('game')">← Назад</button>
-  </div>
-
-  <!-- WORDS TAB -->
-  <div id="wordsTab" style="display:none">
-    <div style="margin-bottom:16px">
-      <input class="text-input" id="wordSearch" placeholder="🔍 Поиск слова..." oninput="renderWordsList()">
-    </div>
-    <div id="wordsListDisplay"></div>
-    <button class="btn-secondary" onclick="showTab('game')">← Назад</button>
-  </div>
-
-  <!-- PROFILE TAB -->
-  <div id="profileTab" style="display:none">
-
-    <!-- Avatar + Name block -->
-    <div style="text-align:center;padding:24px 0 16px;position:relative">
-      <div style="position:relative;display:inline-block">
-        <div id="profileAvatar" style="
-          width:96px;height:96px;border-radius:50%;
-          background:linear-gradient(135deg,var(--blue),var(--cyan));
-          display:flex;align-items:center;justify-content:center;
-          font-size:44px;overflow:hidden;
-          border:4px solid var(--border);margin:0 auto;
-        ">👤</div>
-        <button onclick="document.getElementById('avatarInput').click()" style="
-          position:absolute;bottom:2px;right:2px;
-          background:var(--blue);border:2px solid var(--bg);
-          color:white;border-radius:50%;width:28px;height:28px;
-          font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-        ">✏️</button>
-        <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="changeAvatar(this)">
-      </div>
-      <div style="margin-top:12px">
-        <div style="font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--white)" id="profileName">—</div>
-        <div style="font-size:14px;color:var(--muted);margin-top:4px" id="profileCountry">—</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="profileAge"></div>
-      </div>
-      <button onclick="openEditProfile()" style="
-        margin-top:12px;background:var(--card);
-        border:1px solid var(--border);color:var(--white);
-        border-radius:20px;padding:8px 20px;
-        font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;cursor:pointer;
-      ">✏️ Редактировать профиль</button>
-    </div>
-
-    <!-- Streak banner (like Duolingo) -->
-    <div style="
-      background:linear-gradient(135deg,rgba(240,192,64,0.2),rgba(240,192,64,0.05));
-      border:1px solid rgba(240,192,64,0.35);border-radius:20px;
-      padding:16px 20px;margin-bottom:16px;
-      display:flex;align-items:center;gap:16px;
-    ">
-      <div style="font-size:44px">🔥</div>
-      <div style="flex:1">
-        <div style="font-family:'Unbounded',sans-serif;font-size:24px;color:var(--gold);font-weight:900" id="profileDayStreak">0</div>
-        <div style="font-size:13px;color:var(--muted)">дней подряд</div>
-      </div>
-      <div class="streak-days" id="streakDays" style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end"></div>
-    </div>
-
-    <!-- Stats row (like Duolingo) -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center">
-        <div style="font-size:22px;margin-bottom:4px">⚡</div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--cyan);font-weight:700" id="profileTotalScore">0</div>
-        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px">ОЧКОВ</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center">
-        <div style="font-size:22px;margin-bottom:4px">🎮</div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--cyan);font-weight:700" id="profileGames">0</div>
-        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px">ИГР</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center">
-        <div style="font-size:22px;margin-bottom:4px">📚</div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--cyan);font-weight:700" id="profileWordsLearned">0</div>
-        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px">СЛОВ</div>
-      </div>
-    </div>
-
-    <!-- Badges (like Duolingo achievements) -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px">
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <div style="font-family:'Unbounded',sans-serif;font-size:12px;color:var(--white);letter-spacing:1px">🏅 ДОСТИЖЕНИЯ</div>
-        <div style="font-size:12px;color:var(--muted)" id="badgeCount">0/12</div>
-      </div>
-      <div style="padding:16px">
-        <div class="badges-grid" id="badgesGrid"></div>
-      </div>
-    </div>
-
-    <!-- Friends -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px">
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-        <div style="font-family:'Unbounded',sans-serif;font-size:12px;color:var(--white);letter-spacing:1px">👥 ДРУЗЬЯ</div>
-      </div>
-      <div style="padding:16px">
-        <button class="invite-btn" onclick="inviteFriend()">🔗 Пригласить друга</button>
-        <div id="friendsList" style="margin-top:12px"></div>
-      </div>
-    </div>
-
-    <!-- Telegram -->
-    <div class="tg-card" onclick="window.open('https://t.me/+fgWORPG9sbhmYmIy','_blank')" style="margin-bottom:16px">
-      <div style="font-size:28px">✈️</div>
-      <div style="flex:1">
-        <div style="font-weight:700;font-size:15px">Сообщество MOTT_bu</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Telegram — обсуждай и предлагай идеи</div>
-      </div>
-      <div style="color:var(--cyan);font-size:20px">→</div>
-    </div>
-
-    <!-- Account & Settings -->
-    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
-      <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">⚙️ НАСТРОЙКИ И АККАУНТ</div>
-      <div onclick="showTab('settings')" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:22px">⚙️</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Настройки</div>
-        <div style="color:var(--muted);font-size:18px">›</div>
-      </div>
-      <div onclick="openEditProfile()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:22px">✏️</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Редактировать профиль</div>
-        <div style="color:var(--muted);font-size:18px">›</div>
-      </div>
-      <div onclick="inviteFriend()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:22px">🔗</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Пригласить друга</div>
-        <div style="color:var(--muted);font-size:18px">›</div>
-      </div>
-      <div onclick="window.open('https://t.me/+fgWORPG9sbhmYmIy','_blank')" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:22px">✈️</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Сообщество Telegram</div>
-        <div style="color:var(--muted);font-size:18px">›</div>
-      </div>
-      <div onclick="switchAccount()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:22px">🔄</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Сменить аккаунт</div>
-        <div style="color:var(--muted);font-size:18px">›</div>
-      </div>
-      <div onclick="deleteAccount()" style="padding:15px 20px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:22px">🗑️</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--red)">Удалить аккаунт</div>
-        <div style="color:var(--muted);font-size:18px">›</div>
-      </div>
-    </div>
-
-    <div style="text-align:center;color:var(--muted);font-size:11px;padding-bottom:20px">MOTT_bu v1.0 · Нохчийн Мотт</div>
-
-  </div>
-
-  <!-- SETTINGS TAB -->
-  <div id="settingsTab" style="display:none">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <button onclick="showTab('profile')" style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:8px 14px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
-      <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--white)">НАСТРОЙКИ</div>
-    </div>
-
-    <!-- Sound settings -->
-    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
-      <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">🔊 ЗВУК</div>
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:15px;font-weight:600;color:var(--white)">Звуковые эффекты</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">Звук при ответе</div>
+        <div class="score-divider"></div>
+        <div class="score-item">
+          <div class="score-label">Серия</div>
+          <div class="score-value" id="streak">0🔥</div>
         </div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="soundToggle" checked onchange="toggleSound(this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:15px;font-weight:600;color:var(--white)">Произношение</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">Голосовое чтение слов</div>
-        </div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="speechToggle" checked onchange="toggleSpeech(this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-    </div>
-
-    <!-- Learning settings -->
-    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
-      <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">📚 ОБУЧЕНИЕ</div>
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-        <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:10px">Ежедневная цель</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-          <button onclick="setDailyGoal(5,this)" class="goal-mini ${dailyGoal===5?'active':''}">5</button>
-          <button onclick="setDailyGoal(10,this)" class="goal-mini ${dailyGoal===10?'active':''}">10</button>
-          <button onclick="setDailyGoal(20,this)" class="goal-mini ${dailyGoal===20?'active':''}">20</button>
-          <button onclick="setDailyGoal(30,this)" class="goal-mini ${dailyGoal===30?'active':''}">30</button>
+        <div class="score-divider"></div>
+        <div class="score-item">
+          <div class="score-label">Слов</div>
+          <div class="score-value" id="wordCount">0</div>
         </div>
       </div>
-      <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:15px;font-weight:600;color:var(--white)">AI подсказки</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">При неправильном ответе</div>
+      <div class="mode-tabs">
+        <button class="mode-tab active" onclick="setMode('translate')">Перевод</button>
+        <button class="mode-tab" onclick="setMode('choice')">Выбор</button>
+        <button class="mode-tab" onclick="setMode('scramble')">Буквы</button>
+      </div>
+      <div class="category-tabs" id="categoryTabs"></div>
+      <div class="progress-wrap">
+        <div class="progress-info">
+          <span class="progress-label">Прогресс</span>
+          <span class="progress-label" id="progressText">0 / 20</span>
         </div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="aiToggle" checked onchange="localStorage.setItem('aiEnabled',this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
       </div>
-    </div>
-
-    <!-- App info -->
-    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
-      <div style="padding:14px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">ℹ️ О ПРИЛОЖЕНИИ</div>
-      <div onclick="showPrivacyPolicy()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:20px">🔒</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Политика конфиденциальности</div>
-        <div style="color:var(--muted)">›</div>
+      <div id="gameArea">
+        <div class="game-card" id="gameCard"></div>
+        <div class="feedback" id="feedback"></div>
+        <div id="aiHint" style="display:none"></div>
+        <button class="btn-primary" id="actionBtn" onclick="handleAction()">Проверить</button>
+        <button class="btn-secondary" onclick="skipWord()">Пропустить →</button>
+        <button onclick="startBattle()" style="width:100%;padding:12px;background:#fff0f0;border:2px solid #ffcdd2;border-radius:14px;color:var(--red);font-family:'Unbounded',sans-serif;font-size:11px;cursor:pointer;letter-spacing:1px;margin-top:4px;box-shadow:0 3px 0 #ffcdd2;">⚔️ СЫГРАТЬ БОЙ</button>
       </div>
-      <div onclick="showHelp()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:20px">❓</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Справка</div>
-        <div style="color:var(--muted)">›</div>
-      </div>
-      <div onclick="rateApp()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:20px">⭐</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Оценить приложение</div>
-        <div style="color:var(--muted)">›</div>
-      </div>
-      <div onclick="shareApp()" style="padding:15px 20px;display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-        <div style="font-size:20px">📢</div>
-        <div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Помочь в продвижении</div>
-        <div style="color:var(--muted)">›</div>
-      </div>
-    </div>
-
-    <div style="text-align:center;color:var(--muted);font-size:11px;padding-bottom:20px">MOTT_bu v1.0 · Нохчийн Мотт</div>
-  </div>
-
-  <!-- PLAYER PROFILE MODAL -->
-  <div class="modal-overlay" id="playerProfileModal" style="display:none;align-items:flex-start;padding:0">
-    <div style="width:100%;min-height:100vh;background:var(--bg);padding:20px 16px;max-width:420px;margin:0 auto">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <button onclick="document.getElementById('playerProfileModal').style.display='none'" style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:8px 14px;font-size:16px;cursor:pointer;box-shadow:var(--shadow)">←</button>
-        <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--white)">ПРОФИЛЬ</div>
-      </div>
-      <div id="playerProfileContent"></div>
-    </div>
-  </div>
-
-  <!-- LEAGUES TAB -->
-  <div id="leaguesTab" style="display:none">
-    <div style="text-align:center;padding:20px 0">
-      <div style="font-size:56px" id="leagueIcon">🥉</div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:22px;font-weight:900;color:var(--white);margin-top:8px" id="leagueName">БРОНЗА</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:4px">Набери очки чтобы подняться в лигу</div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
-      <div class="league-card" id="league-bronze" onclick="showLeagueInfo('bronze')">
-        <div style="font-size:28px">🥉</div>
-        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">БРОНЗА</div>
-        <div style="font-size:10px;color:var(--muted)">0+</div>
-      </div>
-      <div class="league-card" id="league-silver" onclick="showLeagueInfo('silver')">
-        <div style="font-size:28px">🥈</div>
-        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">СЕРЕБРО</div>
-        <div style="font-size:10px;color:var(--muted)">500+</div>
-      </div>
-      <div class="league-card" id="league-gold" onclick="showLeagueInfo('gold')">
-        <div style="font-size:28px">🥇</div>
-        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">ЗОЛОТО</div>
-        <div style="font-size:10px;color:var(--muted)">2000+</div>
-      </div>
-      <div class="league-card" id="league-diamond" onclick="showLeagueInfo('diamond')">
-        <div style="font-size:28px">💎</div>
-        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">БРИЛЛИАНТ</div>
-        <div style="font-size:10px;color:var(--muted)">5000+</div>
-      </div>
-    </div>
-    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)">
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:12px;color:var(--white)">🏆 ТОП ЛИГИ</div>
-      <div id="leagueList"></div>
-    </div>
-    <button class="btn-secondary" onclick="showTab('game')">← Назад</button>
-  </div>
-
-  <!-- SEARCH TAB -->
-  <div id="searchTab" style="display:none">
-    <div style="margin-bottom:16px">
-      <input class="text-input" id="playerSearch" placeholder="🔍 Найти игрока по имени..." oninput="searchPlayers(this.value)" style="border:2px solid var(--border)">
-    </div>
-    <div id="onlinePlayers" style="margin-bottom:20px">
-      <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px">🌍 ИГРОКИ МИРА</div>
-      <div id="playersList"></div>
-    </div>
-    <div id="followingSection">
-      <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px">👥 МОИ ПОДПИСКИ</div>
-      <div id="followingList"></div>
-    </div>
-    <button class="btn-secondary" onclick="showTab('game')" style="margin-top:16px">← Назад</button>
-  </div>
-
-  <!-- ADMIN TAB -->
-  <div id="adminTab" style="display:none">
-    <div class="admin-section">
-      <div class="admin-title">🎨 Цвета</div>
-      <div class="color-grid">
-        <div class="color-item"><label>Фон</label><input type="color" value="#070b14" onchange="changeColor('--bg',this.value)"></div>
-        <div class="color-item"><label>Акцент</label><input type="color" value="#00c6ff" onchange="changeColor('--cyan',this.value)"></div>
-        <div class="color-item"><label>Синий</label><input type="color" value="#2d6be4" onchange="changeColor('--blue',this.value)"></div>
-        <div class="color-item"><label>Текст</label><input type="color" value="#e8f0ff" onchange="changeColor('--white',this.value)"></div>
-        <div class="color-item"><label>Карточки</label><input type="color" value="#111d33" onchange="changeColor('--card',this.value)"></div>
-        <div class="color-item"><label>Золото</label><input type="color" value="#f0c040" onchange="changeColor('--gold',this.value)"></div>
-      </div>
-    </div>
-    <div class="admin-section">
-      <div class="admin-title">➕ Добавить слово</div>
-      <div class="add-word-form">
-        <div class="form-row">
-          <input class="small-input" id="newChechen" placeholder="Чеченское">
-          <input class="small-input" id="newRussian" placeholder="Русское">
+      <div id="resultArea" style="display:none">
+        <div class="result-screen">
+          <div class="result-emoji" id="resultEmoji">🏆</div>
+          <div class="result-title" id="resultTitle"></div>
+          <p style="color:var(--muted);font-size:15px;margin-bottom:4px" id="resultMsg"></p>
+          <div class="result-stats">
+            <div class="result-stat"><div class="result-stat-value" id="finalScore">0</div><div class="result-stat-label">Очков</div></div>
+            <div class="result-stat"><div class="result-stat-value" id="finalAccuracy">0%</div><div class="result-stat-label">Точность</div></div>
+            <div class="result-stat"><div class="result-stat-value" id="finalCorrect">0</div><div class="result-stat-label">Правильно</div></div>
+            <div class="result-stat"><div class="result-stat-value" id="finalStreak">0</div><div class="result-stat-label">Серия</div></div>
+          </div>
+          <button class="btn-primary" onclick="restartGame()">Играть снова</button>
+          <button class="btn-secondary" onclick="showTab('leaderboard')">🏆 Таблица лидеров</button>
         </div>
-        <div class="form-row">
-          <input class="small-input" id="newTranscription" placeholder="Произношение">
-          <input class="small-input" id="newCategory" placeholder="Категория">
-        </div>
-        <button class="btn-primary" onclick="addWord()" style="margin-bottom:0">Добавить</button>
       </div>
     </div>
-    <div class="admin-section">
-      <div class="admin-title">📚 Все слова (<span id="wordCountAdmin">0</span>)</div>
-      <div id="wordList"></div>
+
+    <!-- LEADERBOARD TAB -->
+    <div class="tab-page" id="leaderboardTab">
+      <div class="leaderboard-card">
+        <div class="lb-header">🏆 Таблица лидеров</div>
+        <div id="lbList"></div>
+      </div>
     </div>
-    <button class="btn-secondary" onclick="showTab('game')">← Назад</button>
+
+    <!-- WORDS TAB -->
+    <div class="tab-page" id="wordsTab">
+      <div style="margin-bottom:16px">
+        <input class="text-input" id="wordSearch" placeholder="🔍 Поиск слова..." oninput="renderWordsList()" style="border:2px solid var(--border)">
+      </div>
+      <div id="wordsListDisplay"></div>
+    </div>
+
+    <!-- LEAGUES TAB -->
+    <div class="tab-page" id="leaguesTab">
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:56px" id="leagueIcon">🥉</div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:22px;font-weight:900;color:var(--white);margin-top:8px" id="leagueName">БРОНЗА</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">Набери очки чтобы подняться в лигу</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+        <div class="league-card" id="league-bronze"><div style="font-size:28px">🥉</div><div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">БРОНЗА</div><div style="font-size:10px;color:var(--muted)">0+</div></div>
+        <div class="league-card" id="league-silver"><div style="font-size:28px">🥈</div><div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">СЕРЕБРО</div><div style="font-size:10px;color:var(--muted)">500+</div></div>
+        <div class="league-card" id="league-gold"><div style="font-size:28px">🥇</div><div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">ЗОЛОТО</div><div style="font-size:10px;color:var(--muted)">2000+</div></div>
+        <div class="league-card" id="league-diamond"><div style="font-size:28px">💎</div><div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px">БРИЛЛИАНТ</div><div style="font-size:10px;color:var(--muted)">5000+</div></div>
+      </div>
+      <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:12px;color:var(--white)">🏆 ТОП ЛИГИ</div>
+        <div id="leagueList"></div>
+      </div>
+    </div>
+
+    <!-- SEARCH TAB -->
+    <div class="tab-page" id="searchTab">
+      <div style="margin-bottom:16px">
+        <input class="text-input" id="playerSearch" placeholder="🔍 Найти игрока по имени..." oninput="searchPlayers(this.value)" style="border:2px solid var(--border)">
+      </div>
+      <div id="onlinePlayers" style="margin-bottom:20px">
+        <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px">🌍 ИГРОКИ МИРА</div>
+        <div id="playersList"></div>
+      </div>
+      <div id="followingSection">
+        <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:10px">👥 МОИ ПОДПИСКИ</div>
+        <div id="followingList"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE TAB -->
+    <div class="tab-page" id="profileTab"></div>
+
+    <!-- ADMIN TAB -->
+    <div class="tab-page" id="adminTab" style="display:none">
+      <div class="admin-section">
+        <div class="admin-title">🎨 Цвета</div>
+        <div class="color-grid">
+          <div class="color-item"><label>Фон</label><input type="color" value="#f7f7f7" onchange="changeColor('--bg',this.value)"></div>
+          <div class="color-item"><label>Акцент</label><input type="color" value="#1cb0f6" onchange="changeColor('--blue',this.value)"></div>
+          <div class="color-item"><label>Текст</label><input type="color" value="#3c3c3c" onchange="changeColor('--white',this.value)"></div>
+          <div class="color-item"><label>Карточки</label><input type="color" value="#ffffff" onchange="changeColor('--card',this.value)"></div>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-title">🔍 Поиск слов</div>
+        <input class="text-input" id="adminWordSearch" placeholder="Поиск по словам..." oninput="renderAdminWords()" style="margin-bottom:12px;border:2px solid var(--border)">
+      </div>
+      <div class="admin-section">
+        <div class="admin-title">➕ Добавить слово</div>
+        <div class="add-word-form">
+          <div class="form-row">
+            <input class="small-input" id="newChechen" placeholder="Чеченское">
+            <input class="small-input" id="newRussian" placeholder="Русское">
+          </div>
+          <div class="form-row">
+            <input class="small-input" id="newTranscription" placeholder="Произношение">
+            <input class="small-input" id="newCategory" placeholder="Категория">
+          </div>
+          <button class="btn-primary" onclick="addWord()" style="margin-bottom:0">Добавить</button>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-title">📚 Все слова (<span id="wordCountAdmin">0</span>)</div>
+        <div id="wordList"></div>
+      </div>
+    </div>
+
+  </div><!-- end contentArea -->
+
+  <!-- FIXED BOTTOM NAV -->
+  <div id="bottomNav">
+    <button class="bottom-nav-btn active" id="bn-game" onclick="showTab('game')">
+      <span class="nav-icon">🎮</span>
+      <span class="nav-label">ИГРА</span>
+    </button>
+    <button class="bottom-nav-btn" id="bn-leaderboard" onclick="showTab('leaderboard')">
+      <span class="nav-icon">🏆</span>
+      <span class="nav-label">ТОП</span>
+    </button>
+    <button class="bottom-nav-btn" id="bn-leagues" onclick="showTab('leagues')">
+      <span class="nav-icon">🥇</span>
+      <span class="nav-label">ЛИГИ</span>
+    </button>
+    <button class="bottom-nav-btn" id="bn-search" onclick="showTab('search')">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">ПОИСК</span>
+    </button>
+    <button class="bottom-nav-btn" id="bn-profile" onclick="showTab('profile')">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">ПРОФИЛЬ</span>
+    </button>
   </div>
-</div>
+
+</div><!-- end appShell -->
+
 
 <!-- BATTLE MODAL -->
 <div class="modal-overlay" id="battleModal" style="display:none;align-items:flex-start;padding:0">
@@ -1208,7 +1062,6 @@ auth.onAuthStateChanged(async (user) => {
         return;
       }
     }
-    // Has Google account but no country yet
     document.getElementById('regName').value = user.displayName || '';
   }
 });
@@ -1386,43 +1239,44 @@ async function saveUserProfile() {
 }
 
 function enterGame() {
-  document.getElementById('playerGreeting').textContent = `Привет, ${playerName}! 👋`;
+  // Switch from register to app shell
   document.getElementById('registerScreen').classList.remove('active');
-  document.getElementById('gameScreen').classList.add('active');
+  document.getElementById('appShell').style.display = 'flex';
+
+  // Update greeting in top bar
+  const greetEl = document.getElementById('playerGreeting');
+  if (greetEl) greetEl.textContent = playerName ? `Привет, ${playerName}!` : '';
+
+  // Admin button
   if (isAdmin) {
-    document.getElementById('adminNavBtn').style.display = 'block';
+    const adminBtn = document.getElementById('bn-admin');
+    if (adminBtn) adminBtn.style.display = 'flex';
   }
 
-  // Hide profile and leaderboard for guests
+  // Hide social tabs for guests
   const user = auth.currentUser;
-  if (!user) {
-    document.getElementById('navProfile').style.display = 'none';
-    document.getElementById('navLeaderboard').style.display = 'none';
-    document.getElementById('navLeagues').style.display = 'none';
-    document.getElementById('navSearch').style.display = 'none';
-  } else {
-    document.getElementById('navProfile').style.display = '';
-    document.getElementById('navLeaderboard').style.display = '';
-    document.getElementById('navLeagues').style.display = '';
-    document.getElementById('navSearch').style.display = '';
-  }
+  const guestHide = ['bn-leaderboard','bn-leagues','bn-search','bn-profile'];
+  guestHide.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.style.display = user ? 'flex' : 'none';
+  });
+
+  // Trial day check for guests
   if (!user) {
     const trialStart = localStorage.getItem('trialStart');
     const today = new Date().toDateString();
     if (!trialStart) {
       localStorage.setItem('trialStart', today);
-      // Show welcome trial notification
-      setTimeout(() => {
-        showTrialNotification();
-      }, 1000);
+      setTimeout(showTrialNotification, 1000);
     } else if (trialStart !== today) {
-      // Trial day is over — show registration wall
       showTrialOver();
       return;
     }
-    // Show trial banner during game
     showTrialBanner();
   }
+
+  // Init swipe back
+  initSwipeBack();
 
   loadWords().then(() => { renderCategories(); renderWordOfDay(); loadNewWord(); checkFriendInvite(); });
 }
@@ -1682,23 +1536,63 @@ function getWordPool() {
 }
 
 // ---- NAV ----
+const TAB_TITLES = {
+  game: 'MOTT_bu',
+  leaderboard: '🏆 Таблица лидеров',
+  words: '📚 Слова',
+  leagues: '🥇 Лиги',
+  search: '🔍 Игроки',
+  profile: '👤 Профиль',
+  settings: '⚙️ Настройки',
+  admin: '⚙️ Админ'
+};
+
 function showTab(tab) {
-  ['game','leaderboard','words','leagues','search','profile','settings','admin'].forEach(t => {
-    const el = document.getElementById(t+'Tab');
-    if (el) el.style.display = t===tab ? 'block' : 'none';
-  });
-  document.querySelectorAll('.nav-btn').forEach((b,i) => {
-    b.classList.toggle('active', ['game','leaderboard','words','leagues','search','profile','settings','admin'][i] === tab);
-  });
-  if (tab==='leaderboard') renderLeaderboard();
-  if (tab==='admin') renderAdminWords();
-  if (tab==='words') renderWordsList();
-  if (tab==='profile') renderProfile();
-  if (tab==='leagues') renderLeagues();
-  if (tab==='search') renderSearchTab();
+  // Hide all tab-pages
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  // Show selected
+  const el = document.getElementById(tab + 'Tab');
+  if (el) el.classList.add('active');
+  // Scroll to top
+  const ca = document.getElementById('contentArea');
+  if (ca) ca.scrollTop = 0;
+  // Update bottom nav
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+  const bn = document.getElementById('bn-' + tab);
+  if (bn) bn.classList.add('active');
+  // Update top bar title
+  const topTitle = document.getElementById('topBarTitle');
+  if (topTitle) topTitle.textContent = tab === 'game' ? '' : (TAB_TITLES[tab] || '');
+  // Load data
+  if (tab === 'leaderboard') renderLeaderboard();
+  if (tab === 'admin') renderAdminWords();
+  if (tab === 'words') renderWordsList();
+  if (tab === 'profile') renderProfileTab();
+  if (tab === 'leagues') renderLeagues();
+  if (tab === 'search') renderSearchTab();
 }
 
-// ---- PROFILE ----
+// Swipe right to go back to game
+function initSwipeBack() {
+  const content = document.getElementById('contentArea');
+  if (!content) return;
+  let startX = 0, startY = 0;
+  content.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  content.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+    const activeTab = document.querySelector('.tab-page.active');
+    if (dx > 80 && dy < 60 && activeTab && activeTab.id !== 'gameTab') {
+      showTab('game');
+    }
+  }, { passive: true });
+}
+
+// alias for new showTab
+function renderProfileTab() { renderProfile(); }
 let totalGames = 0;
 let totalScoreAll = 0;
 let totalWordsLearned = 0;
@@ -1872,7 +1766,7 @@ async function switchAccount() {
     await auth.signOut();
     playerName = ''; playerCountry = '';
     localStorage.removeItem('trialStart');
-    document.getElementById('gameScreen').classList.remove('active');
+    document.getElementById('appShell').style.display = 'none';
     document.getElementById('registerScreen').classList.add('active');
   } catch(e) { alert('Ошибка: ' + e.message); }
 }
@@ -1885,7 +1779,7 @@ async function deleteAccount() {
     if (user) { await db.ref(`users/${user.uid}`).remove(); await user.delete(); }
     playerName = ''; playerCountry = '';
     localStorage.removeItem('trialStart');
-    document.getElementById('gameScreen').classList.remove('active');
+    document.getElementById('appShell').style.display = 'none';
     document.getElementById('registerScreen').classList.add('active');
     alert('Аккаунт удалён.');
   } catch(e) {
@@ -2316,13 +2210,28 @@ function deleteWord(idx) {
   if (confirm('Удалить?')) { words.splice(idx,1); saveWords(); renderAdminWords(); renderCategories(); }
 }
 function renderAdminWords() {
-  document.getElementById('wordCountAdmin').textContent = words.length;
-  document.getElementById('wordList').innerHTML = words.map((w,i) => `
+  const searchEl = document.getElementById('adminWordSearch');
+  const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
+  const filtered = query
+    ? words.filter(w =>
+        w.chechen.toLowerCase().includes(query) ||
+        w.russian.toLowerCase().includes(query) ||
+        (w.category||'').toLowerCase().includes(query) ||
+        (w.transcription||'').toLowerCase().includes(query))
+    : words;
+  document.getElementById('wordCountAdmin').textContent = filtered.length + (query ? ` из ${words.length}` : '');
+  document.getElementById('wordList').innerHTML = filtered.map(w => {
+    const i = words.indexOf(w);
+    return `
     <div class="word-row">
-      <div class="word-row-text"><div class="word-row-ch">${w.chechen}</div><div class="word-row-ru">${w.russian} · ${w.category}</div></div>
+      <div class="word-row-text">
+        <div class="word-row-ch">${w.chechen}</div>
+        <div class="word-row-ru">${w.russian} · <span style="color:var(--blue);font-size:11px">${w.category}</span></div>
+        <div style="font-size:11px;color:var(--muted)">${w.transcription||''}</div>
+      </div>
       <button class="delete-btn" onclick="deleteWord(${i})">✕</button>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 // ---- LEADERBOARD ----
