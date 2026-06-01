@@ -708,6 +708,12 @@ select.text-input option { background:var(--surface); }
 </style>
 </head>
 <body>
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  console.log('JS Error:', msg, 'Line:', line);
+  return false;
+};
+</script>
 
 <!-- REGISTER -->
 <div id="registerScreen">
@@ -1790,7 +1796,7 @@ function setLang(lang) {
   localStorage.setItem('appLang', lang);
   // Update active button
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('lang-' + lang)?.classList.add('active');
+  var _lb = document.getElementById('lang-' + lang); if(_lb) _lb.classList.add('active');
   // Update all text
   const t = LANGS[lang];
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
@@ -2206,7 +2212,7 @@ async function renderFriends() {
             <div class="friend-avatar">${f.avatar ? `<img src="${f.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
             <div class="friend-info">
               <div class="friend-name">${f.name||'Игрок'}</div>
-              <div class="friend-score">${f.country||''} · ${f.stats?.totalScore||0} очков</div>
+              <div class="friend-score">${f.country||''} · ${(f.stats ? f.stats.totalScore : 0)||0} очков</div>
             </div>
           </div>
         `;
@@ -2483,10 +2489,10 @@ async function viewPlayerProfile(uid) {
     const snap = await db.ref(`users/${uid}`).get();
     if (!snap.exists()) return;
     const u = snap.val();
-    const myUid = auth.currentUser?.uid;
+    const myUid = (auth.currentUser ? auth.currentUser.uid : null);
     const followSnap = myUid ? await db.ref(`users/${myUid}/following/${uid}`).get() : null;
-    const isFollowing = followSnap?.exists();
-    const league = LEAGUES.find(l => (u.stats?.totalScore||0) >= l.min && (u.stats?.totalScore||0) <= l.max) || LEAGUES[0];
+    const isFollowing = (followSnap ? followSnap.exists() : false);
+    const league = LEAGUES.find(l => ((u.stats ? u.stats.totalScore : 0)||0) >= l.min && ((u.stats ? u.stats.totalScore : 0)||0) <= l.max) || LEAGUES[0];
 
     // Count followers and following
     const allUsersSnap = await db.ref('users').get();
@@ -2530,17 +2536,17 @@ async function viewPlayerProfile(uid) {
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
         <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
           <div style="font-size:20px">⚡</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${u.stats?.totalScore||0}</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${(u.stats ? u.stats.totalScore : 0)||0}</div>
           <div style="font-size:10px;color:var(--muted)">ОЧКОВ</div>
         </div>
         <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
           <div style="font-size:20px">🎮</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${u.stats?.games||0}</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${(u.stats ? u.stats.games : 0)||0}</div>
           <div style="font-size:10px;color:var(--muted)">ИГР</div>
         </div>
         <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
           <div style="font-size:20px">🔥</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--gold);font-weight:700">${u.stats?.dayStreak||0}</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--gold);font-weight:700">${(u.stats ? u.stats.dayStreak : 0)||0}</div>
           <div style="font-size:10px;color:var(--muted)">СЕРИЯ</div>
         </div>
       </div>
@@ -2587,10 +2593,10 @@ async function showFollowers(uid) {
     const allSnap = await db.ref('users').get();
     if (!allSnap.exists()) return;
     const allUsers = allSnap.val();
-    const myUid = auth.currentUser?.uid;
+    const myUid = (auth.currentUser ? auth.currentUser.uid : null);
     const followers = Object.entries(allUsers).filter(([fuid, u]) => u.following && u.following[uid]);
     const followSnaps = myUid ? await db.ref(`users/${myUid}/following`).get() : null;
-    const myFollowing = followSnaps?.exists() ? followSnaps.val() : {};
+    const myFollowing = (followSnaps ? followSnaps.exists() : false) ? followSnaps.val() : {};
     document.getElementById('followersList').innerHTML = followers.length === 0
       ? '<div style="text-align:center;padding:20px;color:var(--muted)">Подписчиков пока нет</div>'
       : followers.map(([fuid, u]) => `
@@ -2598,7 +2604,7 @@ async function showFollowers(uid) {
           <div class="player-avatar">${u.avatar?`<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'👤'}</div>
           <div class="player-info">
             <div class="player-name">${u.name||'Игрок'}</div>
-            <div class="player-stats">${u.country||''} · ${u.stats?.totalScore||0} очков</div>
+            <div class="player-stats">${u.country||''} · ${(u.stats ? u.stats.totalScore : 0)||0} очков</div>
           </div>
           ${myUid && myUid !== fuid ? `<button class="follow-btn ${myFollowing[fuid]?'following':''}" onclick="event.stopPropagation();toggleFollow('${fuid}','${myUid}',this)">${myFollowing[fuid]?'✓':'+'}</button>` : ''}
         </div>
@@ -2622,9 +2628,9 @@ async function showFollowing(uid) {
       return;
     }
     const following = snap.val();
-    const myUid = auth.currentUser?.uid;
+    const myUid = (auth.currentUser ? auth.currentUser.uid : null);
     const myFollowSnap = myUid ? await db.ref(`users/${myUid}/following`).get() : null;
-    const myFollowing = myFollowSnap?.exists() ? myFollowSnap.val() : {};
+    const myFollowing = (myFollowSnap ? myFollowSnap.exists() : false) ? myFollowSnap.val() : {};
     let html = '';
     for (const fuid of Object.keys(following)) {
       const usnap = await db.ref(`users/${fuid}`).get();
@@ -2635,7 +2641,7 @@ async function showFollowing(uid) {
             <div class="player-avatar">${u.avatar?`<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'👤'}</div>
             <div class="player-info">
               <div class="player-name">${u.name||'Игрок'}</div>
-              <div class="player-stats">${u.country||''} · ${u.stats?.totalScore||0} очков</div>
+              <div class="player-stats">${u.country||''} · ${(u.stats ? u.stats.totalScore : 0)||0} очков</div>
             </div>
             ${myUid && myUid !== fuid ? `<button class="follow-btn ${myFollowing[fuid]?'following':''}" onclick="event.stopPropagation();toggleFollow('${fuid}','${myUid}',this)">${myFollowing[fuid]?'✓':'+'}</button>` : ''}
           </div>
@@ -2842,7 +2848,7 @@ async function renderLeagues() {
       : players.map((p,i) => `
         <div class="lb-row">
           <div class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
-          <div class="lb-flag">${p.country?.split(' ')[0]||'🌍'}</div>
+          <div class="lb-flag">${(p.country ? p.country.split(' ')[0] : '🌍')}</div>
           <div class="lb-info"><div class="lb-name">${p.name}</div><div class="lb-country">${p.country||''}</div></div>
           <div class="lb-score">${p.score}</div>
         </div>
@@ -3131,7 +3137,7 @@ function renderPlayerCards(players, following, myUid, containerId) {
       <div class="player-avatar" onclick="viewPlayerProfile('${uid}')" style="cursor:pointer">${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
       <div class="player-info" onclick="viewPlayerProfile('${uid}')" style="cursor:pointer">
         <div class="player-name">${u.name||'Игрок'}</div>
-        <div class="player-stats">${u.country||''} · ${u.stats?.totalScore||0} очков · ${u.stats?.games||0} игр</div>
+        <div class="player-stats">${u.country||''} · ${(u.stats ? u.stats.totalScore : 0)||0} очков · ${(u.stats ? u.stats.games : 0)||0} игр</div>
       </div>
       <button class="follow-btn ${following[uid]?'following':''}" id="follow-${uid}" onclick="toggleFollow('${uid}','${myUid}',this)">
         ${following[uid] ? '✓' : '+'}
@@ -3149,7 +3155,7 @@ function renderFollowing(players, following, myUid) {
         <div class="player-avatar">${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
         <div class="player-info">
           <div class="player-name">${u.name||'Игрок'}</div>
-          <div class="player-stats">${u.country||''} · ${u.stats?.totalScore||0} очков</div>
+          <div class="player-stats">${u.country||''} · ${(u.stats ? u.stats.totalScore : 0)||0} очков</div>
         </div>
         <button class="follow-btn following" onclick="toggleFollow('${uid}','${myUid}',this)">✓ Подписан</button>
       </div>
@@ -3183,7 +3189,7 @@ async function searchPlayers(query) {
     const followSnap = await db.ref(`users/${user.uid}/following`).get();
     const following = followSnap.exists() ? followSnap.val() : {};
     const filtered = Object.entries(users)
-      .filter(([uid, u]) => uid !== user.uid && u.name?.toLowerCase().includes(query.toLowerCase()));
+      .filter(([uid, u]) => uid !== user.uid && (u.name ? u.name.toLowerCase().includes(query.toLowerCase()) : false));
     renderPlayerCards(filtered, following, user.uid, 'playersList');
   } catch(e) {}
 }
@@ -3409,7 +3415,7 @@ async function getAIHint(chechenWord, russianWord) {
       })
     });
     const data = await response.json();
-    const text = data.content?.[0]?.text || 'Не удалось получить подсказку';
+    const text = (data.content && data.content[0] && data.content[0].text ? data.content[0].text : 'Не удалось получить подсказку');
     hintEl.innerHTML = `
       <div style="background:rgba(45,107,228,0.1);border:1px solid rgba(45,107,228,0.3);border-radius:12px;padding:12px 14px;margin-top:12px">
         <div style="font-size:11px;color:var(--blue2);font-family:'Unbounded',sans-serif;letter-spacing:1px;margin-bottom:6px">🤖 AI ПОДСКАЗКА</div>
@@ -3710,7 +3716,7 @@ function renderCard() {
     `;
     card.dataset.askChechen=askChechen; card.dataset.mode='translate';
     document.getElementById('actionBtn').style.display='block';
-    setTimeout(()=>document.getElementById('answerInput')?.focus(),100);
+    setTimeout(()=>var _ai=document.getElementById('answerInput');if(_ai)_ai.focus();},100);
 
   } else if (currentMode==='choice') {
     const pool = getWordPool();
@@ -3946,4 +3952,3 @@ auth.onAuthStateChanged(async (user) => {
 
 </body>
 </html>
- 
