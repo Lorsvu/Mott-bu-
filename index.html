@@ -58,9 +58,12 @@ body {
 /* APP SHELL */
 #appShell {
   position:fixed; inset:0;
-  display:flex; flex-direction:column;
+  display:none; flex-direction:column;
   max-width:420px; margin:0 auto;
   background:var(--bg);
+}
+#appShell.visible {
+  display:flex;
 }
 
 /* FIXED TOP HEADER */
@@ -154,10 +157,10 @@ body {
   position:fixed; inset:0; z-index:100;
   background:var(--bg);
   overflow-y:auto;
-  display:none;
+  display:block;
   width:100%;
 }
-#registerScreen.active { display:block; }
+#registerScreen.hidden { display:none; }
 #registerScreen > div { max-width:420px; margin:0 auto; padding:20px 16px 80px; }
 .reg-content { padding:20px 16px 40px; }
 
@@ -664,7 +667,7 @@ select.text-input option { background:var(--surface); }
 <body>
 
 <!-- REGISTER -->
-<div id="registerScreen" class="active">
+<div id="registerScreen">
   <div style="max-width:420px;margin:0 auto;padding:20px 16px 80px">
   <header>
     <svg class="app-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
@@ -762,7 +765,7 @@ select.text-input option { background:var(--surface); }
 </div>
 
 <!-- GAME SCREEN - NEW APP SHELL -->
-<div id="appShell" style="display:none">
+<div id="appShell">
 
   <!-- FIXED TOP BAR -->
   <div id="topBar">
@@ -1312,8 +1315,8 @@ async function saveUserProfile() {
 
 function enterGame() {
   // Switch from register to app shell
-  document.getElementById('registerScreen').classList.remove('active');
-  document.getElementById('appShell').style.display = 'flex';
+  document.getElementById('registerScreen').classList.add('hidden');
+  document.getElementById('appShell').style.display = ''; document.getElementById('appShell').classList.add('visible');
 
   // Update greeting in top bar
   const greetEl = document.getElementById('playerGreeting');
@@ -1404,8 +1407,8 @@ function showTrialBanner() {
 }
 
 function showTrialOver() {
-  document.getElementById('registerScreen').classList.remove('active');
-  document.getElementById('appShell').style.display = 'flex';
+  document.getElementById('registerScreen').classList.add('hidden');
+  document.getElementById('appShell').style.display = ''; document.getElementById('appShell').classList.add('visible');
   document.getElementById('gameTab').innerHTML = `
     <div style="text-align:center;padding:40px 20px">
       <div style="font-size:64px;margin-bottom:16px">🏔️</div>
@@ -1946,8 +1949,8 @@ async function switchAccount() {
     await auth.signOut();
     playerName = ''; playerCountry = '';
     localStorage.removeItem('trialStart');
-    document.getElementById('appShell').style.display = 'none';
-    document.getElementById('registerScreen').classList.add('active');
+    document.getElementById('appShell').classList.remove('visible');
+    document.getElementById('registerScreen').classList.remove('hidden');
   } catch(e) { alert('Ошибка: ' + e.message); }
 }
 
@@ -1959,15 +1962,15 @@ async function deleteAccount() {
     if (user) { await db.ref(`users/${user.uid}`).remove(); await user.delete(); }
     playerName = ''; playerCountry = '';
     localStorage.removeItem('trialStart');
-    document.getElementById('appShell').style.display = 'none';
-    document.getElementById('registerScreen').classList.add('active');
+    document.getElementById('appShell').classList.remove('visible');
+    document.getElementById('registerScreen').classList.remove('hidden');
     alert('Аккаунт удалён.');
   } catch(e) {
     if (e.code === 'auth/requires-recent-login') {
       alert('Нужно заново войти для удаления.');
       await auth.signOut();
-      document.getElementById('appShell').style.display = 'none';
-      document.getElementById('registerScreen').classList.add('active');
+      document.getElementById('appShell').classList.remove('visible');
+      document.getElementById('registerScreen').classList.remove('hidden');
     } else { alert('Ошибка: ' + e.message); }
   }
 }
@@ -3264,4 +3267,3 @@ function restartGame() {
 
 </body>
 </html>
- 
