@@ -10,306 +10,227 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MOTT_bu">
 <link rel="apple-touch-icon" href="IMG_4739.jpeg">
-<meta name="theme-color" content="#f7f7f7">
+<meta name="theme-color" content="#f4f6fb">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script>
-firebase.initializeApp({
-  apiKey: "AIzaSyCggYrJeGm_gf1laNiFl0VRjgd2M4KNDro",
-  authDomain: "mott-bu-d1633.firebaseapp.com",
-  databaseURL: "https://mott-bu-d1633-default-rtdb.firebaseio.com",
-  projectId: "mott-bu-d1633",
-  storageBucket: "mott-bu-d1633.appspot.com",
-  messagingSenderId: "56719636643"
-});
-var fAuth = firebase.auth();
-var fDb = firebase.database();
+// Firebase Realtime DB via REST only (no SDK needed)
+var FB_URL = "https://mott-bu-d1633-default-rtdb.firebaseio.com";
 var db = {
   ref: function(p) {
+    var url = FB_URL + "/" + p + ".json";
     return {
       get: function() {
-        return fDb.ref(p).once("value").then(function(s){
-          return {exists:function(){return s.exists();},val:function(){return s.val();}};
+        return fetch(url).then(function(r){return r.json();}).then(function(d){
+          return {exists:function(){return d!==null;},val:function(){return d;}};
         }).catch(function(){return {exists:function(){return false;},val:function(){return null;}};});
       },
-      set: function(d){return fDb.ref(p).set(d).catch(function(){});},
-      update: function(d){return fDb.ref(p).update(d).catch(function(){});}
+      set: function(d){return fetch(url,{method:"PUT",body:JSON.stringify(d),headers:{"Content-Type":"application/json"}}).catch(function(){});},
+      update: function(d){return fetch(url,{method:"PATCH",body:JSON.stringify(d),headers:{"Content-Type":"application/json"}}).catch(function(){});}
     };
   }
 };
 </script>
 <style>
 :root{
-  --bg:#f4f6fb;
-  --surface:#ffffff;
-  --card:#ffffff;
-  --border:#e8eaf0;
-  --blue:#1cb0f6;
-  --blue2:#45c0f8;
-  --white:#2d2d2d;
-  --muted:#9aa0b0;
-  --red:#ff4b4b;
-  --green:#58cc02;
-  --gold:#ffc800;
-  --shadow:0 2px 12px rgba(0,0,0,0.07);
-  --radius:16px;
+  --bg:#f4f6fb;--surface:#fff;--card:#fff;--border:#e8eaf0;
+  --blue:#1cb0f6;--blue2:#45c0f8;--white:#2d2d2d;--muted:#9aa0b0;
+  --red:#ff4b4b;--green:#58cc02;--gold:#ffc800;
+  --shadow:0 2px 12px rgba(0,0,0,.07);--r:16px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);}
 body{font-family:'Manrope',sans-serif;color:var(--white);}
 
-/* APP SHELL */
 #app{position:fixed;inset:0;display:none;flex-direction:column;max-width:430px;margin:0 auto;background:var(--bg);}
 #app.on{display:flex;}
 
-/* TOP BAR */
-#topBar{
-  flex-shrink:0;background:var(--surface);
-  border-bottom:1.5px solid var(--border);
-  padding:10px 16px;
-  display:flex;align-items:center;justify-content:space-between;
-  box-shadow:0 1px 8px rgba(0,0,0,0.04);
-  padding-top:max(10px,env(safe-area-inset-top));
-}
-.top-logo{font-family:'Unbounded',sans-serif;font-size:17px;font-weight:900;color:var(--blue);}
-#topGreeting{font-size:11px;color:var(--muted);font-family:'Unbounded',sans-serif;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#topScore{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--blue);}
-#menuBtn{background:none;border:none;cursor:pointer;font-size:22px;color:var(--muted);padding:4px 6px;line-height:1;border-radius:8px;}
-#menuBtn:active{background:var(--bg);}
+#topBar{flex-shrink:0;background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 6px rgba(0,0,0,.04);padding-top:max(10px,env(safe-area-inset-top));}
+.tlogo{font-family:'Unbounded',sans-serif;font-size:17px;font-weight:900;color:var(--blue);}
+#tGreet{font-size:11px;color:var(--muted);font-family:'Unbounded',sans-serif;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#tScore{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--blue);}
+#mBtn{background:none;border:none;cursor:pointer;font-size:22px;color:var(--muted);padding:4px 6px;line-height:1;border-radius:8px;}
 
-/* CONTENT */
 #content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
-.page{display:none;padding:14px 14px 20px;min-height:100%;animation:fadeUp .22s ease;}
-.page.on{display:block;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.pg{display:none;padding:14px 14px 20px;min-height:100%;animation:fu .22s ease;}
+.pg.on{display:block;}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-/* BOTTOM NAV — 4 кнопки */
-#nav{
-  flex-shrink:0;background:var(--surface);
-  border-top:1.5px solid var(--border);
-  display:grid;grid-template-columns:repeat(4,1fr);
-  padding:6px 4px;
-  padding-bottom:max(8px,env(safe-area-inset-bottom));
-  box-shadow:0 -1px 8px rgba(0,0,0,0.04);
-}
-.nb{
-  display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:6px 4px;border:none;background:transparent;cursor:pointer;
-  border-radius:12px;transition:background .15s;color:var(--muted);
-}
+#nav{flex-shrink:0;background:var(--surface);border-top:1.5px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 4px;padding-bottom:max(8px,env(safe-area-inset-bottom));box-shadow:0 -1px 6px rgba(0,0,0,.04);}
+.nb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border:none;background:transparent;cursor:pointer;border-radius:12px;color:var(--muted);}
 .nb:active{background:var(--bg);}
 .nb.on{color:var(--blue);}
 .nb .ni{font-size:22px;line-height:1;}
-.nb .nl{font-family:'Unbounded',sans-serif;font-size:8px;font-weight:700;letter-spacing:.3px;margin-top:1px;}
+.nb .nl{font-family:'Unbounded',sans-serif;font-size:8px;font-weight:700;}
 
 /* REGISTER */
 #reg{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;}
 #reg.off{display:none;}
-.reg-wrap{max-width:430px;margin:0 auto;padding:20px 16px 80px;}
+.rw{max-width:430px;margin:0 auto;padding:20px 16px 80px;}
 
 /* CARDS */
-.card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
-.card-accent{position:relative;overflow:hidden;}
-.card-accent::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--blue2));}
+.card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);}
+.ca::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--blue2));}
+.ca{position:relative;overflow:hidden;}
 
 /* BUTTONS */
-.btn{display:block;width:100%;padding:15px;border:none;border-radius:14px;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;letter-spacing:.8px;cursor:pointer;transition:transform .1s,box-shadow .1s;text-align:center;text-transform:uppercase;position:relative;top:0;}
-.btn-blue{background:var(--blue);color:#fff;box-shadow:0 5px 0 #0096d6;margin-bottom:10px;}
-.btn-blue:active{top:3px;box-shadow:0 2px 0 #0096d6;}
-.btn-gray{background:var(--surface);color:var(--white);border:2px solid var(--border);box-shadow:0 4px 0 var(--border);margin-bottom:10px;}
-.btn-gray:active{top:2px;box-shadow:0 2px 0 var(--border);}
-.btn-google{background:#fff;color:#333;border:2px solid #e0e0e0;box-shadow:0 4px 0 #d0d0d0;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;padding:15px;border-radius:14px;cursor:pointer;width:100%;position:relative;top:0;transition:top .1s,box-shadow .1s;}
-.btn-google:active{top:3px;box-shadow:0 1px 0 #d0d0d0;}
+.btn{display:block;width:100%;padding:15px;border:none;border-radius:14px;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;letter-spacing:.8px;cursor:pointer;text-align:center;text-transform:uppercase;position:relative;top:0;transition:top .1s,box-shadow .1s;}
+.bb{background:var(--blue);color:#fff;box-shadow:0 5px 0 #0096d6;margin-bottom:10px;}
+.bb:active{top:3px;box-shadow:0 2px 0 #0096d6;}
+.bg{background:var(--surface);color:var(--white);border:2px solid var(--border);box-shadow:0 4px 0 var(--border);margin-bottom:10px;}
+.bg:active{top:2px;box-shadow:0 2px 0 var(--border);}
 
-/* INPUTS */
+.gBtn{background:#fff;color:#333;border:2px solid #e0e0e0;box-shadow:0 4px 0 #d0d0d0;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;padding:15px;border-radius:14px;cursor:pointer;width:100%;position:relative;top:0;transition:top .1s,box-shadow .1s;}
+.gBtn:active{top:3px;box-shadow:0 1px 0 #d0d0d0;}
+
 .inp{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:13px 15px;color:var(--white);font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:border-color .2s;}
-.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(28,176,246,.12);}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(28,176,246,.1);}
 .lbl{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;margin-top:18px;font-family:'Unbounded',sans-serif;display:block;}
 .lbl:first-child{margin-top:0;}
 
-/* LANG BUTTONS */
-.lang-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
-.lang-btn{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s;box-shadow:0 3px 0 var(--border);}
-.lang-btn.on{border-color:var(--blue);background:#e8f7fe;box-shadow:0 3px 0 var(--blue);}
-.lang-btn:active{transform:translateY(2px);box-shadow:none;}
+.lg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.lb2{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s;box-shadow:0 3px 0 var(--border);}
+.lb2.on{border-color:var(--blue);background:#e8f7fe;box-shadow:0 3px 0 var(--blue);}
+.lb2:active{transform:translateY(2px);box-shadow:none;}
 
-/* GOAL */
-.goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
-.goal-item{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;}
-.goal-item.on{border-color:var(--blue);background:#e8f7fe;}
+.gg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+.gi2{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:border-color .2s;}
+.gi2.on{border-color:var(--blue);background:#e8f7fe;}
 
 /* PROGRESS */
-.prog-bar{height:6px;background:var(--border);border-radius:4px;overflow:hidden;}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:4px;transition:width .4s ease;}
+.pb{height:6px;background:var(--border);border-radius:4px;overflow:hidden;}
+.pf{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:4px;transition:width .4s ease;}
 
-/* GAME CARD */
-.game-card{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:24px 20px;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:var(--shadow);}
-.game-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--blue2));}
-
-/* CHOICES */
+/* GAME */
+.gc{background:var(--card);border:2px solid var(--border);border-radius:20px;padding:22px 18px;margin-bottom:12px;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+.gc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--blue2));}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
-.ch-btn{padding:14px 8px;background:var(--surface);border:2px solid var(--border);border-radius:12px;color:var(--white);font-family:'Manrope',sans-serif;font-size:14px;cursor:pointer;transition:all .12s;text-align:center;line-height:1.3;font-weight:600;box-shadow:0 3px 0 var(--border);}
-.ch-btn:active:not(:disabled){transform:translateY(1px);box-shadow:none;}
-.ch-btn.ok{background:#d7ffb2;border-color:var(--green);color:#2d7a00;box-shadow:0 3px 0 #3d9900;}
-.ch-btn.no{background:#ffdfe0;border-color:var(--red);color:#aa0000;box-shadow:0 3px 0 #aa0000;}
-
-/* FEEDBACK */
-.fb{display:none;text-align:center;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:700;margin-bottom:12px;border:2px solid;}
+.cb{padding:13px 8px;background:var(--surface);border:2px solid var(--border);border-radius:12px;color:var(--white);font-family:'Manrope',sans-serif;font-size:14px;cursor:pointer;text-align:center;line-height:1.3;font-weight:600;box-shadow:0 3px 0 var(--border);transition:all .1s;}
+.cb:active:not(:disabled){transform:translateY(1px);box-shadow:none;}
+.cb.ok{background:#d7ffb2;border-color:var(--green);color:#2d7a00;box-shadow:0 3px 0 #3d9900;}
+.cb.no{background:#ffdfe0;border-color:var(--red);color:#aa0000;box-shadow:0 3px 0 #aa0000;}
+.fb{display:none;text-align:center;padding:12px;border-radius:12px;font-size:14px;font-weight:700;margin-bottom:12px;border:2px solid;}
 .fb.ok{display:block;background:#d7ffb2;border-color:var(--green);color:#2d7a00;}
 .fb.no{display:block;background:#ffdfe0;border-color:var(--red);color:#aa0000;}
 
-/* SPEAK BTN */
-.spk{display:inline-flex;align-items:center;gap:5px;background:rgba(28,176,246,.1);border:1px solid rgba(28,176,246,.25);color:var(--blue);padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;margin-top:10px;font-family:'Manrope',sans-serif;font-weight:600;}
-.spk:active{background:rgba(28,176,246,.2);}
+.spk{display:inline-flex;align-items:center;gap:5px;background:rgba(28,176,246,.1);border:1px solid rgba(28,176,246,.25);color:var(--blue);padding:6px 13px;border-radius:20px;font-size:12px;cursor:pointer;margin-top:8px;font-family:'Manrope',sans-serif;font-weight:600;}
 
-/* SCRAMBLE */
-.scr-ans{min-height:44px;background:rgba(0,0,0,.03);border:1.5px dashed var(--border);border-radius:12px;padding:10px;text-align:center;font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;color:var(--white);margin-top:14px;margin-bottom:10px;letter-spacing:2px;}
-.scr-pool{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
-.l-btn{width:36px;height:36px;background:var(--surface);color:var(--white);border:1.5px solid var(--border);border-radius:8px;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s;}
-.l-btn:active:not(:disabled){background:var(--blue);color:#fff;border-color:var(--blue);}
-.l-btn:disabled{opacity:.2;cursor:default;}
+.sa{min-height:42px;background:rgba(0,0,0,.03);border:1.5px dashed var(--border);border-radius:12px;padding:10px;text-align:center;font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;color:var(--white);margin-top:12px;margin-bottom:8px;letter-spacing:2px;}
+.sp{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.lb3{width:35px;height:35px;background:var(--surface);color:var(--white);border:1.5px solid var(--border);border-radius:8px;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.lb3:active:not(:disabled){background:var(--blue);color:#fff;}
+.lb3:disabled{opacity:.2;cursor:default;}
 
-/* MODE CARDS */
-.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-.mode-card{background:var(--card);border:2px solid var(--border);border-radius:18px;padding:16px 10px;text-align:center;cursor:pointer;box-shadow:0 4px 0 var(--border);transition:transform .1s,box-shadow .1s;user-select:none;}
-.mode-card:active{transform:translateY(3px);box-shadow:0 1px 0 var(--border);}
-.mode-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 8px;}
-.mode-name{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:900;color:var(--white);margin-bottom:3px;}
-.mode-desc{font-size:10px;color:var(--muted);line-height:1.3;}
+/* MODE */
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.mc{background:var(--card);border:2px solid var(--border);border-radius:18px;padding:15px 10px;text-align:center;cursor:pointer;box-shadow:0 4px 0 var(--border);user-select:none;}
+.mc:active{transform:translateY(3px);box-shadow:0 1px 0 var(--border);}
+.mi{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 7px;}
+.mn{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:900;color:var(--white);margin-bottom:2px;}
+.md{font-size:10px;color:var(--muted);line-height:1.3;}
 
 /* WOD */
-.wod{background:linear-gradient(135deg,rgba(28,176,246,.15),rgba(69,192,248,.08));border:1.5px solid rgba(28,176,246,.25);border-radius:18px;padding:18px 20px;margin-bottom:14px;position:relative;overflow:hidden;}
+.wod{background:linear-gradient(135deg,rgba(28,176,246,.14),rgba(69,192,248,.07));border:1.5px solid rgba(28,176,246,.25);border-radius:18px;padding:16px 18px;margin-bottom:12px;position:relative;overflow:hidden;}
 .wod::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--blue2));}
-.wod-lbl{font-family:'Unbounded',sans-serif;font-size:9px;letter-spacing:2px;color:var(--blue);margin-bottom:8px;}
-.wod-word{font-family:'Unbounded',sans-serif;font-size:26px;font-weight:900;color:var(--white);}
-.wod-tr{font-size:14px;color:var(--muted);margin-top:3px;}
-
-/* LEADERBOARD */
-.lb-row{display:flex;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);gap:10px;}
-.lb-row:last-child{border-bottom:none;}
-.lb-rank{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--muted);width:26px;text-align:center;}
-.lb-name{flex:1;font-size:14px;font-weight:600;color:var(--white);}
-.lb-sc{font-family:'Unbounded',sans-serif;font-size:13px;color:var(--blue);font-weight:700;}
 
 /* RESULT */
-.result{text-align:center;padding:32px 20px;}
-.res-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;}
-.res-stat{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px;}
-.res-val{font-family:'Unbounded',sans-serif;font-size:24px;color:var(--blue);}
-.res-lbl{font-size:10px;color:var(--muted);margin-top:3px;}
+.rs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0;}
+.rst{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:13px;text-align:center;}
 
-/* FLASH CARD */
-#flashcard{background:var(--card);border:2px solid var(--border);border-radius:22px;padding:26px 18px;text-align:center;min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 5px 0 var(--border);transition:transform .1s,box-shadow .1s;position:relative;overflow:hidden;user-select:none;margin-bottom:14px;}
-#flashcard:active{transform:scale(.97);box-shadow:0 2px 0 var(--border);}
+/* FLASHCARD */
+#fc{background:var(--card);border:2px solid var(--border);border-radius:22px;padding:24px 16px;text-align:center;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 5px 0 var(--border);position:relative;overflow:hidden;user-select:none;margin-bottom:12px;}
+#fc:active{transform:scale(.97);box-shadow:0 2px 0 var(--border);}
 
-/* LEARN CATEGORIES */
-.cat-item{background:var(--card);border:2px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:10px;cursor:pointer;box-shadow:0 4px 0 var(--border);display:flex;align-items:center;transition:transform .1s,box-shadow .1s;}
-.cat-item:active{transform:translateY(3px);box-shadow:0 1px 0 var(--border);}
-.cat-ic{width:76px;height:68px;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;}
+/* CAT ITEM */
+.ci{background:var(--card);border:2px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:10px;cursor:pointer;box-shadow:0 4px 0 var(--border);display:flex;align-items:center;}
+.ci:active{transform:translateY(3px);box-shadow:0 1px 0 var(--border);}
 
-/* BATTLE */
-.battle-score-box{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:12px;text-align:center;box-shadow:var(--shadow);}
-
-/* TOGGLE */
-.toggle{position:relative;display:inline-block;width:48px;height:26px;}
-.toggle input{opacity:0;width:0;height:0;}
-.tslider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:26px;transition:.3s;}
-.tslider:before{content:'';position:absolute;width:20px;height:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
-.toggle input:checked+.tslider{background:var(--blue);}
-.toggle input:checked+.tslider:before{transform:translateX(22px);}
+/* LB */
+.lr{display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);gap:10px;}
+.lr:last-child{border-bottom:none;}
 
 /* MENU SHEET */
-.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:400;display:flex;align-items:flex-end;justify-content:center;}
-.sheet{background:var(--bg);border-radius:24px 24px 0 0;padding:16px 16px 32px;width:100%;max-width:430px;animation:sheetUp .25s ease;}
-@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
-.sheet-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
-.sg-btn{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;box-shadow:0 3px 0 var(--border);transition:transform .1s;}
-.sg-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--border);}
-.sg-ic{font-size:24px;margin-bottom:5px;}
-.sg-lb{font-family:'Unbounded',sans-serif;font-size:8px;color:var(--white);font-weight:700;}
+.sov{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:400;display:flex;align-items:flex-end;justify-content:center;}
+.sh{background:var(--bg);border-radius:24px 24px 0 0;padding:14px 14px 28px;width:100%;max-width:430px;animation:su .22s ease;}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sh-h{width:34px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;}
+.sb2{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:13px 8px;text-align:center;cursor:pointer;box-shadow:0 3px 0 var(--border);}
+.sb2:active{transform:translateY(2px);box-shadow:0 1px 0 var(--border);}
 
-/* CAT TABS */
-.cat-tabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:none;}
-.cat-tabs::-webkit-scrollbar{display:none;}
-.ct{flex-shrink:0;padding:6px 13px;background:var(--surface);border:1.5px solid var(--border);border-radius:20px;color:var(--muted);font-size:11px;cursor:pointer;font-weight:600;transition:all .15s;}
-.ct.on{background:rgba(28,176,246,.15);border-color:var(--blue);color:var(--blue);}
+/* TOGGLE */
+.tg{position:relative;display:inline-block;width:48px;height:26px;}
+.tg input{opacity:0;width:0;height:0;}
+.ts{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:26px;transition:.3s;}
+.ts:before{content:'';position:absolute;width:20px;height:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.tg input:checked+.ts{background:var(--blue);}
+.tg input:checked+.ts:before{transform:translateX(22px);}
 
 /* MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
-.modal{background:var(--card);border-radius:20px;padding:26px 22px;width:100%;max-width:340px;position:relative;overflow:hidden;}
-.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--blue2));}
-.modal-title{font-family:'Unbounded',sans-serif;font-size:15px;color:var(--blue);margin-bottom:16px;text-align:center;}
+.mover{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+.mod{background:var(--card);border-radius:20px;padding:24px 20px;width:100%;max-width:340px;position:relative;overflow:hidden;}
+.mod::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--blue2));}
 
-/* PROFILE */
-.prof-avatar{width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#0096d6);display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto;border:3px solid var(--border);overflow:hidden;}
-.prof-stat{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;box-shadow:var(--shadow);}
-.prof-stat-val{font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700;}
-.prof-stat-lbl{font-size:9px;color:var(--muted);margin-top:3px;font-family:'Unbounded',sans-serif;}
-
-/* MENU ROW */
-.menu-row{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;}
-.menu-row:last-child{border-bottom:none;}
-.menu-row:active{background:var(--bg);}
-
-/* SPINNER */
-.spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:rot .7s linear infinite;}
-@keyframes rot{to{transform:rotate(360deg)}}
-
-/* SECTION TITLE */
-.sec-title{font-family:'Unbounded',sans-serif;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;}
+/* CAT TABS */
+.ct2{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;scrollbar-width:none;}
+.ct2::-webkit-scrollbar{display:none;}
+.ct3{flex-shrink:0;padding:5px 12px;background:var(--surface);border:1.5px solid var(--border);border-radius:20px;color:var(--muted);font-size:11px;cursor:pointer;font-weight:600;}
+.ct3.on{background:rgba(28,176,246,.14);border-color:var(--blue);color:var(--blue);}
 
 /* PROG DOTS */
-.pdots{display:flex;justify-content:center;gap:5px;margin-top:14px;flex-wrap:wrap;}
+.pd{display:flex;justify-content:center;gap:5px;margin-top:12px;flex-wrap:wrap;}
 
-/* WORD ROW */
-.word-row-item{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);}
+/* PROFILE */
+.pav{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#0096d6);display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto;border:3px solid var(--border);overflow:hidden;}
+.pst{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:13px 8px;text-align:center;box-shadow:var(--shadow);}
+.mr{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;}
+.mr:last-child{border-bottom:none;}
+.mr:active{background:var(--bg);}
+
+.spin{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:rot .7s linear infinite;}
+@keyframes rot{to{transform:rotate(360deg)}}
+.st{font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;}
+.wri{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);}
 </style>
 </head>
 <body>
 
 <!-- REGISTER -->
 <div id="reg">
-<div class="reg-wrap">
-
-  <div style="text-align:center;padding:28px 0 18px">
-    <div style="font-family:'Unbounded',sans-serif;font-size:30px;font-weight:900;color:var(--blue)">MOTT_bu</div>
-    <div style="font-family:'Unbounded',sans-serif;font-size:10px;color:var(--muted);letter-spacing:3px;margin-top:4px" id="r-sub">УЧИ ЧЕЧЕНСКИЙ</div>
+<div class="rw">
+  <div style="text-align:center;padding:26px 0 16px">
+    <div style="font-family:'Unbounded',sans-serif;font-size:28px;font-weight:900;color:var(--blue)">MOTT_bu</div>
+    <div style="font-family:'Unbounded',sans-serif;font-size:10px;color:var(--muted);letter-spacing:3px;margin-top:4px" id="rSub">УЧИ ЧЕЧЕНСКИЙ</div>
   </div>
 
-  <!-- Lang -->
-  <div style="font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:8px" id="r-ll">ТВОЙ ЯЗЫК</div>
-  <div class="lang-grid">
-    <div onclick="setLang('ru')" id="lang-ru" class="lang-btn on"><div style="font-size:24px">🇷🇺</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px;color:var(--white)">РУС</div></div>
-    <div onclick="setLang('en')" id="lang-en" class="lang-btn"><div style="font-size:24px">🇬🇧</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px;color:var(--white)">ENG</div></div>
-    <div onclick="setLang('de')" id="lang-de" class="lang-btn"><div style="font-size:24px">🇩🇪</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px;color:var(--white)">DEU</div></div>
-    <div onclick="setLang('fr')" id="lang-fr" class="lang-btn"><div style="font-size:24px">🇫🇷</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px;color:var(--white)">FRA</div></div>
+  <div style="font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:8px" id="rLL">ТВОЙ ЯЗЫК</div>
+  <div class="lg">
+    <div onclick="sL('ru')" id="lang-ru" class="lb2 on"><div style="font-size:22px">🇷🇺</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px">РУС</div></div>
+    <div onclick="sL('en')" id="lang-en" class="lb2"><div style="font-size:22px">🇬🇧</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px">ENG</div></div>
+    <div onclick="sL('de')" id="lang-de" class="lb2"><div style="font-size:22px">🇩🇪</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px">DEU</div></div>
+    <div onclick="sL('fr')" id="lang-fr" class="lb2"><div style="font-size:22px">🇫🇷</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px">FRA</div></div>
   </div>
 
   <!-- Google -->
-  <div class="card card-accent" style="padding:18px;margin-bottom:14px">
-    <div style="font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:12px;text-align:center" id="r-li">ВОЙДИ ЧТОБЫ НАЧАТЬ</div>
+  <div class="card ca" style="padding:16px;margin-bottom:12px">
+    <div style="font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:12px;text-align:center" id="rLI">ВОЙДИ ЧТОБЫ НАЧАТЬ</div>
     <div id="gArea">
-      <button class="btn-google" id="gBtn" onclick="doGoogleSignIn()">
+      <button class="gBtn" onclick="googleLogin()">
         <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        <span id="gBtnTxt">Войти через Google</span>
+        <span id="gBT">Войти через Google</span>
       </button>
     </div>
   </div>
 
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
     <div style="flex:1;height:1px;background:var(--border)"></div>
-    <div style="font-size:12px;color:var(--muted)" id="r-or">или без аккаунта</div>
+    <div style="font-size:12px;color:var(--muted)" id="rOr">или без аккаунта</div>
     <div style="flex:1;height:1px;background:var(--border)"></div>
   </div>
 
-  <!-- Guest -->
-  <div class="card card-accent" style="padding:18px;margin-bottom:14px">
-    <label class="lbl" id="r-ln">ТВОЁ ИМЯ</label>
+  <div class="card ca" style="padding:16px;margin-bottom:12px">
+    <label class="lbl" id="rLN">ТВОЁ ИМЯ</label>
     <input type="text" class="inp" id="rName" placeholder="Введи имя...">
-    <label class="lbl" id="r-lc">СТРАНА</label>
+    <label class="lbl" id="rLC">СТРАНА</label>
     <select class="inp" id="rCountry">
       <option value="">Выбери страну</option>
       <option value="🇷🇺 Россия">🇷🇺 Россия</option>
@@ -327,188 +248,161 @@ body{font-family:'Manrope',sans-serif;color:var(--white);}
       <option value="🇸🇦 Саудовская Аравия">🇸🇦 Саудовская Аравия</option>
       <option value="🌍 Другая">🌍 Другая</option>
     </select>
-    <label class="lbl" id="r-lg">ЕЖЕДНЕВНАЯ ЦЕЛЬ</label>
-    <div class="goal-grid">
-      <div class="goal-item on" onclick="pickGoal(this,5)"><div style="font-size:22px">🌱</div><div style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;margin-top:4px" id="g-easy">Легко</div><div style="font-size:11px;color:var(--muted)">5 слов</div></div>
-      <div class="goal-item" onclick="pickGoal(this,10)"><div style="font-size:22px">⚡</div><div style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;margin-top:4px" id="g-norm">Обычно</div><div style="font-size:11px;color:var(--muted)">10 слов</div></div>
-      <div class="goal-item" onclick="pickGoal(this,20)"><div style="font-size:22px">🔥</div><div style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;margin-top:4px" id="g-ser">Серьёзно</div><div style="font-size:11px;color:var(--muted)">20 слов</div></div>
-      <div class="goal-item" onclick="pickGoal(this,30)"><div style="font-size:22px">👑</div><div style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;margin-top:4px" id="g-int">Интенсив</div><div style="font-size:11px;color:var(--muted)">30 слов</div></div>
+    <label class="lbl" id="rLG">ЕЖЕДНЕВНАЯ ЦЕЛЬ</label>
+    <div class="gg">
+      <div class="gi2 on" onclick="pG(this,5)"><div style="font-size:22px">🌱</div><div style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;margin-top:3px" id="gE">Легко</div><div style="font-size:11px;color:var(--muted)">5 слов</div></div>
+      <div class="gi2" onclick="pG(this,10)"><div style="font-size:22px">⚡</div><div style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;margin-top:3px" id="gN">Обычно</div><div style="font-size:11px;color:var(--muted)">10 слов</div></div>
+      <div class="gi2" onclick="pG(this,20)"><div style="font-size:22px">🔥</div><div style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;margin-top:3px" id="gS">Серьёзно</div><div style="font-size:11px;color:var(--muted)">20 слов</div></div>
+      <div class="gi2" onclick="pG(this,30)"><div style="font-size:22px">👑</div><div style="font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;margin-top:3px" id="gI">Интенсив</div><div style="font-size:11px;color:var(--muted)">30 слов</div></div>
     </div>
   </div>
 
-  <button class="btn btn-blue" id="startBtn" onclick="guestStart()" style="font-size:13px;padding:16px">НАЧАТЬ →</button>
-
+  <button class="btn bb" id="stBtn" onclick="gStart()" style="font-size:13px;padding:16px">НАЧАТЬ →</button>
 </div>
 </div>
 
 <!-- APP -->
 <div id="app">
   <div id="topBar">
-    <div class="top-logo">MOTT_bu</div>
-    <div id="topGreeting"></div>
+    <div class="tlogo">MOTT_bu</div>
+    <div id="tGreet"></div>
     <div style="display:flex;align-items:center;gap:8px">
-      <div id="topScore">0⚡</div>
-      <button id="menuBtn" onclick="openMenu()">⋯</button>
+      <div id="tScore">0⚡</div>
+      <button id="mBtn" onclick="openMenu()">⋯</button>
     </div>
   </div>
 
   <div id="content">
 
     <!-- HOME -->
-    <div class="page on" id="pgHome">
+    <div class="pg on" id="pgHome">
       <div id="wodEl"></div>
-      <div class="card" style="padding:12px 14px;margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div class="card" style="padding:11px 13px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
           <div style="font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:1px">🎯 ЦЕЛЬ ДНЯ</div>
-          <div style="font-size:11px;color:var(--blue);font-weight:700" id="hpTxt">0 / 10</div>
+          <div style="font-size:11px;color:var(--blue);font-weight:700" id="hpT">0 / 10</div>
         </div>
-        <div class="prog-bar"><div class="prog-fill" id="hpFill" style="width:0%"></div></div>
+        <div class="pb"><div class="pf" id="hpF" style="width:0%"></div></div>
       </div>
-      <div class="sec-title">РЕЖИМЫ ИГРЫ</div>
-      <div class="mode-grid">
-        <div onclick="startMode('translate')" class="mode-card">
-          <div class="mode-icon" style="background:linear-gradient(135deg,#4CAF50,#81C784)">✍️</div>
-          <div class="mode-name">ПЕРЕВОД</div>
-          <div class="mode-desc">Напиши перевод слова</div>
+      <div class="st">РЕЖИМЫ ИГРЫ</div>
+      <div class="mg">
+        <div onclick="sM('translate')" class="mc"><div class="mi" style="background:linear-gradient(135deg,#4CAF50,#81C784)">✍️</div><div class="mn">ПЕРЕВОД</div><div class="md">Напиши перевод</div></div>
+        <div onclick="sM('choice')" class="mc"><div class="mi" style="background:linear-gradient(135deg,#2196F3,#64B5F6)">🎯</div><div class="mn">ВЫБОР</div><div class="md">Выбери из 4</div></div>
+        <div onclick="sM('scramble')" class="mc"><div class="mi" style="background:linear-gradient(135deg,#FF9800,#FFB74D)">🔤</div><div class="mn">БУКВЫ</div><div class="md">Собери из букв</div></div>
+        <div onclick="openBattle()" class="mc" style="border-color:#ffcdd2;background:#fff8f8"><div class="mi" style="background:linear-gradient(135deg,#f44336,#EF9A9A)">⚔️</div><div class="mn" style="color:var(--red)">БОЙ</div><div class="md">60 сек vs бот</div></div>
+      </div>
+    </div>
+
+    <!-- LEARN -->
+    <div class="pg" id="pgLearn">
+      <div id="lCatV"><div class="st">ВЫБЕРИ КАТЕГОРИЮ</div><div id="lCatG"></div></div>
+      <div id="lCardV" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px">
+          <button onclick="xLearn()" class="btn bg" style="width:auto;padding:9px 13px;margin:0;font-size:14px">←</button>
+          <div style="font-family:'Unbounded',sans-serif;font-size:11px;font-weight:900;flex:1" id="lTitle"></div>
+          <div style="font-size:11px;color:var(--muted)" id="lProg">1/10</div>
         </div>
-        <div onclick="startMode('choice')" class="mode-card">
-          <div class="mode-icon" style="background:linear-gradient(135deg,#2196F3,#64B5F6)">🎯</div>
-          <div class="mode-name">ВЫБОР</div>
-          <div class="mode-desc">Выбери из 4 вариантов</div>
+        <div id="fc" onclick="flip()">
+          <div id="fcImg" style="font-size:68px;margin-bottom:8px"></div>
+          <div style="font-size:9px;color:var(--muted);font-family:'Unbounded',sans-serif;letter-spacing:2px;margin-bottom:6px" id="fcL">ЧЕЧЕНСКИЙ</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:24px;font-weight:900;margin-bottom:4px" id="fcW"></div>
+          <div style="font-size:12px;color:var(--muted)" id="fcT"></div>
+          <div id="fcTr" style="display:none;margin-top:8px"><div style="height:1px;background:var(--border);margin-bottom:8px"></div><div style="font-size:16px;color:var(--blue);font-weight:700" id="fcR"></div></div>
+          <div style="position:absolute;bottom:8px;right:12px;font-size:10px;color:var(--muted)">👆 tap</div>
         </div>
-        <div onclick="startMode('scramble')" class="mode-card">
-          <div class="mode-icon" style="background:linear-gradient(135deg,#FF9800,#FFB74D)">🔤</div>
-          <div class="mode-name">БУКВЫ</div>
-          <div class="mode-desc">Собери слово из букв</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button onclick="pC()" class="btn bg" style="flex:1;margin:0;padding:10px;font-size:12px">← Назад</button>
+          <button onclick="spC()" style="background:var(--card);border:2px solid var(--border);border-radius:12px;padding:10px 13px;cursor:pointer;font-size:17px;box-shadow:0 3px 0 var(--border)">🔊</button>
+          <button onclick="nC()" class="btn bb" style="flex:1;margin:0;padding:10px;font-size:12px">Далее →</button>
         </div>
-        <div onclick="openBattleMenu()" class="mode-card" style="border-color:#ffcdd2;background:#fff8f8">
-          <div class="mode-icon" style="background:linear-gradient(135deg,#f44336,#EF9A9A)">⚔️</div>
-          <div class="mode-name" style="color:var(--red)">БОЙ</div>
-          <div class="mode-desc">60 сек против бота</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="mC(false)" style="flex:1;padding:11px;background:#fff0f0;border:2px solid #ffcdd2;border-radius:12px;color:var(--red);font-family:'Unbounded',sans-serif;font-size:10px;cursor:pointer;box-shadow:0 3px 0 #ffcdd2">✗ НЕ ЗНАЮ</button>
+          <button onclick="mC(true)" style="flex:1;padding:11px;background:#f0fff0;border:2px solid #c8e6c9;border-radius:12px;color:var(--green);font-family:'Unbounded',sans-serif;font-size:10px;cursor:pointer;box-shadow:0 3px 0 #c8e6c9">✓ ЗНАЮ</button>
         </div>
+        <div class="pd" id="pd"></div>
       </div>
     </div>
 
     <!-- LEADERBOARD -->
-    <div class="page" id="pgLb">
-      <div class="sec-title">🏆 ТАБЛИЦА ЛИДЕРОВ</div>
-      <div class="card"><div id="lbList" style="padding:8px 0"></div></div>
-    </div>
-
-    <!-- LEARN -->
-    <div class="page" id="pgLearn">
-      <div id="learnCatView">
-        <div class="sec-title">ВЫБЕРИ КАТЕГОРИЮ</div>
-        <div id="learnCatGrid"></div>
-      </div>
-      <div id="learnCardView" style="display:none">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-          <button onclick="exitLearn()" class="btn btn-gray" style="width:auto;padding:10px 14px;margin:0;font-size:14px">←</button>
-          <div style="font-family:'Unbounded',sans-serif;font-size:12px;font-weight:900;color:var(--white);flex:1" id="learnTitle"></div>
-          <div style="font-size:11px;color:var(--muted)" id="learnProg">1/10</div>
-        </div>
-        <div id="flashcard" onclick="flipCard()">
-          <div id="fcImage" style="font-size:72px;margin-bottom:10px"></div>
-          <div style="font-size:9px;color:var(--muted);font-family:'Unbounded',sans-serif;letter-spacing:2px;margin-bottom:7px" id="fcLang">ЧЕЧЕНСКИЙ</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:26px;font-weight:900;color:var(--white);margin-bottom:5px" id="fcWord"></div>
-          <div style="font-size:12px;color:var(--muted)" id="fcTr"></div>
-          <div id="fcTrans" style="display:none;margin-top:10px">
-            <div style="height:1px;background:var(--border);margin-bottom:10px"></div>
-            <div style="font-size:17px;color:var(--blue);font-weight:700" id="fcRu"></div>
-          </div>
-          <div style="position:absolute;bottom:10px;right:12px;font-size:10px;color:var(--muted)">👆 tap</div>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button onclick="prevCard()" class="btn btn-gray" style="flex:1;margin:0;padding:11px;font-size:12px">← Назад</button>
-          <button onclick="speakCard()" style="background:var(--card);border:2px solid var(--border);border-radius:12px;padding:11px 14px;cursor:pointer;font-size:18px;box-shadow:0 3px 0 var(--border)">🔊</button>
-          <button onclick="nextCard()" class="btn btn-blue" style="flex:1;margin:0;padding:11px;font-size:12px">Далее →</button>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button onclick="markCard(false)" style="flex:1;padding:12px;background:#fff0f0;border:2px solid #ffcdd2;border-radius:12px;color:var(--red);font-family:'Unbounded',sans-serif;font-size:10px;cursor:pointer;box-shadow:0 3px 0 #ffcdd2">✗ НЕ ЗНАЮ</button>
-          <button onclick="markCard(true)" style="flex:1;padding:12px;background:#f0fff0;border:2px solid #c8e6c9;border-radius:12px;color:var(--green);font-family:'Unbounded',sans-serif;font-size:10px;cursor:pointer;box-shadow:0 3px 0 #c8e6c9">✓ ЗНАЮ</button>
-        </div>
-        <div class="pdots" id="pdots"></div>
-      </div>
+    <div class="pg" id="pgLb">
+      <div class="st">🏆 ТАБЛИЦА ЛИДЕРОВ</div>
+      <div class="card"><div id="lbL" style="padding:8px 0"></div></div>
     </div>
 
     <!-- PROFILE -->
-    <div class="page" id="pgProfile"></div>
+    <div class="pg" id="pgProf"></div>
 
     <!-- WORDS -->
-    <div class="page" id="pgWords">
-      <input class="inp" id="wordSrch" placeholder="🔍 Поиск слова..." oninput="renderWords()" style="margin-bottom:12px">
-      <div id="wordsOut"></div>
+    <div class="pg" id="pgWords">
+      <input class="inp" id="wSrch" placeholder="🔍 Поиск слова..." oninput="rWords()" style="margin-bottom:12px">
+      <div id="wOut"></div>
     </div>
 
     <!-- MISTAKES -->
-    <div class="page" id="pgMistakes">
+    <div class="pg" id="pgMist">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900">📖 МОИ ОШИБКИ</div>
-        <button onclick="clearMistakes()" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer">Очистить</button>
+        <button onclick="clrMist()" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--muted);cursor:pointer">Очистить</button>
       </div>
-      <div id="mistakesOut"></div>
+      <div id="mOut"></div>
     </div>
 
     <!-- LEAGUES -->
-    <div class="page" id="pgLeagues">
-      <div style="text-align:center;padding:18px 0 12px">
-        <div style="font-size:52px" id="lgIcon">🥉</div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;margin-top:6px" id="lgName">БРОНЗА</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">Набери очки чтобы подняться</div>
+    <div class="pg" id="pgLeagues">
+      <div style="text-align:center;padding:16px 0 10px">
+        <div style="font-size:50px" id="lgI">🥉</div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:19px;font-weight:900;margin-top:6px" id="lgN">БРОНЗА</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">Набери очки чтобы подняться</div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
-        <div class="card" style="padding:10px 6px;text-align:center;cursor:pointer" id="lc-bronze"><div style="font-size:26px">🥉</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px">БРОНЗА</div></div>
-        <div class="card" style="padding:10px 6px;text-align:center;cursor:pointer" id="lc-silver"><div style="font-size:26px">🥈</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px">СЕРЕБРО</div></div>
-        <div class="card" style="padding:10px 6px;text-align:center;cursor:pointer" id="lc-gold"><div style="font-size:26px">🥇</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px">ЗОЛОТО</div></div>
-        <div class="card" style="padding:10px 6px;text-align:center;cursor:pointer" id="lc-diamond"><div style="font-size:26px">💎</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:3px">БРИЛЛ.</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+        <div class="card" style="padding:10px 6px;text-align:center" id="lc-b"><div style="font-size:24px">🥉</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:2px">БРОНЗА</div></div>
+        <div class="card" style="padding:10px 6px;text-align:center" id="lc-s"><div style="font-size:24px">🥈</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:2px">СЕРЕБРО</div></div>
+        <div class="card" style="padding:10px 6px;text-align:center" id="lc-g"><div style="font-size:24px">🥇</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:2px">ЗОЛОТО</div></div>
+        <div class="card" style="padding:10px 6px;text-align:center" id="lc-d"><div style="font-size:24px">💎</div><div style="font-size:9px;font-family:'Unbounded',sans-serif;margin-top:2px">БРИЛЛ.</div></div>
       </div>
-      <div class="card"><div style="padding:12px 16px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px">🏆 ТОП ЛИГИ</div><div id="lgList"></div></div>
+      <div class="card"><div style="padding:12px 14px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:10px">🏆 ТОП ЛИГИ</div><div id="lgL"></div></div>
     </div>
 
     <!-- SETTINGS -->
-    <div class="page" id="pgSettings">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <button onclick="showPage('profile')" class="btn btn-gray" style="width:auto;padding:10px 14px;margin:0;font-size:14px">←</button>
+    <div class="pg" id="pgSet">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <button onclick="sP('prof')" class="btn bg" style="width:auto;padding:9px 13px;margin:0;font-size:14px">←</button>
         <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900">НАСТРОЙКИ</div>
       </div>
-      <div class="card" style="overflow:hidden;margin-bottom:12px">
-        <div style="padding:10px 16px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:1px">🔊 ЗВУК</div>
-        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-          <div><div style="font-size:14px;font-weight:600">Звуковые эффекты</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Звук при ответе</div></div>
-          <label class="toggle"><input type="checkbox" id="sndToggle" checked onchange="toggleSound(this.checked)"><span class="tslider"></span></label>
+      <div class="card" style="overflow:hidden;margin-bottom:10px">
+        <div style="padding:9px 14px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:1px">🔊 ЗВУК</div>
+        <div style="padding:13px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <div><div style="font-size:14px;font-weight:600">Звуковые эффекты</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Звук при ответе</div></div>
+          <label class="tg"><input type="checkbox" id="sndT" checked onchange="snd=this.checked"><span class="ts"></span></label>
         </div>
-        <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
-          <div><div style="font-size:14px;font-weight:600">Произношение</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Голосовое чтение слов</div></div>
-          <label class="toggle"><input type="checkbox" id="spkToggle" checked onchange="toggleSpeech(this.checked)"><span class="tslider"></span></label>
+        <div style="padding:13px 14px;display:flex;align-items:center;justify-content:space-between">
+          <div><div style="font-size:14px;font-weight:600">Произношение</div><div style="font-size:11px;color:var(--muted);margin-top:1px">Голосовое чтение слов</div></div>
+          <label class="tg"><input type="checkbox" id="spkT" checked onchange="spk=this.checked"><span class="ts"></span></label>
         </div>
       </div>
-      <div class="card" style="overflow:hidden;margin-bottom:12px">
-        <div style="padding:10px 16px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:1px">📚 ОБУЧЕНИЕ</div>
-        <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div class="card" style="overflow:hidden;margin-bottom:10px">
+        <div style="padding:9px 14px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:1px">📚 ОБУЧЕНИЕ</div>
+        <div style="padding:13px 14px;border-bottom:1px solid var(--border)">
           <div style="font-size:14px;font-weight:600;margin-bottom:8px">Ежедневная цель</div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-            <button onclick="setGoal(5,this)" class="btn btn-gray" style="margin:0;padding:10px 4px;font-size:10px">🌱 5</button>
-            <button onclick="setGoal(10,this)" class="btn btn-gray" style="margin:0;padding:10px 4px;font-size:10px">⚡ 10</button>
-            <button onclick="setGoal(20,this)" class="btn btn-gray" style="margin:0;padding:10px 4px;font-size:10px">🔥 20</button>
-            <button onclick="setGoal(30,this)" class="btn btn-gray" style="margin:0;padding:10px 4px;font-size:10px">👑 30</button>
+            <button onclick="sDG(5)" class="btn bg" style="margin:0;padding:9px 4px;font-size:10px">🌱 5</button>
+            <button onclick="sDG(10)" class="btn bg" style="margin:0;padding:9px 4px;font-size:10px">⚡ 10</button>
+            <button onclick="sDG(20)" class="btn bg" style="margin:0;padding:9px 4px;font-size:10px">🔥 20</button>
+            <button onclick="sDG(30)" class="btn bg" style="margin:0;padding:9px 4px;font-size:10px">👑 30</button>
           </div>
         </div>
-        <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
-          <div><div style="font-size:14px;font-weight:600">AI подсказки</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Подсказка при ошибке</div></div>
-          <label class="toggle"><input type="checkbox" id="aiToggle" checked onchange="localStorage.setItem('ai',this.checked)"><span class="tslider"></span></label>
-        </div>
       </div>
-      <div class="card" style="overflow:hidden;margin-bottom:12px">
-        <div onclick="alert('MOTT_bu хранит только имя и страну. Данные не передаются третьим лицам.')" class="menu-row"><div style="font-size:20px">🔒</div><div style="flex:1;font-size:14px;font-weight:600">Политика конфиденциальности</div><div style="color:var(--muted)">›</div></div>
-        <div onclick="shareApp()" class="menu-row"><div style="font-size:20px">📢</div><div style="flex:1;font-size:14px;font-weight:600">Поделиться приложением</div><div style="color:var(--muted)">›</div></div>
+      <div class="card" style="overflow:hidden;margin-bottom:10px">
+        <div onclick="alert('MOTT_bu хранит только имя и страну. Не передаётся третьим лицам.')" class="mr"><div style="font-size:18px">🔒</div><div style="flex:1;font-size:14px;font-weight:600">Политика конфиденциальности</div><div style="color:var(--muted)">›</div></div>
+        <div onclick="share()" class="mr"><div style="font-size:18px">📢</div><div style="flex:1;font-size:14px;font-weight:600">Поделиться приложением</div><div style="color:var(--muted)">›</div></div>
       </div>
-      <div style="text-align:center;color:var(--muted);font-size:10px;padding-bottom:20px">MOTT_bu v2.0 · Нохчийн Мотт</div>
+      <div style="text-align:center;color:var(--muted);font-size:10px;padding:4px 0 20px">MOTT_bu v2.0 · Нохчийн Мотт</div>
     </div>
 
     <!-- ADMIN -->
-    <div class="page" id="pgAdmin">
-      <div class="sec-title">➕ ДОБАВИТЬ СЛОВО</div>
-      <div class="card" style="padding:14px;margin-bottom:14px">
+    <div class="pg" id="pgAdmin">
+      <div class="st">➕ ДОБАВИТЬ СЛОВО</div>
+      <div class="card" style="padding:14px;margin-bottom:12px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <input class="inp" id="nCh" placeholder="Чеченское" style="font-size:14px">
           <input class="inp" id="nRu" placeholder="Русское" style="font-size:14px">
@@ -517,113 +411,105 @@ body{font-family:'Manrope',sans-serif;color:var(--white);}
           <input class="inp" id="nTr" placeholder="Произношение" style="font-size:14px">
           <input class="inp" id="nCat" placeholder="Категория" style="font-size:14px">
         </div>
-        <button class="btn btn-blue" onclick="addWord()" style="margin:0">Добавить</button>
+        <button class="btn bb" onclick="addW()" style="margin:0">Добавить</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <div class="sec-title" style="margin:0;flex:1">СЛОВА (<span id="wCount">0</span>)</div>
+      <div style="display:flex;align-items:center;margin-bottom:8px">
+        <div class="st" style="margin:0;flex:1">СЛОВА (<span id="wCnt">0</span>)</div>
       </div>
-      <input class="inp" id="adminSrch" placeholder="🔍 Поиск..." oninput="renderAdmin()" style="margin-bottom:10px">
-      <div id="adminWords"></div>
+      <input class="inp" id="aSrch" placeholder="🔍 Поиск..." oninput="rAdmin()" style="margin-bottom:10px">
+      <div id="aWords"></div>
     </div>
 
-  </div><!-- end content -->
+  </div>
 
   <!-- BOTTOM NAV: 4 кнопки -->
   <div id="nav">
-    <button class="nb on" id="nb-home" onclick="showPage('home')">
-      <span class="ni">🎮</span><span class="nl">ИГРА</span>
-    </button>
-    <button class="nb" id="nb-learn" onclick="showPage('learn')">
-      <span class="ni">📖</span><span class="nl">УЧИТЬ</span>
-    </button>
-    <button class="nb" id="nb-lb" onclick="showPage('lb')">
-      <span class="ni">🏆</span><span class="nl">ТОП</span>
-    </button>
-    <button class="nb" id="nb-profile" onclick="showPage('profile')">
-      <span class="ni">👤</span><span class="nl">Я</span>
-    </button>
+    <button class="nb on" id="nb-home" onclick="sP('home')"><span class="ni">🎮</span><span class="nl">ИГРА</span></button>
+    <button class="nb" id="nb-learn" onclick="sP('learn')"><span class="ni">📖</span><span class="nl">УЧИТЬ</span></button>
+    <button class="nb" id="nb-lb" onclick="sP('lb')"><span class="ni">🏆</span><span class="nl">ТОП</span></button>
+    <button class="nb" id="nb-prof" onclick="sP('prof')"><span class="ni">👤</span><span class="nl">Я</span></button>
   </div>
-
-</div><!-- end app -->
+</div>
 
 <!-- GAME OVERLAY -->
-<div id="gameOv" style="display:none;position:fixed;inset:0;z-index:100;background:var(--bg);flex-direction:column;max-width:430px;margin:0 auto;">
-  <div style="flex-shrink:0;background:var(--surface);border-bottom:2px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px;">
-    <button onclick="exitGame()" style="background:var(--bg);border:2px solid var(--border);border-radius:10px;padding:8px 12px;font-size:15px;cursor:pointer;box-shadow:0 2px 0 var(--border);line-height:1;">✕</button>
-    <div style="flex:1"><div class="prog-bar" style="height:8px;border-radius:6px;"><div class="prog-fill" id="gProgFill" style="width:0%;height:8px;"></div></div></div>
-    <div style="font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:var(--gold)">⚡<span id="gScore">0</span></div>
-    <div style="font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:var(--gold)">🔥<span id="gStreak">0</span></div>
+<div id="gOv" style="display:none;position:fixed;inset:0;z-index:100;background:var(--bg);flex-direction:column;max-width:430px;margin:0 auto;">
+  <div style="flex-shrink:0;background:var(--surface);border-bottom:2px solid var(--border);padding:10px 13px;display:flex;align-items:center;gap:10px;">
+    <button onclick="xGame()" style="background:var(--bg);border:2px solid var(--border);border-radius:10px;padding:8px 11px;font-size:15px;cursor:pointer;box-shadow:0 2px 0 var(--border);line-height:1;">✕</button>
+    <div style="flex:1"><div class="pb" style="height:7px;border-radius:5px;"><div class="pf" id="gPF" style="width:0%;height:7px;"></div></div></div>
+    <div style="font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:var(--gold)">⚡<span id="gSc">0</span></div>
+    <div style="font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:var(--gold)">🔥<span id="gSt">0</span></div>
   </div>
-  <div style="flex-shrink:0;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);">
-    <div class="cat-tabs" id="gCatTabs"></div>
+  <div style="flex-shrink:0;padding:7px 13px;background:var(--surface);border-bottom:1px solid var(--border);">
+    <div class="ct2" id="gCT"></div>
   </div>
-  <div style="flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-      <div style="font-size:11px;color:var(--muted)" id="gProgTxt">0 / 10</div>
+  <div style="flex:1;overflow-y:auto;padding:13px;-webkit-overflow-scrolling:touch;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--muted)" id="gPT">0 / 10</div>
     </div>
-    <div id="gArea">
-      <div class="game-card" id="gCard"></div>
+    <div id="gA">
+      <div class="gc" id="gC"></div>
       <div class="fb" id="gFb"></div>
       <div id="gHint"></div>
-      <button class="btn btn-blue" id="gActBtn" onclick="doAction()">Проверить</button>
-      <button class="btn btn-gray" onclick="skipWord()">Пропустить →</button>
+      <button class="btn bb" id="gAB" onclick="doAct()">Проверить</button>
+      <button class="btn bg" onclick="skip()">Пропустить →</button>
     </div>
-    <div id="gResult" style="display:none">
-      <div class="result">
-        <div style="font-size:60px;margin-bottom:12px" id="rEmoji">🏆</div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:20px;color:var(--blue);margin-bottom:6px" id="rTitle"></div>
-        <div style="font-size:14px;color:var(--muted);margin-bottom:4px" id="rMsg"></div>
-        <div class="res-stats">
-          <div class="res-stat"><div class="res-val" id="rScore">0</div><div class="res-lbl">Очков</div></div>
-          <div class="res-stat"><div class="res-val" id="rAcc">0%</div><div class="res-lbl">Точность</div></div>
-          <div class="res-stat"><div class="res-val" id="rOk">0</div><div class="res-lbl">Правильно</div></div>
-          <div class="res-stat"><div class="res-val" id="rBest">0</div><div class="res-lbl">Серия</div></div>
+    <div id="gRes" style="display:none">
+      <div style="text-align:center;padding:30px 16px">
+        <div style="font-size:56px;margin-bottom:10px" id="rEm">🏆</div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);margin-bottom:6px" id="rTi"></div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px" id="rMs"></div>
+        <div class="rs">
+          <div class="rst"><div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue)" id="rSc">0</div><div style="font-size:10px;color:var(--muted)">Очков</div></div>
+          <div class="rst"><div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue)" id="rAc">0%</div><div style="font-size:10px;color:var(--muted)">Точность</div></div>
+          <div class="rst"><div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue)" id="rOk">0</div><div style="font-size:10px;color:var(--muted)">Правильно</div></div>
+          <div class="rst"><div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue)" id="rBs">0</div><div style="font-size:10px;color:var(--muted)">Серия</div></div>
         </div>
-        <button class="btn btn-blue" onclick="restartGame()">Играть снова 🔄</button>
-        <button class="btn btn-gray" onclick="exitGame()">← На главную</button>
-        <button class="btn btn-gray" id="rMistBtn" style="display:none" onclick="exitGame();showPage('mistakes')">📖 Мои ошибки</button>
+        <button class="btn bb" onclick="restart()">Играть снова 🔄</button>
+        <button class="btn bg" onclick="xGame()">← На главную</button>
+        <button class="btn bg" id="rMB" style="display:none" onclick="xGame();sP('mist')">📖 Мои ошибки</button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- BATTLE OVERLAY -->
-<div id="battleOv" style="display:none;position:fixed;inset:0;z-index:100;background:var(--bg);flex-direction:column;max-width:430px;margin:0 auto;padding:16px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <button onclick="closeBattle()" style="background:transparent;border:2px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">🏳 Сдаться</button>
+<div id="btOv" style="display:none;position:fixed;inset:0;z-index:100;background:var(--bg);max-width:430px;margin:0 auto;padding:14px;overflow-y:auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <button onclick="xBattle()" style="background:transparent;border:2px solid var(--border);color:var(--muted);border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;">🏳 Сдаться</button>
     <div style="font-family:'Unbounded',sans-serif;font-size:12px">⚔️ БОЙ</div>
-    <div style="font-family:'Unbounded',sans-serif;font-size:24px;color:var(--red);font-weight:900" id="btTime">60</div>
+    <div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--red);font-weight:900" id="btT">60</div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:18px">
-    <div class="battle-score-box"><div style="font-size:10px;color:var(--muted);font-family:'Unbounded',sans-serif">ТЫ</div><div style="font-family:'Unbounded',sans-serif;font-size:30px;color:var(--green);font-weight:900" id="btMe">0</div></div>
-    <div style="font-size:20px;text-align:center">⚔️</div>
-    <div class="battle-score-box"><div style="font-size:10px;color:var(--muted);font-family:'Unbounded',sans-serif">БОТ</div><div style="font-family:'Unbounded',sans-serif;font-size:30px;color:var(--red);font-weight:900" id="btBot">0</div></div>
+  <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:16px">
+    <div class="card" style="padding:12px;text-align:center"><div style="font-size:9px;color:var(--muted);font-family:'Unbounded',sans-serif">ТЫ</div><div style="font-family:'Unbounded',sans-serif;font-size:28px;color:var(--green);font-weight:900" id="btM">0</div></div>
+    <div style="font-size:18px;text-align:center">⚔️</div>
+    <div class="card" style="padding:12px;text-align:center"><div style="font-size:9px;color:var(--muted);font-family:'Unbounded',sans-serif">БОТ</div><div style="font-family:'Unbounded',sans-serif;font-size:28px;color:var(--red);font-weight:900" id="btB">0</div></div>
   </div>
-  <div class="card card-accent" style="padding:22px;text-align:center;margin-bottom:16px">
-    <div style="font-size:10px;color:var(--muted);font-family:'Unbounded',sans-serif;letter-spacing:2px;margin-bottom:8px">ПЕРЕВЕДИ НА РУССКИЙ</div>
-    <div style="font-family:'Unbounded',sans-serif;font-size:30px;font-weight:900;margin-bottom:5px" id="btWord"></div>
-    <div style="font-size:11px;color:var(--muted)" id="btHint"></div>
+  <div class="card ca" style="padding:20px;text-align:center;margin-bottom:14px">
+    <div style="font-size:9px;color:var(--muted);font-family:'Unbounded',sans-serif;letter-spacing:2px;margin-bottom:8px">ПЕРЕВЕДИ НА РУССКИЙ</div>
+    <div style="font-family:'Unbounded',sans-serif;font-size:28px;font-weight:900;margin-bottom:5px" id="btW"></div>
+    <div style="font-size:11px;color:var(--muted)" id="btH"></div>
   </div>
-  <div id="btChoices" class="choices"></div>
+  <div id="btC" class="choices"></div>
 </div>
 
-<!-- MODAL ADMIN LOGIN -->
-<div class="modal-bg" id="adminModal" style="display:none">
-  <div class="modal">
-    <div class="modal-title">🔐 Пароль администратора</div>
-    <input type="password" class="inp" id="adminPw" placeholder="Пароль..." onkeydown="if(event.key==='Enter')checkAdmin()">
-    <div style="height:14px"></div>
-    <button class="btn btn-blue" onclick="checkAdmin()">Войти</button>
-    <button class="btn btn-gray" onclick="document.getElementById('adminModal').style.display='none'">Отмена</button>
+<!-- ADMIN MODAL -->
+<div class="mover" id="admMod" style="display:none">
+  <div class="mod">
+    <div style="font-family:'Unbounded',sans-serif;font-size:14px;color:var(--blue);margin-bottom:14px;text-align:center">🔐 Пароль админа</div>
+    <input type="password" class="inp" id="admPw" placeholder="Пароль..." onkeydown="if(event.key==='Enter')chkAdm()">
+    <div style="height:12px"></div>
+    <button class="btn bb" onclick="chkAdm()">Войти</button>
+    <button class="btn bg" onclick="document.getElementById('admMod').style.display='none'">Отмена</button>
   </div>
 </div>
 
 <script>
 var ADMIN_PASS = "Mott-biyc0707";
 var ADMIN_EMAIL = "mottbu560@gmail.com";
+// Google OAuth Client ID (same project)
+var G_CLIENT = "56719636643-faj5hqha8k32foa07lf8pl6le5g4bskq.apps.googleusercontent.com";
 
-// ===== WORDS =====
-var words = [
+var words=[
   {chechen:"Маршалла",russian:"Привет / Мир",transcription:"Маршалла",category:"Приветствия"},
   {chechen:"Дела реза хийла",russian:"Спасибо",transcription:"Дела реза хийла",category:"Приветствия"},
   {chechen:"Салам",russian:"Салам",transcription:"Салам",category:"Приветствия"},
@@ -682,7 +568,7 @@ var words = [
   {chechen:"ЙоI",russian:"Дочь / Девушка",transcription:"ЙоI",category:"Семья"},
   {chechen:"Корта",russian:"Голова",transcription:"Корта",category:"Тело"},
   {chechen:"Куьг",russian:"Рука",transcription:"Куьг",category:"Тело"},
-  {chechen:"Ког",russian:"Нога",transcription:"Kog",category:"Тело"},
+  {chechen:"Kog",russian:"Нога",transcription:"Kog",category:"Тело"},
   {chechen:"БIаьрг",russian:"Глаз",transcription:"БIаьрг",category:"Тело"},
   {chechen:"Церг",russian:"Зуб",transcription:"Церг",category:"Тело"},
   {chechen:"Цlа",russian:"Дом",transcription:"Цlа",category:"Дом"},
@@ -701,7 +587,6 @@ var words = [
   {chechen:"Жима",russian:"Маленький",transcription:"Жима",category:"Прилагательные"},
   {chechen:"Дика",russian:"Хороший",transcription:"Дика",category:"Прилагательные"},
   {chechen:"Вон",russian:"Плохой",transcription:"Вон",category:"Прилагательные"},
-  {chechen:"Самукъане",russian:"Весёлый",transcription:"Самукъане",category:"Прилагательные"},
   {chechen:"Ваг1а",russian:"Идти",transcription:"Ваг1а",category:"Глаголы"},
   {chechen:"Ваха",russian:"Жить",transcription:"Ваха",category:"Глаголы"},
   {chechen:"Ала",russian:"Сказать",transcription:"Ала",category:"Глаголы"},
@@ -715,7 +600,7 @@ var words = [
   {chechen:"Даймохк",russian:"Родина",transcription:"Даймохк",category:"Природа Чечни"},
   {chechen:"Нохчийчоь",russian:"Чечня",transcription:"Нохчийчоь",category:"Природа Чечни"},
   {chechen:"Б1ов",russian:"Башня",transcription:"Б1ов",category:"Природа Чечни"},
-  {chechen:"Г1ала",russian:"Крепость",transcription:"Г1ала",category:"Природа Чечни"},
+  {chechen:"Аьрзу",russian:"Орёл",transcription:"Аьрзу",category:"Природа Чечни"},
   {chechen:"Муха ву хьо?",russian:"Как ты?",transcription:"Муха ву хьо",category:"Фразы"},
   {chechen:"Дика ву со",russian:"Я хорошо",transcription:"Дика ву со",category:"Фразы"},
   {chechen:"Хlун цlе йу хьан?",russian:"Как тебя зовут?",transcription:"Хlун цlе йу хьан",category:"Фразы"},
@@ -724,128 +609,123 @@ var words = [
   {chechen:"Хаза сан",russian:"Мне нравится",transcription:"Хаза сан",category:"Фразы"},
 ];
 
-// ===== STATE =====
-var playerName="", playerCountry="", dailyGoal=10;
-var curMode="translate", curWord=null;
-var score=0, streak=0, bestStreak=0, totalAns=0, correctAns=0;
-var usedWords=[], scrSelected=[], answered=false;
-var isAdmin=false, adminUnlocked=false;
-var selCat="Все";
-var sndEnabled=true, spkEnabled=true;
-var curLang=localStorage.getItem("lang")||"ru";
-var mistakes=[];
-try{mistakes=JSON.parse(localStorage.getItem("mistakes")||"[]");}catch(e){}
-var lcards=[], lIdx=0, lKnown=[], cFlipped=false;
-var totGames=0, totScore=0, totWords=0;
-var btTimer=null, btTime=60, btMe=0, btBot=0, btWord=null;
+// STATE
+var pName="",pCountry="",goal=10,curMode="translate",curW=null;
+var sc=0,str=0,bStr=0,totA=0,corA=0,used=[],scrSel=[],answered=false;
+var isAdm=false,admUnlocked=false,selCat="Все";
+var snd=true,spk=true,curLang=localStorage.getItem("lang")||"ru";
+var mist=[];try{mist=JSON.parse(localStorage.getItem("mist")||"[]");}catch(e){}
+var lCards=[],lIdx=0,lKnown=[],cFlip=false;
+var tG=0,tS=0,tW=0;
+try{tG=+localStorage.getItem("tg")||0;tS=+localStorage.getItem("ts")||0;tW=+localStorage.getItem("tw")||0;}catch(e){}
+var btTmr=null,btTime=60,btMe=0,btBot=0,btW2=null;
+var googleUser=null; // {name, email, photo, uid}
 
-// Load stats
-try{totGames=parseInt(localStorage.getItem("tg")||"0");totScore=parseInt(localStorage.getItem("ts")||"0");totWords=parseInt(localStorage.getItem("tw")||"0");}catch(e){}
+try{if(new URLSearchParams(location.search).get("admin")==="true")sessionStorage.setItem("adm","1");isAdm=sessionStorage.getItem("adm")==="1";}catch(e){}
 
-// Admin check
-try{if(new URLSearchParams(location.search).get("admin")==="true")sessionStorage.setItem("adm","1");isAdmin=sessionStorage.getItem("adm")==="1";}catch(e){}
-
-var EMOJIS={"Природа":"🌿","Природа Чечни":"🏔","Семья":"👨‍👩‍👧","Еда":"🍽","Одежда":"👕","Животные":"🐾","Числа":"🔢","Дни недели":"📅","Цвета":"🎨","Тело":"🧍","Приветствия":"👋","Фразы":"💬","Глаголы":"⚡","Прилагательные":"✨","Ценности":"🕊","Дом":"🏠","Местоимения":"👁","Время":"⏰","Люди":"👥"};
-var LEAGUES=[{id:"bronze",n:"БРОНЗА",ic:"🥉",min:0,max:499},{id:"silver",n:"СЕРЕБРО",ic:"🥈",min:500,max:1999},{id:"gold",n:"ЗОЛОТО",ic:"🥇",min:2000,max:4999},{id:"diamond",n:"БРИЛЛИАНТ",ic:"💎",min:5000,max:999999}];
-
-var LANGS={
+var LS={
   ru:{sub:"УЧИ ЧЕЧЕНСКИЙ",ll:"ТВОЙ ЯЗЫК",li:"ВОЙДИ ЧТОБЫ НАЧАТЬ",gb:"Войти через Google",or:"или без аккаунта",ln:"ТВОЁ ИМЯ",lc:"СТРАНА",lg:"ЕЖЕДНЕВНАЯ ЦЕЛЬ",ge:"Легко",gn:"Обычно",gs:"Серьёзно",gi:"Интенсив",sb:"НАЧАТЬ",np:"Введи имя..."},
   en:{sub:"LEARN CHECHEN",ll:"YOUR LANGUAGE",li:"SIGN IN TO START",gb:"Sign in with Google",or:"or without account",ln:"YOUR NAME",lc:"COUNTRY",lg:"DAILY GOAL",ge:"Easy",gn:"Normal",gs:"Serious",gi:"Intense",sb:"START",np:"Enter your name..."},
   de:{sub:"TSCHETSCHENISCH",ll:"DEINE SPRACHE",li:"ANMELDEN",gb:"Mit Google anmelden",or:"oder ohne Konto",ln:"DEIN NAME",lc:"LAND",lg:"TAGESZIEL",ge:"Leicht",gn:"Normal",gs:"Ernst",gi:"Intensiv",sb:"STARTEN",np:"Name eingeben..."},
   fr:{sub:"APPRENDRE",ll:"TA LANGUE",li:"CONNECTE-TOI",gb:"Se connecter",or:"ou sans compte",ln:"TON NOM",lc:"PAYS",lg:"OBJECTIF",ge:"Facile",gn:"Normal",gs:"Sérieux",gi:"Intensif",sb:"COMMENCER",np:"Ton prénom..."}
 };
+function T(){return LS[curLang]||LS.ru;}
 
-function T(){return LANGS[curLang]||LANGS.ru;}
-
-function setLang(l){
+function sL(l){
   curLang=l;localStorage.setItem("lang",l);
-  document.querySelectorAll(".lang-btn").forEach(function(b){b.classList.remove("on");});
-  var lb=document.getElementById("lang-"+l);if(lb)lb.classList.add("on");
+  document.querySelectorAll(".lb2").forEach(function(b){b.classList.remove("on");});
+  var e=document.getElementById("lang-"+l);if(e)e.classList.add("on");
   var t=T();
-  var m={"r-sub":t.sub,"r-ll":t.ll,"r-li":t.li,"gBtnTxt":t.gb,"r-or":t.or,"r-ln":t.ln,"r-lc":t.lc,"r-lg":t.lg,"g-easy":t.ge,"g-norm":t.gn,"g-ser":t.gs,"g-int":t.gi};
-  for(var k in m){var e=document.getElementById(k);if(e)e.textContent=m[k];}
+  var m={rSub:t.sub,rLL:t.ll,rLI:t.li,gBT:t.gb,rOr:t.or,rLN:t.ln,rLC:t.lc,rLG:t.lg,gE:t.ge,gN:t.gn,gS:t.gs,gI:t.gi};
+  for(var k in m){var e2=document.getElementById(k);if(e2)e2.textContent=m[k];}
   var ni=document.getElementById("rName");if(ni)ni.placeholder=t.np;
-  var sb=document.getElementById("startBtn");if(sb)sb.textContent=t.sb+" →";
+  var sb=document.getElementById("stBtn");if(sb)sb.textContent=t.sb+" →";
 }
 
-function pickGoal(el,g){
-  document.querySelectorAll(".goal-item").forEach(function(x){x.classList.remove("on");});
-  el.classList.add("on");dailyGoal=g;
+function pG(el,g){document.querySelectorAll(".gi2").forEach(function(x){x.classList.remove("on");});el.classList.add("on");goal=g;}
+
+// ===== GOOGLE LOGIN (OAuth token flow) =====
+function googleLogin(){
+  // Save current URL as redirect target
+  var redirectUri=location.href.split("#")[0].split("?")[0];
+  localStorage.setItem("oauthRedirect", redirectUri);
+  var url="https://accounts.google.com/o/oauth2/v2/auth"
+    +"?client_id="+encodeURIComponent(G_CLIENT)
+    +"&redirect_uri="+encodeURIComponent(redirectUri)
+    +"&response_type=token"
+    +"&scope="+encodeURIComponent("email profile")
+    +"&prompt=select_account";
+  location.href=url;
 }
 
-// ===== GOOGLE AUTH =====
-function doGoogleSignIn(){
-  var area=document.getElementById("gArea");
-  area.innerHTML='<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;color:var(--muted);font-size:14px"><div class="spin"></div>Переходим к Google...</div>';
-  var provider=new firebase.auth.GoogleAuthProvider();
-  fAuth.signInWithRedirect(provider).catch(function(e){
-    console.error(e);
-    restoreGoogleBtn();
-    alert("Ошибка: "+e.message);
-  });
+function handleOAuthToken(){
+  var hash=location.hash;
+  if(!hash||hash.indexOf("access_token")===-1)return false;
+  var params={};
+  hash.replace(/^#/,"").split("&").forEach(function(p){var kv=p.split("=");params[kv[0]]=decodeURIComponent(kv[1]||"");});
+  if(!params.access_token)return false;
+  // Clear hash from URL
+  history.replaceState(null,"",location.pathname+location.search);
+  // Show loading
+  var ga=document.getElementById("gArea");
+  if(ga)ga.innerHTML='<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;color:var(--muted);font-size:14px"><div class="spin"></div>Загружаем профиль...</div>';
+  // Fetch Google user info
+  fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+params.access_token}})
+  .then(function(r){return r.json();})
+  .then(function(u){
+    if(!u.sub){restoreGBtn();return;}
+    googleUser={name:u.name||u.email.split("@")[0],email:u.email,photo:u.picture||"",uid:"g_"+u.sub};
+    pName=googleUser.name;
+    localStorage.setItem("gUid",googleUser.uid);
+    localStorage.setItem("gName",pName);
+    localStorage.setItem("gPhoto",googleUser.photo||"");
+    if(u.email===ADMIN_EMAIL){isAdm=true;sessionStorage.setItem("adm","1");}
+    // Load country from DB
+    db.ref("users/"+googleUser.uid).get().then(function(s){
+      if(s.exists()&&s.val()&&s.val().country){
+        pCountry=s.val().country;
+        localStorage.setItem("gCountry",pCountry);
+        enterApp();
+      } else {
+        var ni=document.getElementById("rName");if(ni)ni.value=pName;
+        restoreGBtn();
+      }
+    }).catch(function(){restoreGBtn();});
+  })
+  .catch(function(e){console.error(e);restoreGBtn();alert("Ошибка входа через Google");});
+  return true;
 }
 
-function restoreGoogleBtn(){
-  var area=document.getElementById("gArea");if(!area)return;
-  area.innerHTML='<button class="btn-google" id="gBtn" onclick="doGoogleSignIn()"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg><span>'+T().gb+'</span></button>';
+function restoreGBtn(){
+  var ga=document.getElementById("gArea");if(!ga)return;
+  ga.innerHTML='<button class="gBtn" onclick="googleLogin()"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg><span>'+T().gb+'</span></button>';
 }
 
-function handleRedirect(){
-  fAuth.getRedirectResult().then(function(r){
-    if(r&&r.user){
-      var u=r.user;
-      playerName=u.displayName||u.email.split("@")[0];
-      if(u.email===ADMIN_EMAIL){isAdmin=true;sessionStorage.setItem("adm","1");}
-      var uid="google_"+u.uid;
-      localStorage.setItem("gUid",uid);
-      localStorage.setItem("gName",playerName);
-      fDb.ref("users/"+uid).once("value").then(function(s){
-        if(s.exists()&&s.val()&&s.val().country){
-          playerCountry=s.val().country;
-          localStorage.setItem("gCountry",playerCountry);
-          enterApp();
-        } else {
-          var ni=document.getElementById("rName");if(ni)ni.value=playerName;
-          restoreGoogleBtn();
-        }
-      }).catch(function(){restoreGoogleBtn();enterApp();});
-    } else {
-      restoreGoogleBtn();
-    }
-  }).catch(function(e){
-    console.error("redirect result error:",e);
-    restoreGoogleBtn();
-  });
-}
-
-function guestStart(){
+function gStart(){
   var n=document.getElementById("rName").value.trim();
   var c=document.getElementById("rCountry").value;
   if(!n){alert(curLang==="ru"?"Введи имя!":"Enter your name!");return;}
   if(!c){alert(curLang==="ru"?"Выбери страну!":"Choose country!");return;}
-  playerName=n;playerCountry=c;
+  pName=n;pCountry=c;
   localStorage.setItem("gName",n);localStorage.setItem("gCountry",c);
   var uid=localStorage.getItem("gUid");
-  if(uid)fDb.ref("users/"+uid).update({name:n,country:c}).catch(function(){});
+  if(uid)db.ref("users/"+uid).update({name:n,country:c}).catch(function(){});
   enterApp();
 }
 
 function enterApp(){
-  var reg=document.getElementById("reg");var app=document.getElementById("app");
-  if(reg)reg.classList.add("off");
-  if(app)app.classList.add("on");
-  var g=document.getElementById("topGreeting");if(g)g.textContent=playerName;
-  if(isAdmin){
-    var ab=document.getElementById("nb-admin");
-    if(!ab){
-      var nav=document.getElementById("nav");
-      var btn=document.createElement("button");
-      btn.className="nb";btn.id="nb-admin";btn.onclick=function(){showPage("admin");};
-      btn.innerHTML='<span class="ni">⚙️</span><span class="nl">АДМИН</span>';
-      nav.appendChild(btn);
+  document.getElementById("reg").classList.add("off");
+  document.getElementById("app").classList.add("on");
+  document.getElementById("tGreet").textContent=pName;
+  if(isAdm){
+    var nav=document.getElementById("nav");
+    if(!document.getElementById("nb-adm")){
+      var b=document.createElement("button");b.className="nb";b.id="nb-adm";b.onclick=function(){sP("admin");};
+      b.innerHTML='<span class="ni">⚙️</span><span class="nl">АДМИН</span>';
+      nav.appendChild(b);
     }
   }
-  loadWords().then(function(){renderWOD();renderLearnCats();renderCatTabs();loadWord();});
+  loadWords().then(function(){rWOD();rLearnCats();rCatTabs();loadW();});
 }
 
 function loadWords(){
@@ -856,305 +736,245 @@ function loadWords(){
 function saveWords(){db.ref("words").set(words).catch(function(){});}
 
 // ===== PAGES =====
-var pageMap={"home":"pgHome","lb":"pgLb","learn":"pgLearn","profile":"pgProfile","words":"pgWords","mistakes":"pgMistakes","leagues":"pgLeagues","settings":"pgSettings","admin":"pgAdmin"};
-var navMap={"home":"nb-home","lb":"nb-lb","learn":"nb-learn","profile":"nb-profile"};
+var PM={"home":"pgHome","lb":"pgLb","learn":"pgLearn","prof":"pgProf","words":"pgWords","mist":"pgMist","leagues":"pgLeagues","set":"pgSet","admin":"pgAdmin"};
+var NM={"home":"nb-home","lb":"nb-lb","learn":"nb-learn","prof":"nb-prof"};
 
-function showPage(p){
-  document.querySelectorAll(".page").forEach(function(x){x.classList.remove("on");});
-  var el=document.getElementById(pageMap[p]||("pg"+p.charAt(0).toUpperCase()+p.slice(1)));
-  if(el)el.classList.add("on");
+function sP(p){
+  document.querySelectorAll(".pg").forEach(function(x){x.classList.remove("on");});
+  var el=document.getElementById(PM[p]);if(el)el.classList.add("on");
   var c=document.getElementById("content");if(c)c.scrollTop=0;
   document.querySelectorAll(".nb").forEach(function(x){x.classList.remove("on");});
-  var nb=document.getElementById(navMap[p]);if(nb)nb.classList.add("on");
-  if(p==="lb")renderLb();
-  if(p==="profile")renderProfile();
-  if(p==="words")renderWords();
-  if(p==="mistakes")renderMistakes();
-  if(p==="leagues")renderLeagues();
-  if(p==="settings")initSettings();
-  if(p==="admin")renderAdmin();
-  if(p==="learn"){renderLearnCats();}
+  var nb=document.getElementById(NM[p]);if(nb)nb.classList.add("on");
+  if(p==="lb")rLb();
+  if(p==="prof")rProf();
+  if(p==="words")rWords();
+  if(p==="mist")rMist();
+  if(p==="leagues")rLeagues();
+  if(p==="admin")rAdmin();
+  if(p==="learn")rLearnCats();
 }
 
 // ===== MENU =====
 function openMenu(){
   var items=[
-    {ic:"📚",lb:"Слова",p:"words"},
-    {ic:"❌",lb:"Ошибки",p:"mistakes"},
-    {ic:"🥇",lb:"Лиги",p:"leagues"},
-    {ic:"⚙️",lb:"Настройки",p:"settings"},
-    {ic:"🔗",lb:"Поделиться",fn:shareApp},
-    {ic:"🔄",lb:"Выйти",fn:logout}
+    {ic:"📚",lb:"Слова",p:"words"},{ic:"❌",lb:"Ошибки",p:"mist"},
+    {ic:"🥇",lb:"Лиги",p:"leagues"},{ic:"⚙️",lb:"Настройки",p:"set"},
+    {ic:"🔗",lb:"Поделиться",fn:share},{ic:"🔄",lb:"Выйти",fn:logout}
   ];
-  if(isAdmin)items.push({ic:"🛠",lb:"Админ",p:"admin"});
-  var ov=document.createElement("div");ov.className="sheet-overlay";
-  var sh=document.createElement("div");sh.className="sheet";
-  sh.innerHTML='<div class="sheet-handle"></div>';
-  var g=document.createElement("div");g.className="sheet-grid";
+  if(isAdm)items.push({ic:"🛠",lb:"Админ",p:"admin"});
+  var ov=document.createElement("div");ov.className="sov";
+  var sh=document.createElement("div");sh.className="sh";
+  sh.innerHTML='<div class="sh-h"></div>';
+  var g=document.createElement("div");g.className="sg";
   items.forEach(function(it){
-    var b=document.createElement("div");b.className="sg-btn";
-    b.innerHTML='<div class="sg-ic">'+it.ic+'</div><div class="sg-lb">'+it.lb+'</div>';
-    b.onclick=function(){ov.remove();if(it.p)showPage(it.p);else if(it.fn)it.fn();};
+    var b=document.createElement("div");b.className="sb2";
+    b.innerHTML='<div style="font-size:22px;margin-bottom:4px">'+it.ic+'</div><div style="font-family:\'Unbounded\',sans-serif;font-size:8px;font-weight:700">'+it.lb+'</div>';
+    b.onclick=function(){ov.remove();if(it.p)sP(it.p);else if(it.fn)it.fn();};
     g.appendChild(b);
   });
-  var cl=document.createElement("button");cl.className="btn btn-gray";cl.style.cssText="margin:0;";cl.textContent="ЗАКРЫТЬ";cl.onclick=function(){ov.remove();};
+  var cl=document.createElement("button");cl.className="btn bg";cl.style.margin="0";cl.textContent="ЗАКРЫТЬ";cl.onclick=function(){ov.remove();};
   sh.appendChild(g);sh.appendChild(cl);ov.appendChild(sh);
   ov.addEventListener("click",function(e){if(e.target===ov)ov.remove();});
   document.body.appendChild(ov);
 }
 
 // ===== WOD =====
-function renderWOD(){
+var EMOJ={"Природа":"🌿","Природа Чечни":"🏔","Семья":"👨‍👩‍👧","Еда":"🍽","Одежда":"👕","Животные":"🐾","Числа":"🔢","Дни недели":"📅","Цвета":"🎨","Тело":"🧍","Приветствия":"👋","Фразы":"💬","Глаголы":"⚡","Прилагательные":"✨","Ценности":"🕊","Дом":"🏠","Местоимения":"👁","Время":"⏰","Люди":"👥"};
+
+function rWOD(){
   var el=document.getElementById("wodEl");if(!el||!words.length)return;
   var w=words[new Date().getDate()%words.length];
-  el.innerHTML='';
-  var d=document.createElement("div");d.className="wod";
-  d.innerHTML='<div class="wod-lbl">⭐ СЛОВО ДНЯ</div>'
-    +'<div class="wod-word">'+w.chechen+'</div>'
-    +'<div class="wod-tr">'+w.russian+' · '+w.category+'</div>'
-    +'<button class="spk" onclick="speak(\''+w.transcription+'\')">🔊 Слушать</button>';
-  el.appendChild(d);
+  el.innerHTML='<div class="wod"><div style="font-family:\'Unbounded\',sans-serif;font-size:9px;letter-spacing:2px;color:var(--blue);margin-bottom:7px">⭐ СЛОВО ДНЯ</div><div style="font-family:\'Unbounded\',sans-serif;font-size:24px;font-weight:900">'+w.chechen+'</div><div style="font-size:13px;color:var(--muted);margin-top:3px">'+w.russian+' · '+w.category+'</div><button class="spk" onclick="speak(\''+w.transcription.replace(/'/g,"\\'")+'\')" style="margin-top:8px">🔊 Слушать</button></div>';
 }
 
-// ===== CATEGORY TABS =====
-function renderCatTabs(){
-  var el=document.getElementById("gCatTabs");if(!el)return;el.innerHTML="";
-  var cats=["Все"];
-  var s={};words.forEach(function(w){s[w.category]=1;});
-  cats=cats.concat(Object.keys(s));
+function rCatTabs(){
+  var el=document.getElementById("gCT");if(!el)return;el.innerHTML="";
+  var cats=["Все"],s={};words.forEach(function(w){s[w.category]=1;});cats=cats.concat(Object.keys(s));
   cats.forEach(function(c){
-    var b=document.createElement("button");b.className="ct"+(c===selCat?" on":"");b.textContent=c;
-    b.onclick=function(){selCat=c;renderCatTabs();usedWords=[];loadWord();};
+    var b=document.createElement("button");b.className="ct3"+(c===selCat?" on":"");b.textContent=c;
+    b.onclick=function(){selCat=c;rCatTabs();used=[];loadW();};
     el.appendChild(b);
   });
 }
 
-function getPool(){return selCat==="Все"?words:words.filter(function(w){return w.category===selCat;});}
+function pool(){return selCat==="Все"?words:words.filter(function(w){return w.category===selCat;});}
 
 // ===== GAME =====
-function startMode(mode){
-  curMode=mode;score=0;streak=0;bestStreak=0;totalAns=0;correctAns=0;
-  usedWords=[];scrSelected=[];answered=false;
-  var ov=document.getElementById("gameOv");ov.style.display="flex";document.body.style.overflow="hidden";
-  document.getElementById("gArea").style.display="block";
-  document.getElementById("gResult").style.display="none";
-  document.getElementById("gFb").className="fb";
-  document.getElementById("gHint").innerHTML="";
-  document.getElementById("gScore").textContent="0";
-  document.getElementById("gStreak").textContent="0";
-  document.getElementById("gProgFill").style.width="0%";
-  document.getElementById("gProgTxt").textContent="0 / "+dailyGoal;
-  renderCatTabs();loadWord();
+function sM(mode){
+  curMode=mode;sc=0;str=0;bStr=0;totA=0;corA=0;used=[];scrSel=[];answered=false;
+  var ov=document.getElementById("gOv");ov.style.display="flex";document.body.style.overflow="hidden";
+  document.getElementById("gA").style.display="block";document.getElementById("gRes").style.display="none";
+  document.getElementById("gFb").className="fb";document.getElementById("gHint").innerHTML="";
+  document.getElementById("gSc").textContent="0";document.getElementById("gSt").textContent="0";
+  document.getElementById("gPF").style.width="0%";document.getElementById("gPT").textContent="0 / "+goal;
+  rCatTabs();loadW();
 }
 
-function exitGame(){
-  document.getElementById("gameOv").style.display="none";
-  document.body.style.overflow="";
-  var hf=document.getElementById("hpFill"),ht=document.getElementById("hpTxt");
-  if(hf)hf.style.width=Math.min((totalAns/dailyGoal)*100,100)+"%";
-  if(ht)ht.textContent=totalAns+" / "+dailyGoal;
+function xGame(){
+  document.getElementById("gOv").style.display="none";document.body.style.overflow="";
+  var hf=document.getElementById("hpF"),ht=document.getElementById("hpT");
+  if(hf)hf.style.width=Math.min((totA/goal)*100,100)+"%";
+  if(ht)ht.textContent=totA+" / "+goal;
 }
 
-function loadWord(){
-  var pool=getPool();if(!pool.length)return;
-  var unused=pool.filter(function(w){return usedWords.indexOf(w.chechen)===-1;});
-  if(!unused.length){usedWords=[];unused=pool;}
-  curWord=unused[Math.floor(Math.random()*unused.length)];
-  usedWords.push(curWord.chechen);
-  answered=false;renderCard();
+function loadW(){
+  var p=pool();if(!p.length)return;
+  var u=p.filter(function(w){return used.indexOf(w.chechen)===-1;});
+  if(!u.length){used=[];u=p;}
+  curW=u[Math.floor(Math.random()*u.length)];used.push(curW.chechen);
+  answered=false;rCard();
 }
 
-function renderCard(){
-  if(!curWord)return;
-  var card=document.getElementById("gCard");
-  var fb=document.getElementById("gFb");
-  var ab=document.getElementById("gActBtn");
-  fb.className="fb";fb.textContent="";
-  card.innerHTML="";
-  // Word display
-  var wEl=document.createElement("div");
-  wEl.innerHTML='<div style="font-family:\'Unbounded\',sans-serif;font-size:26px;font-weight:900;color:var(--white);margin-bottom:5px">'+curWord.chechen+'</div>'
-    +'<div style="font-size:12px;color:var(--muted);margin-bottom:6px">'+curWord.transcription+'</div>'
-    +'<button class="spk" onclick="speak(\''+curWord.transcription+'\')">🔊 Слушать</button>';
-  card.appendChild(wEl);
-
+function rCard(){
+  if(!curW)return;
+  var card=document.getElementById("gC"),fb=document.getElementById("gFb"),ab=document.getElementById("gAB");
+  fb.className="fb";fb.textContent="";card.innerHTML="";
+  var h='<div style="font-family:\'Unbounded\',sans-serif;font-size:24px;font-weight:900;margin-bottom:4px">'+curW.chechen+'</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:6px">'+curW.transcription+'</div>'
+    +'<button class="spk" onclick="speak(\''+curW.transcription.replace(/'/g,"\\'")+'\')">🔊 Слушать</button>';
+  card.innerHTML=h;
   if(curMode==="translate"){
-    var inp=document.createElement("input");
-    inp.type="text";inp.id="ansInp";inp.placeholder="Переведи на русский...";
+    var inp=document.createElement("input");inp.type="text";inp.id="aInp";inp.placeholder="Переведи на русский...";
     inp.setAttribute("autocomplete","off");inp.setAttribute("autocorrect","off");inp.setAttribute("autocapitalize","off");
-    inp.style.cssText="width:100%;background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:13px 14px;color:var(--white);font-family:'Manrope',sans-serif;font-size:16px;margin-top:14px;outline:none;";
-    inp.onkeydown=function(e){if(e.key==="Enter")doAction();};
-    card.appendChild(inp);
-    ab.textContent="Проверить";ab.style.display="block";
-    setTimeout(function(){var i=document.getElementById("ansInp");if(i)i.focus();},80);
+    inp.style.cssText="width:100%;background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:13px 14px;color:var(--white);font-family:'Manrope',sans-serif;font-size:16px;margin-top:12px;outline:none;";
+    inp.onkeydown=function(e){if(e.key==="Enter")doAct();};
+    card.appendChild(inp);ab.textContent="Проверить";ab.style.display="block";
+    setTimeout(function(){var i=document.getElementById("aInp");if(i)i.focus();},80);
   } else if(curMode==="choice"){
-    var pool=getPool();
-    var wrong=pool.filter(function(w){return w.chechen!==curWord.chechen;});
+    var p2=pool(),wrong=p2.filter(function(w){return w.chechen!==curW.chechen;});
     wrong.sort(function(){return Math.random()-.5;});wrong=wrong.slice(0,3);
-    var all=[curWord].concat(wrong);all.sort(function(){return Math.random()-.5;});
+    var all=[curW].concat(wrong);all.sort(function(){return Math.random()-.5;});
     var ch=document.createElement("div");ch.className="choices";
     all.forEach(function(w){
-      var b=document.createElement("button");b.className="ch-btn";b.textContent=w.russian;
-      (function(ww){b.onclick=function(){checkChoice(b,ww.chechen);};})(w);
-      ch.appendChild(b);
+      var b=document.createElement("button");b.className="cb";b.textContent=w.russian;
+      (function(ww){b.onclick=function(){chChoice(b,ww.chechen);};})(w);ch.appendChild(b);
     });
     card.appendChild(ch);ab.style.display="none";
   } else if(curMode==="scramble"){
-    var letters=curWord.russian.toUpperCase().split("").sort(function(){return Math.random()-.5;});
-    scrSelected=[];
-    var ans=document.createElement("div");ans.className="scr-ans";ans.id="scrAns";
-    var pool2=document.createElement("div");pool2.className="scr-pool";
+    var letters=curW.russian.toUpperCase().split("").sort(function(){return Math.random()-.5;});
+    scrSel=[];
+    var ans=document.createElement("div");ans.className="sa";ans.id="sAns";
+    var pl=document.createElement("div");pl.className="sp";
     letters.forEach(function(l,i){
-      var b=document.createElement("button");b.className="l-btn";b.id="lb"+i;b.textContent=l;
-      (function(ll,ii){b.onclick=function(){addLetter(ll,ii);};})(l,i);
-      pool2.appendChild(b);
+      var b=document.createElement("button");b.className="lb3";b.id="lb"+i;b.textContent=l;
+      (function(ll,ii){b.onclick=function(){addL(ll,ii);};})(l,i);pl.appendChild(b);
     });
-    var clr=document.createElement("button");clr.className="btn btn-gray";clr.style.cssText="margin-top:8px;margin-bottom:0;";clr.textContent="Очистить";clr.onclick=clearScramble;
-    card.appendChild(ans);card.appendChild(pool2);card.appendChild(clr);
+    var cl=document.createElement("button");cl.className="btn bg";cl.style.cssText="margin-top:7px;margin-bottom:0";cl.textContent="Очистить";cl.onclick=clrScr;
+    card.appendChild(ans);card.appendChild(pl);card.appendChild(cl);
     ab.textContent="Проверить";ab.style.display="block";
   }
 }
 
-function addLetter(l,i){
-  scrSelected.push({l:l,i:i});
-  var b=document.getElementById("lb"+i);if(b)b.disabled=true;
-  var a=document.getElementById("scrAns");if(a)a.textContent=scrSelected.map(function(s){return s.l;}).join("");
-}
-function clearScramble(){
-  scrSelected=[];
-  document.querySelectorAll(".l-btn").forEach(function(b){b.disabled=false;});
-  var a=document.getElementById("scrAns");if(a)a.textContent="";
-}
+function addL(l,i){scrSel.push({l:l,i:i});var b=document.getElementById("lb"+i);if(b)b.disabled=true;var a=document.getElementById("sAns");if(a)a.textContent=scrSel.map(function(s){return s.l;}).join("");}
+function clrScr(){scrSel=[];document.querySelectorAll(".lb3").forEach(function(b){b.disabled=false;});var a=document.getElementById("sAns");if(a)a.textContent="";}
 
-function doAction(){
-  if(answered){loadWord();return;}
+function doAct(){
+  if(answered){loadW();return;}
   if(curMode==="translate"){
-    var inp=document.getElementById("ansInp");if(!inp||!inp.value.trim())return;
-    var ua=inp.value.trim().toLowerCase();var ca=curWord.russian.toLowerCase();
-    handleResult(ua===ca||ca.indexOf(ua)!==-1,curWord.russian);
+    var inp=document.getElementById("aInp");if(!inp||!inp.value.trim())return;
+    var ua=inp.value.trim().toLowerCase(),ca=curW.russian.toLowerCase();
+    hRes(ua===ca||ca.indexOf(ua)!==-1,curW.russian);
   } else if(curMode==="scramble"){
-    var ua2=scrSelected.map(function(s){return s.l;}).join("").toLowerCase();
-    handleResult(ua2===curWord.russian.toLowerCase(),curWord.russian);
+    var ua2=scrSel.map(function(s){return s.l;}).join("").toLowerCase();
+    hRes(ua2===curW.russian.toLowerCase(),curW.russian);
   }
-  var ab=document.getElementById("gActBtn");
-  if(ab){ab.textContent="Следующее →";ab.onclick=function(){ab.onclick=doAction;loadWord();};}
+  var ab=document.getElementById("gAB");if(ab){ab.textContent="Следующее →";ab.onclick=function(){ab.onclick=doAct;loadW();};}
 }
 
-function checkChoice(btn,key){
+function chChoice(btn,key){
   if(answered)return;answered=true;
-  var ok=key===curWord.chechen;
-  document.querySelectorAll(".ch-btn").forEach(function(b){b.disabled=true;});
+  var ok=key===curW.chechen;
+  document.querySelectorAll(".cb").forEach(function(b){b.disabled=true;});
   if(ok)btn.classList.add("ok");
-  else{
-    btn.classList.add("no");
-    document.querySelectorAll(".ch-btn").forEach(function(b){if(b.textContent===curWord.russian)b.classList.add("ok");});
-  }
-  handleResult(ok,curWord.russian);
-  var ab=document.getElementById("gActBtn");
-  if(ab){ab.style.display="block";ab.textContent="Следующее →";ab.onclick=function(){ab.onclick=doAction;loadWord();};}
+  else{btn.classList.add("no");document.querySelectorAll(".cb").forEach(function(b){if(b.textContent===curW.russian)b.classList.add("ok");});}
+  hRes(ok,curW.russian);
+  var ab=document.getElementById("gAB");if(ab){ab.style.display="block";ab.textContent="Следующее →";ab.onclick=function(){ab.onclick=doAct;loadW();};}
 }
 
-function skipWord(){loadWord();}
+function skip(){loadW();}
 
-function playOk(){if(!sndEnabled)return;try{var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=523;g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.3);o.start(c.currentTime);o.stop(c.currentTime+0.3);}catch(e){}}
-function playFail(){if(!sndEnabled)return;try{var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=200;o.type="sawtooth";g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.3);o.start(c.currentTime);o.stop(c.currentTime+0.3);}catch(e){}}
+function pOk(){if(!snd)return;try{var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=523;g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.3);o.start(c.currentTime);o.stop(c.currentTime+0.3);}catch(e){}}
+function pNo(){if(!snd)return;try{var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=200;o.type="sawtooth";g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.3);o.start(c.currentTime);o.stop(c.currentTime+0.3);}catch(e){}}
+function speak(t){if(!spk||!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang="ru-RU";u.rate=0.8;window.speechSynthesis.speak(u);}
 
-function speak(t){if(!spkEnabled||!window.speechSynthesis)return;window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang="ru-RU";u.rate=0.8;window.speechSynthesis.speak(u);}
-
-function handleResult(ok,correct){
-  totalAns++;answered=true;
-  var fb=document.getElementById("gFb");
+function hRes(ok,cor){
+  totA++;answered=true;var fb=document.getElementById("gFb");
   if(ok){
-    correctAns++;streak++;if(streak>bestStreak)bestStreak=streak;
-    var pts=10+(streak>=3?streak*5:0);score+=pts;
-    fb.className="fb ok";
-    fb.textContent=streak>=3?"🔥 Серия "+streak+"! +"+pts+" очков":"✓ Верно! +10 очков";
-    playOk();
-    mistakes=mistakes.filter(function(w){return w.chechen!==curWord.chechen;});
+    corA++;str++;if(str>bStr)bStr=str;var pts=10+(str>=3?str*5:0);sc+=pts;
+    fb.className="fb ok";fb.textContent=str>=3?"🔥 Серия "+str+"! +"+pts+" очков":"✓ Верно! +10 очков";
+    pOk();mist=mist.filter(function(w){return w.chechen!==curW.chechen;});
   } else {
-    streak=0;fb.className="fb no";fb.textContent="✗ Правильно: "+correct;playFail();
-    var found=false;
-    for(var i=0;i<mistakes.length;i++){if(mistakes[i].chechen===curWord.chechen){mistakes[i].cnt=(mistakes[i].cnt||1)+1;found=true;break;}}
-    if(!found){var m={};for(var k in curWord)m[k]=curWord[k];m.cnt=1;mistakes.push(m);}
-    if(localStorage.getItem("ai")!=="false"){
-      var h=document.getElementById("gHint");if(h){h.innerHTML='<div style="background:rgba(28,176,246,.08);border:1px solid rgba(28,176,246,.2);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--muted)">🤖 '+curWord.chechen+' — '+curWord.russian+'</div>';}
-    }
+    str=0;fb.className="fb no";fb.textContent="✗ Правильно: "+cor;pNo();
+    var f=false;for(var i=0;i<mist.length;i++){if(mist[i].chechen===curW.chechen){mist[i].cnt=(mist[i].cnt||1)+1;f=true;break;}}
+    if(!f){var m={};for(var k in curW)m[k]=curW[k];m.cnt=1;mist.push(m);}
+    document.getElementById("gHint").innerHTML='<div style="background:rgba(28,176,246,.08);border:1px solid rgba(28,176,246,.2);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--muted)">🤖 '+curW.chechen+' — '+curW.russian+'</div>';
   }
-  try{localStorage.setItem("mistakes",JSON.stringify(mistakes));}catch(e){}
-  // Update UI
-  document.getElementById("gScore").textContent=score;
-  document.getElementById("gStreak").textContent=streak;
-  var pct=Math.min((totalAns/dailyGoal)*100,100);
-  document.getElementById("gProgFill").style.width=pct+"%";
-  document.getElementById("gProgTxt").textContent=totalAns+" / "+dailyGoal;
-  document.getElementById("topScore").textContent=score+"⚡";
-  if(totalAns>=dailyGoal)setTimeout(showResult,1400);
+  try{localStorage.setItem("mist",JSON.stringify(mist));}catch(e){}
+  document.getElementById("gSc").textContent=sc;document.getElementById("gSt").textContent=str;
+  document.getElementById("gPF").style.width=Math.min((totA/goal)*100,100)+"%";
+  document.getElementById("gPT").textContent=totA+" / "+goal;
+  document.getElementById("tScore").textContent=sc+"⚡";
+  if(totA>=goal)setTimeout(showRes,1400);
 }
 
-function showResult(){
-  document.getElementById("gArea").style.display="none";
-  document.getElementById("gResult").style.display="block";
-  var acc=totalAns>0?Math.round((correctAns/totalAns)*100):0;
-  document.getElementById("rEmoji").textContent=acc>=80?"🏆":acc>=50?"⭐":"📚";
-  document.getElementById("rTitle").textContent=acc>=80?"ОТЛИЧНО!":acc>=50?"ХОРОШИЙ РЕЗУЛЬТАТ!":"УЧИСЬ ДАЛЬШЕ!";
-  document.getElementById("rMsg").textContent=acc>=80?"Ты хорошо знаешь чеченский!":"Продолжай практиковаться!";
-  document.getElementById("rScore").textContent=score;
-  document.getElementById("rAcc").textContent=acc+"%";
-  document.getElementById("rOk").textContent=correctAns;
-  document.getElementById("rBest").textContent=bestStreak;
-  totGames++;totScore+=score;totWords+=correctAns;
-  try{localStorage.setItem("tg",totGames);localStorage.setItem("ts",totScore);localStorage.setItem("tw",totWords);}catch(e){}
-  var mb=document.getElementById("rMistBtn");if(mb)mb.style.display=mistakes.length>0?"block":"none";
-  saveStats();
+function showRes(){
+  document.getElementById("gA").style.display="none";document.getElementById("gRes").style.display="block";
+  var acc=totA>0?Math.round((corA/totA)*100):0;
+  document.getElementById("rEm").textContent=acc>=80?"🏆":acc>=50?"⭐":"📚";
+  document.getElementById("rTi").textContent=acc>=80?"ОТЛИЧНО!":acc>=50?"ХОРОШИЙ РЕЗУЛЬТАТ!":"УЧИСЬ ДАЛЬШЕ!";
+  document.getElementById("rMs").textContent=acc>=80?"Ты хорошо знаешь чеченский!":"Продолжай практиковаться!";
+  document.getElementById("rSc").textContent=sc;document.getElementById("rAc").textContent=acc+"%";
+  document.getElementById("rOk").textContent=corA;document.getElementById("rBs").textContent=bStr;
+  tG++;tS+=sc;tW+=corA;
+  try{localStorage.setItem("tg",tG);localStorage.setItem("ts",tS);localStorage.setItem("tw",tW);}catch(e){}
+  var mb=document.getElementById("rMB");if(mb)mb.style.display=mist.length>0?"block":"none";
+  svStats();
 }
 
-function restartGame(){
-  score=0;streak=0;bestStreak=0;totalAns=0;correctAns=0;usedWords=[];scrSelected=[];answered=false;
-  document.getElementById("gProgFill").style.width="0%";document.getElementById("gProgTxt").textContent="0 / "+dailyGoal;
-  document.getElementById("gScore").textContent="0";document.getElementById("gStreak").textContent="0";
-  document.getElementById("gArea").style.display="block";document.getElementById("gResult").style.display="none";
-  loadWord();
+function restart(){
+  sc=0;str=0;bStr=0;totA=0;corA=0;used=[];scrSel=[];answered=false;
+  document.getElementById("gPF").style.width="0%";document.getElementById("gPT").textContent="0 / "+goal;
+  document.getElementById("gSc").textContent="0";document.getElementById("gSt").textContent="0";
+  document.getElementById("gA").style.display="block";document.getElementById("gRes").style.display="none";
+  loadW();
 }
 
 // ===== LEADERBOARD =====
-function renderLb(){
-  var el=document.getElementById("lbList");if(!el)return;
-  el.innerHTML='<div style="padding:16px;text-align:center"><div class="spin"></div></div>';
+function rLb(){
+  var el=document.getElementById("lbL");if(!el)return;
+  el.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
   db.ref("leaderboard").get().then(function(s){
     el.innerHTML="";
-    if(!s.exists()||!s.val()){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">Зарегистрируйся чтобы попасть в топ!</div>';return;}
-    var data=s.val(),arr=[];
-    for(var k in data){if(data[k].verified)arr.push(data[k]);}
+    if(!s.exists()||!s.val()){el.innerHTML='<div style="padding:16px;text-align:center;color:var(--muted)">Зарегистрируйся чтобы попасть в топ!</div>';return;}
+    var data=s.val(),arr=[];for(var k in data){if(data[k].verified)arr.push(data[k]);}
     arr.sort(function(a,b){return(b.score||0)-(a.score||0);});
-    if(!arr.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">Нет данных</div>';return;}
+    if(!arr.length){el.innerHTML='<div style="padding:14px;text-align:center;color:var(--muted)">Нет данных</div>';return;}
     arr.slice(0,50).forEach(function(p,i){
-      var row=document.createElement("div");row.className="lb-row";
-      var medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
-      row.innerHTML='<div class="lb-rank">'+medal+'</div>'
-        +'<div style="font-size:20px">'+(p.country?p.country.split(" ")[0]:"🌍")+'</div>'
-        +'<div class="lb-name">'+( p.name||"Игрок")+'</div>'
-        +'<div class="lb-sc">'+(p.score||0)+'⚡</div>';
-      el.appendChild(row);
+      var r=document.createElement("div");r.className="lr";
+      var med=i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
+      r.innerHTML='<div style="font-family:\'Unbounded\',sans-serif;font-size:12px;color:var(--muted);width:24px;text-align:center">'+med+'</div>'
+        +'<div style="font-size:18px">'+(p.country?p.country.split(" ")[0]:"🌍")+'</div>'
+        +'<div style="flex:1;font-size:13px;font-weight:600">'+(p.name||"Игрок")+'</div>'
+        +'<div style="font-family:\'Unbounded\',sans-serif;font-size:12px;color:var(--blue);font-weight:700">'+(p.score||0)+'⚡</div>';
+      el.appendChild(r);
     });
-  }).catch(function(){el.innerHTML='<div style="padding:16px;text-align:center;color:var(--muted)">Ошибка загрузки</div>';});
+  }).catch(function(){el.innerHTML='<div style="padding:14px;text-align:center;color:var(--muted)">Ошибка загрузки</div>';});
 }
 
-// ===== WORDS LIST =====
-function renderWords(){
-  var el=document.getElementById("wordsOut");if(!el)return;
-  var q=(document.getElementById("wordSrch")||{value:""}).value.toLowerCase();
-  var filtered=q?words.filter(function(w){return w.chechen.toLowerCase().includes(q)||w.russian.toLowerCase().includes(q);}):words;
-  var cats={};filtered.forEach(function(w){if(!cats[w.category])cats[w.category]=[];cats[w.category].push(w);});
+// ===== WORDS =====
+function rWords(){
+  var el=document.getElementById("wOut");if(!el)return;
+  var q=(document.getElementById("wSrch")||{value:""}).value.toLowerCase();
+  var f=q?words.filter(function(w){return w.chechen.toLowerCase().includes(q)||w.russian.toLowerCase().includes(q);}):words;
+  var cats={};f.forEach(function(w){if(!cats[w.category])cats[w.category]=[];cats[w.category].push(w);});
   el.innerHTML="";
   for(var cat in cats){
-    var d=document.createElement("div");d.style.cssText="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;box-shadow:var(--shadow)";
-    var h=document.createElement("div");h.style.cssText="padding:10px 14px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:10px;color:var(--white);letter-spacing:1px";
-    h.textContent=cat+" ("+cats[cat].length+")";d.appendChild(h);
+    var d=document.createElement("div");d.style.cssText="background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px;box-shadow:var(--shadow)";
+    var h=document.createElement("div");h.style.cssText="padding:9px 13px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:10px";h.textContent=cat+" ("+cats[cat].length+")";d.appendChild(h);
     cats[cat].forEach(function(w){
-      var r=document.createElement("div");r.style.cssText="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px";
-      var info=document.createElement("div");info.style.flex="1";
-      info.innerHTML='<div style="font-weight:700;font-size:14px">'+w.chechen+'</div><div style="font-size:11px;color:var(--muted)">'+w.russian+' · '+w.transcription+'</div>';
-      var sb=document.createElement("button");sb.style.cssText="background:none;border:none;font-size:18px;cursor:pointer;padding:4px";sb.textContent="🔊";
+      var r=document.createElement("div");r.style.cssText="padding:10px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px";
+      var info=document.createElement("div");info.style.flex="1";info.innerHTML='<div style="font-weight:700;font-size:13px">'+w.chechen+'</div><div style="font-size:11px;color:var(--muted)">'+w.russian+'</div>';
+      var sb=document.createElement("button");sb.style.cssText="background:none;border:none;font-size:17px;cursor:pointer;padding:3px";sb.textContent="🔊";
       (function(t){sb.onclick=function(){speak(t);};})(w.transcription);
       r.appendChild(info);r.appendChild(sb);d.appendChild(r);
     });
@@ -1163,340 +983,257 @@ function renderWords(){
 }
 
 // ===== MISTAKES =====
-function renderMistakes(){
-  var c=document.getElementById("mistakesOut");if(!c)return;c.innerHTML="";
-  if(!mistakes.length){
-    c.innerHTML='<div style="text-align:center;padding:50px 20px"><div style="font-size:52px">🎉</div><div style="font-size:15px;margin:14px 0">Ошибок нет!</div><div style="font-size:12px;color:var(--muted)">Слова которые ты не угадал появятся здесь</div></div>';
-    return;
-  }
-  var sorted=mistakes.slice().sort(function(a,b){return(b.cnt||1)-(a.cnt||1);});
-  var warn=document.createElement("div");warn.style.cssText="background:#fff3cd;border:2px solid #ffc107;border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px";
-  warn.innerHTML='<div style="font-size:22px">⚠️</div><div style="font-size:13px;font-weight:700;color:#856404">'+sorted.length+' слов нужно повторить</div>';
-  c.appendChild(warn);
-  var pb=document.createElement("button");pb.className="btn btn-blue";pb.style.marginBottom="12px";pb.textContent="🔄 Повторить ошибки";pb.onclick=practiceMistakes;c.appendChild(pb);
+function rMist(){
+  var c=document.getElementById("mOut");if(!c)return;c.innerHTML="";
+  if(!mist.length){c.innerHTML='<div style="text-align:center;padding:46px 16px"><div style="font-size:48px">🎉</div><div style="font-size:14px;margin:12px 0">Ошибок нет!</div><div style="font-size:12px;color:var(--muted)">Слова которые ты не угадал появятся здесь</div></div>';return;}
+  var sorted=mist.slice().sort(function(a,b){return(b.cnt||1)-(a.cnt||1);});
+  var w2=document.createElement("div");w2.style.cssText="background:#fff3cd;border:2px solid #ffc107;border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px";
+  w2.innerHTML='<div style="font-size:20px">⚠️</div><div style="font-size:13px;font-weight:700;color:#856404">'+sorted.length+' слов нужно повторить</div>';
+  c.appendChild(w2);
+  var pb=document.createElement("button");pb.className="btn bb";pb.style.marginBottom="12px";pb.textContent="🔄 Повторить ошибки";pb.onclick=pracMist;c.appendChild(pb);
   sorted.forEach(function(w){
-    var row=document.createElement("div");
-    row.style.cssText="background:var(--card);border:2px solid "+((w.cnt||1)>=3?"var(--red)":"var(--border)")+";border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)";
-    var info=document.createElement("div");info.style.flex="1";
-    info.innerHTML='<div style="font-family:\'Unbounded\',sans-serif;font-size:14px;font-weight:700">'+w.chechen+' ×'+(w.cnt||1)+'</div><div style="font-size:12px;color:var(--muted)">'+w.russian+'</div>';
-    var sb=document.createElement("button");sb.style.cssText="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:16px";sb.textContent="🔊";
+    var r=document.createElement("div");r.style.cssText="background:var(--card);border:2px solid "+((w.cnt||1)>=3?"var(--red)":"var(--border)")+";border-radius:12px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)";
+    var info=document.createElement("div");info.style.flex="1";info.innerHTML='<div style="font-family:\'Unbounded\',sans-serif;font-size:13px;font-weight:700">'+w.chechen+' ×'+(w.cnt||1)+'</div><div style="font-size:12px;color:var(--muted)">'+w.russian+'</div>';
+    var sb=document.createElement("button");sb.style.cssText="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 9px;cursor:pointer;font-size:15px";sb.textContent="🔊";
     (function(t){sb.onclick=function(){speak(t);};})(w.transcription||"");
-    row.appendChild(info);row.appendChild(sb);c.appendChild(row);
+    r.appendChild(info);r.appendChild(sb);c.appendChild(r);
   });
 }
-
-function practiceMistakes(){if(!mistakes.length)return;words=mistakes.slice();selCat="Все";startMode(curMode||"translate");}
-function clearMistakes(){if(!confirm("Очистить все ошибки?"))return;mistakes=[];try{localStorage.setItem("mistakes","[]");}catch(e){}renderMistakes();}
+function pracMist(){if(!mist.length)return;words=mist.slice();selCat="Все";sM(curMode||"translate");}
+function clrMist(){if(!confirm("Очистить все ошибки?"))return;mist=[];try{localStorage.setItem("mist","[]");}catch(e){}rMist();}
 
 // ===== LEARN =====
-function renderLearnCats(){
-  var g=document.getElementById("learnCatGrid");if(!g)return;g.innerHTML="";
+function rLearnCats(){
+  var g=document.getElementById("lCatG");if(!g)return;g.innerHTML="";
   var cats={};words.forEach(function(w){cats[w.category]=1;});
   Object.keys(cats).sort().forEach(function(cat){
     var cnt=words.filter(function(w){return w.category===cat;}).length;
-    var em=EMOJIS[cat]||"📚";
-    var d=document.createElement("div");d.className="cat-item";
-    d.innerHTML='<div class="cat-ic" style="background:linear-gradient(135deg,var(--blue),#0096d6)">'+em+'</div>'
-      +'<div style="flex:1;padding:12px 14px"><div style="font-family:\'Unbounded\',sans-serif;font-size:12px;font-weight:900">'+cat+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">'+cnt+' слов</div></div>'
-      +'<div style="padding-right:14px;color:var(--muted);font-size:18px">›</div>';
+    var em=EMOJ[cat]||"📚";
+    var d=document.createElement("div");d.className="ci";
+    d.innerHTML='<div style="width:72px;height:64px;background:linear-gradient(135deg,var(--blue),#0096d6);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">'+em+'</div>'
+      +'<div style="flex:1;padding:11px 13px"><div style="font-family:\'Unbounded\',sans-serif;font-size:11px;font-weight:900">'+cat+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">'+cnt+' слов</div></div>'
+      +'<div style="padding-right:12px;color:var(--muted);font-size:16px">›</div>';
     (function(c){d.onclick=function(){startLearn(c);};})(cat);
     g.appendChild(d);
   });
 }
 
 function startLearn(cat){
-  lcards=words.filter(function(w){return w.category===cat;});
-  lIdx=0;lKnown=lcards.map(function(){return null;});cFlipped=false;
-  document.getElementById("learnTitle").textContent=cat;
-  document.getElementById("learnCatView").style.display="none";
-  document.getElementById("learnCardView").style.display="block";
-  renderLearnCard();
+  lCards=words.filter(function(w){return w.category===cat;});
+  lIdx=0;lKnown=lCards.map(function(){return null;});cFlip=false;
+  document.getElementById("lTitle").textContent=cat;
+  document.getElementById("lCatV").style.display="none";
+  document.getElementById("lCardV").style.display="block";
+  rLC();
 }
+function xLearn(){document.getElementById("lCatV").style.display="block";document.getElementById("lCardV").style.display="none";}
 
-function exitLearn(){
-  document.getElementById("learnCatView").style.display="block";
-  document.getElementById("learnCardView").style.display="none";
-}
-
-function renderLearnCard(){
-  if(!lcards.length)return;
-  var w=lcards[lIdx];cFlipped=false;
-  var fc=document.getElementById("flashcard");if(!fc)return;
+function rLC(){
+  if(!lCards.length)return;
+  var w=lCards[lIdx];cFlip=false;
+  var fc=document.getElementById("fc");if(!fc)return;
   fc.style.borderColor=lKnown[lIdx]===true?"#c8e6c9":lKnown[lIdx]===false?"#ffcdd2":"var(--border)";
-  document.getElementById("learnProg").textContent=(lIdx+1)+"/"+lcards.length;
-  document.getElementById("fcImage").textContent=EMOJIS[w.category]||"📚";
-  document.getElementById("fcLang").textContent="ЧЕЧЕНСКИЙ";
-  document.getElementById("fcWord").textContent=w.chechen;
-  document.getElementById("fcTr").textContent=w.transcription||"";
-  document.getElementById("fcTrans").style.display="none";
-  document.getElementById("fcRu").textContent=w.russian;
-  var dots=document.getElementById("pdots");if(!dots)return;dots.innerHTML="";
-  lcards.forEach(function(_,i){
+  document.getElementById("lProg").textContent=(lIdx+1)+"/"+lCards.length;
+  document.getElementById("fcImg").textContent=EMOJ[w.category]||"📚";
+  document.getElementById("fcL").textContent="ЧЕЧЕНСКИЙ";
+  document.getElementById("fcW").textContent=w.chechen;
+  document.getElementById("fcT").textContent=w.transcription||"";
+  document.getElementById("fcTr").style.display="none";
+  document.getElementById("fcR").textContent=w.russian;
+  var dots=document.getElementById("pd");if(!dots)return;dots.innerHTML="";
+  lCards.forEach(function(_,i){
     var d=document.createElement("div");
-    d.style.cssText="width:"+(i===lIdx?18:7)+"px;height:7px;border-radius:4px;transition:all .3s;background:"+(lKnown[i]===true?"var(--green)":lKnown[i]===false?"var(--red)":i===lIdx?"var(--blue)":"var(--border)");
+    d.style.cssText="width:"+(i===lIdx?16:6)+"px;height:6px;border-radius:4px;transition:all .3s;background:"+(lKnown[i]===true?"var(--green)":lKnown[i]===false?"var(--red)":i===lIdx?"var(--blue)":"var(--border)");
     dots.appendChild(d);
   });
 }
+function flip(){cFlip=!cFlip;document.getElementById("fcTr").style.display=cFlip?"block":"none";document.getElementById("fcL").textContent=cFlip?"ПЕРЕВОД":"ЧЕЧЕНСКИЙ";}
+function nC(){if(lIdx<lCards.length-1){lIdx++;rLC();}else lDone();}
+function pC(){if(lIdx>0){lIdx--;rLC();}}
+function mC(k){lKnown[lIdx]=k;rLC();setTimeout(nC,320);}
+function spC(){if(lCards[lIdx])speak(lCards[lIdx].transcription||lCards[lIdx].chechen);}
 
-function flipCard(){
-  cFlipped=!cFlipped;
-  document.getElementById("fcTrans").style.display=cFlipped?"block":"none";
-  document.getElementById("fcLang").textContent=cFlipped?"ПЕРЕВОД":"ЧЕЧЕНСКИЙ";
-}
-function nextCard(){if(lIdx<lcards.length-1){lIdx++;renderLearnCard();}else learnDone();}
-function prevCard(){if(lIdx>0){lIdx--;renderLearnCard();}}
-function markCard(k){lKnown[lIdx]=k;renderLearnCard();setTimeout(nextCard,350);}
-function speakCard(){if(lcards[lIdx])speak(lcards[lIdx].transcription||lcards[lIdx].chechen);}
-
-function learnDone(){
+function lDone(){
   var ok=lKnown.filter(function(k){return k===true;}).length;
   var no=lKnown.filter(function(k){return k===false;}).length;
-  var cv=document.getElementById("learnCardView");if(!cv)return;cv.innerHTML="";
-  var d=document.createElement("div");d.style.cssText="text-align:center;padding:40px 16px";
-  d.innerHTML='<div style="font-size:60px;margin-bottom:12px">'+(ok>=lcards.length*.8?"🏆":"📚")+'</div>'
-    +'<div style="font-family:\'Unbounded\',sans-serif;font-size:17px;font-weight:900;margin-bottom:8px">'+(ok>=lcards.length*.8?"ОТЛИЧНО!":"ПРОДОЛЖАЙ!")+'</div>'
-    +'<div style="font-size:13px;color:var(--muted);margin-bottom:20px">Знаешь: '+ok+' · Учить: '+no+'</div>';
-  var b1=document.createElement("button");b1.className="btn btn-blue";b1.textContent="🔄 Повторить всё";
-  b1.onclick=function(){lIdx=0;lKnown=lcards.map(function(){return null;});renderLearnCard();};
-  var b2=document.createElement("button");b2.className="btn btn-gray";b2.textContent="← К категориям";b2.onclick=exitLearn;
+  var cv=document.getElementById("lCardV");if(!cv)return;cv.innerHTML="";
+  var d=document.createElement("div");d.style.cssText="text-align:center;padding:36px 14px";
+  d.innerHTML='<div style="font-size:56px;margin-bottom:10px">'+(ok>=lCards.length*.8?"🏆":"📚")+'</div><div style="font-family:\'Unbounded\',sans-serif;font-size:16px;font-weight:900;margin-bottom:8px">'+(ok>=lCards.length*.8?"ОТЛИЧНО!":"ПРОДОЛЖАЙ!")+'</div><div style="font-size:12px;color:var(--muted);margin-bottom:18px">Знаешь: '+ok+' · Учить: '+no+'</div>';
+  var b1=document.createElement("button");b1.className="btn bb";b1.textContent="🔄 Повторить всё";b1.onclick=function(){lIdx=0;lKnown=lCards.map(function(){return null;});rLC();};
+  var b2=document.createElement("button");b2.className="btn bg";b2.textContent="← К категориям";b2.onclick=xLearn;
   d.appendChild(b1);d.appendChild(b2);cv.appendChild(d);
 }
 
 // ===== PROFILE =====
-function renderProfile(){
-  var tab=document.getElementById("pgProfile");if(!tab)return;
-  var league=getLeague();
-  var gu=fAuth.currentUser;
+var LG=[{id:"b",n:"БРОНЗА",ic:"🥉",min:0,max:499},{id:"s",n:"СЕРЕБРО",ic:"🥈",min:500,max:1999},{id:"g",n:"ЗОЛОТО",ic:"🥇",min:2000,max:4999},{id:"d",n:"БРИЛЛИАНТ",ic:"💎",min:5000,max:999999}];
+function getLG(){for(var i=0;i<LG.length;i++){if(tS>=LG[i].min&&tS<=LG[i].max)return LG[i];}return LG[0];}
+
+function rProf(){
+  var tab=document.getElementById("pgProf");if(!tab)return;
+  var lg=getLG();var gu=googleUser;
   tab.innerHTML="";
-  var top=document.createElement("div");top.style.cssText="text-align:center;padding:22px 0 14px";
-  var av='<div class="prof-avatar">';
-  if(gu&&gu.photoURL)av+='<img src="'+gu.photoURL+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
-  else av+='👤';
-  av+='</div>';
-  top.innerHTML=av
-    +'<div style="font-family:\'Unbounded\',sans-serif;font-size:18px;font-weight:900;margin-top:10px">'+playerName+'</div>'
-    +'<div style="font-size:13px;color:var(--muted);margin-top:3px">'+playerCountry+'</div>'
-    +'<div style="font-size:12px;color:var(--blue);margin-top:3px">'+league.ic+' '+league.n+'</div>'
-    +(gu?'<div style="display:inline-flex;align-items:center;gap:5px;background:#e8f0fe;border:1px solid #4285F4;border-radius:20px;padding:3px 12px;font-size:11px;color:#4285F4;font-weight:700;margin-top:8px">✓ Google аккаунт</div>':'');
+  var photo=gu&&gu.photo?'<img src="'+gu.photo+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">':'👤';
+  var top=document.createElement("div");top.style.cssText="text-align:center;padding:20px 0 13px";
+  top.innerHTML='<div class="pav">'+photo+'</div>'
+    +'<div style="font-family:\'Unbounded\',sans-serif;font-size:17px;font-weight:900;margin-top:10px">'+pName+'</div>'
+    +'<div style="font-size:13px;color:var(--muted);margin-top:2px">'+pCountry+'</div>'
+    +'<div style="font-size:12px;color:var(--blue);margin-top:2px">'+lg.ic+' '+lg.n+'</div>'
+    +(gu?'<div style="display:inline-flex;align-items:center;gap:5px;background:#e8f0fe;border:1px solid #4285F4;border-radius:20px;padding:3px 12px;font-size:11px;color:#4285F4;font-weight:700;margin-top:7px">✓ Google</div>':'');
   tab.appendChild(top);
   var stats=document.createElement("div");stats.style.cssText="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px";
-  [{ic:"⚡",v:totScore,l:"ОЧКОВ"},{ic:"🎮",v:totGames,l:"ИГР"},{ic:"📚",v:totWords,l:"СЛОВ"}].forEach(function(s){
-    var d=document.createElement("div");d.className="prof-stat";
-    d.innerHTML='<div style="font-size:20px;margin-bottom:3px">'+s.ic+'</div><div class="prof-stat-val">'+s.v+'</div><div class="prof-stat-lbl">'+s.l+'</div>';
+  [{ic:"⚡",v:tS,l:"ОЧКОВ"},{ic:"🎮",v:tG,l:"ИГР"},{ic:"📚",v:tW,l:"СЛОВ"}].forEach(function(s){
+    var d=document.createElement("div");d.className="pst";d.innerHTML='<div style="font-size:18px;margin-bottom:2px">'+s.ic+'</div><div style="font-family:\'Unbounded\',sans-serif;font-size:16px;color:var(--blue);font-weight:700">'+s.v+'</div><div style="font-size:9px;color:var(--muted);font-family:\'Unbounded\',sans-serif">'+s.l+'</div>';
     stats.appendChild(d);
   });
   tab.appendChild(stats);
-  var menu=document.createElement("div");menu.style.cssText="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow)";
-  var mtitle=document.createElement("div");mtitle.style.cssText="padding:10px 16px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:1px";mtitle.textContent="⚙️ УПРАВЛЕНИЕ";
-  menu.appendChild(mtitle);
-  var items=[{ic:"⚙️",lb:"Настройки",fn:function(){showPage("settings");}},{ic:"🔗",lb:"Пригласить друга",fn:shareApp},{ic:"🔄",lb:"Выйти",fn:logout}];
-  if(!gu)items.splice(1,0,{ic:"✏️",lb:"Редактировать профиль",fn:editProfile});
+  var menu=document.createElement("div");menu.style.cssText="background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow)";
+  var mt=document.createElement("div");mt.style.cssText="padding:9px 14px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:9px;color:var(--muted);letter-spacing:1px";mt.textContent="⚙️ УПРАВЛЕНИЕ";menu.appendChild(mt);
+  var items=[{ic:"⚙️",lb:"Настройки",fn:function(){sP("set");}},{ic:"🔗",lb:"Пригласить друга",fn:share},{ic:"🔄",lb:"Выйти",fn:logout}];
+  if(!gu)items.splice(1,0,{ic:"✏️",lb:"Редактировать профиль",fn:editProf});
   items.forEach(function(it){
-    var row=document.createElement("div");row.className="menu-row";row.onclick=it.fn;
-    row.innerHTML='<div style="font-size:20px">'+it.ic+'</div><div style="flex:1;font-size:14px;font-weight:600">'+it.lb+'</div><div style="color:var(--muted)">›</div>';
-    menu.appendChild(row);
+    var r=document.createElement("div");r.className="mr";r.onclick=it.fn;
+    r.innerHTML='<div style="font-size:18px">'+it.ic+'</div><div style="flex:1;font-size:13px;font-weight:600">'+it.lb+'</div><div style="color:var(--muted)">›</div>';
+    menu.appendChild(r);
   });
   tab.appendChild(menu);
-  var ft=document.createElement("div");ft.style.cssText="text-align:center;color:var(--muted);font-size:10px;padding-bottom:20px";ft.textContent="MOTT_bu v2.0 · Нохчийн Мотт";
-  tab.appendChild(ft);
+  tab.innerHTML+='<div style="text-align:center;color:var(--muted);font-size:10px;padding-bottom:18px">MOTT_bu v2.0 · Нохчийн Мотт</div>';
 }
 
-function editProfile(){
-  var n=prompt("Твоё имя:",playerName);
-  if(n&&n.trim()){playerName=n.trim();localStorage.setItem("gName",playerName);document.getElementById("topGreeting").textContent=playerName;renderProfile();}
-}
-
-function logout(){
-  if(!confirm("Выйти?"))return;
-  fAuth.signOut().catch(function(){});
-  localStorage.removeItem("gName");localStorage.removeItem("gCountry");localStorage.removeItem("gUid");
-  playerName="";playerCountry="";
-  document.getElementById("app").classList.remove("on");
-  document.getElementById("reg").classList.remove("off");
-  restoreGoogleBtn();
-}
-
-function getLeague(){
-  for(var i=0;i<LEAGUES.length;i++){if(totScore>=LEAGUES[i].min&&totScore<=LEAGUES[i].max)return LEAGUES[i];}
-  return LEAGUES[0];
-}
+function editProf(){var n=prompt("Твоё имя:",pName);if(n&&n.trim()){pName=n.trim();localStorage.setItem("gName",pName);document.getElementById("tGreet").textContent=pName;rProf();}}
+function logout(){if(!confirm("Выйти?"))return;googleUser=null;localStorage.removeItem("gName");localStorage.removeItem("gCountry");localStorage.removeItem("gUid");localStorage.removeItem("gPhoto");pName="";pCountry="";document.getElementById("app").classList.remove("on");document.getElementById("reg").classList.remove("off");restoreGBtn();}
+function share(){var t="Учу чеченский в MOTT_bu! https://lorsvu.github.io/Mott-bu-";if(navigator.share)navigator.share({title:"MOTT_bu",text:t,url:"https://lorsvu.github.io/Mott-bu-"});else{try{navigator.clipboard.writeText(t).then(function(){alert("Ссылка скопирована!");});}catch(e){alert(t);}}}
 
 // ===== LEAGUES =====
-function renderLeagues(){
-  var league=getLeague();
-  var li=document.getElementById("lgIcon"),ln=document.getElementById("lgName");
-  if(li)li.textContent=league.ic;if(ln)ln.textContent=league.n;
-  ["bronze","silver","gold","diamond"].forEach(function(id){
-    var c=document.getElementById("lc-"+id);if(c)c.style.border=id===league.id?"2px solid var(--blue)":"";
-  });
-  var el=document.getElementById("lgList");if(!el)return;
-  el.innerHTML='<div style="padding:14px;text-align:center"><div class="spin"></div></div>';
+function rLeagues(){
+  var lg=getLG();
+  var li=document.getElementById("lgI"),ln=document.getElementById("lgN");
+  if(li)li.textContent=lg.ic;if(ln)ln.textContent=lg.n;
+  ["b","s","g","d"].forEach(function(id){var c=document.getElementById("lc-"+id);if(c)c.style.border=id===lg.id?"2px solid var(--blue)":"";});
+  var el=document.getElementById("lgL");if(!el)return;
+  el.innerHTML='<div style="padding:12px;text-align:center"><div class="spin"></div></div>';
   db.ref("leaderboard").get().then(function(s){
     el.innerHTML="";
     if(!s.exists()||!s.val()){el.innerHTML='<div style="padding:14px;text-align:center;color:var(--muted)">Нет данных</div>';return;}
-    var data=s.val(),arr=[];
-    for(var k in data){var sc=data[k].score||0;if(sc>=league.min&&sc<=league.max)arr.push(data[k]);}
+    var data=s.val(),arr=[];for(var k in data){var v=data[k].score||0;if(v>=lg.min&&v<=lg.max)arr.push(data[k]);}
     arr.sort(function(a,b){return(b.score||0)-(a.score||0);});
     if(!arr.length){el.innerHTML='<div style="padding:14px;text-align:center;color:var(--muted)">Нет игроков в этой лиге</div>';return;}
     arr.slice(0,20).forEach(function(p,i){
-      var row=document.createElement("div");row.className="lb-row";
-      row.innerHTML='<div class="lb-rank">'+(i+1)+'.</div><div class="lb-name">'+(p.name||"Игрок")+'</div><div class="lb-sc">'+(p.score||0)+'⚡</div>';
-      el.appendChild(row);
+      var r=document.createElement("div");r.className="lr";
+      r.innerHTML='<div style="font-family:\'Unbounded\',sans-serif;font-size:12px;color:var(--muted);width:22px;text-align:center">'+(i+1)+'.</div><div style="flex:1;font-size:13px;font-weight:600">'+(p.name||"Игрок")+'</div><div style="font-family:\'Unbounded\',sans-serif;font-size:12px;color:var(--blue);font-weight:700">'+(p.score||0)+'⚡</div>';
+      el.appendChild(r);
     });
   }).catch(function(){el.innerHTML='<div style="padding:14px;text-align:center;color:var(--muted)">Ошибка</div>';});
 }
 
 // ===== BATTLE =====
-function openBattleMenu(){
-  var ov=document.createElement("div");ov.className="sheet-overlay";
-  var sh=document.createElement("div");sh.className="sheet";
-  sh.innerHTML='<div class="sheet-handle"></div>'
-    +'<div style="text-align:center;font-size:36px;margin-bottom:10px">⚔️</div>'
-    +'<div style="font-family:\'Unbounded\',sans-serif;font-size:16px;font-weight:900;text-align:center;margin-bottom:16px">РЕЖИМ БОЯ</div>';
-  var btn=document.createElement("div");btn.className="card";btn.style.cssText="padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px";
-  btn.innerHTML='<div style="font-size:34px">🤖</div><div style="flex:1"><div style="font-family:\'Unbounded\',sans-serif;font-size:13px;font-weight:700">ПРОТИВ БОТА</div><div style="font-size:11px;color:var(--muted)">60 секунд · всегда доступно</div></div><div style="color:var(--muted);font-size:18px">›</div>';
+function openBattle(){
+  var ov=document.createElement("div");ov.className="sov";
+  var sh=document.createElement("div");sh.className="sh";
+  sh.innerHTML='<div class="sh-h"></div><div style="text-align:center;font-size:34px;margin-bottom:8px">⚔️</div><div style="font-family:\'Unbounded\',sans-serif;font-size:15px;font-weight:900;text-align:center;margin-bottom:14px">РЕЖИМ БОЯ</div>';
+  var btn=document.createElement("div");btn.className="card";btn.style.cssText="padding:13px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;margin-bottom:10px";
+  btn.innerHTML='<div style="font-size:32px">🤖</div><div style="flex:1"><div style="font-family:\'Unbounded\',sans-serif;font-size:12px;font-weight:700">ПРОТИВ БОТА</div><div style="font-size:11px;color:var(--muted)">60 секунд · всегда доступно</div></div><div style="color:var(--muted);font-size:16px">›</div>';
   btn.onclick=function(){ov.remove();startBattle();};
-  var cl=document.createElement("button");cl.className="btn btn-gray";cl.style.cssText="margin:0;";cl.textContent="ОТМЕНА";cl.onclick=function(){ov.remove();};
+  var cl=document.createElement("button");cl.className="btn bg";cl.style.margin="0";cl.textContent="ОТМЕНА";cl.onclick=function(){ov.remove();};
   sh.appendChild(btn);sh.appendChild(cl);ov.appendChild(sh);
   ov.addEventListener("click",function(e){if(e.target===ov)ov.remove();});
   document.body.appendChild(ov);
 }
 
 function startBattle(){
-  var ov=document.getElementById("battleOv");ov.style.display="flex";document.body.style.overflow="hidden";
+  var ov=document.getElementById("btOv");ov.style.display="block";document.body.style.overflow="hidden";
   btTime=60;btMe=0;btBot=0;
-  document.getElementById("btTime").textContent=60;
-  document.getElementById("btMe").textContent=0;
-  document.getElementById("btBot").textContent=0;
-  loadBattleWord();
-  btTimer=setInterval(function(){
-    btTime--;document.getElementById("btTime").textContent=btTime;
-    if(Math.random()<.14){btBot++;document.getElementById("btBot").textContent=btBot;}
-    if(btTime<=0){clearInterval(btTimer);endBattle();}
+  document.getElementById("btT").textContent=60;document.getElementById("btM").textContent=0;document.getElementById("btB").textContent=0;
+  loadBW();
+  btTmr=setInterval(function(){
+    btTime--;document.getElementById("btT").textContent=btTime;
+    if(Math.random()<.14){btBot++;document.getElementById("btB").textContent=btBot;}
+    if(btTime<=0){clearInterval(btTmr);endBattle();}
   },1000);
 }
 
-function loadBattleWord(){
-  btWord=words[Math.floor(Math.random()*words.length)];
-  document.getElementById("btWord").textContent=btWord.chechen;
-  document.getElementById("btHint").textContent=btWord.transcription;
-  var ch=document.getElementById("btChoices");ch.innerHTML="";
-  var wrong=words.filter(function(w){return w.chechen!==btWord.chechen;});
+function loadBW(){
+  btW2=words[Math.floor(Math.random()*words.length)];
+  document.getElementById("btW").textContent=btW2.chechen;
+  document.getElementById("btH").textContent=btW2.transcription;
+  var ch=document.getElementById("btC");ch.innerHTML="";
+  var wrong=words.filter(function(w){return w.chechen!==btW2.chechen;});
   wrong.sort(function(){return Math.random()-.5;});wrong=wrong.slice(0,3);
-  var all=[btWord].concat(wrong);all.sort(function(){return Math.random()-.5;});
+  var all=[btW2].concat(wrong);all.sort(function(){return Math.random()-.5;});
   all.forEach(function(w){
-    var b=document.createElement("button");b.className="ch-btn";b.textContent=w.russian;
+    var b=document.createElement("button");b.className="cb";b.textContent=w.russian;
     (function(key){b.onclick=function(){
-      if(key===btWord.chechen){btMe++;document.getElementById("btMe").textContent=btMe;b.classList.add("ok");}
+      if(key===btW2.chechen){btMe++;document.getElementById("btM").textContent=btMe;b.classList.add("ok");}
       else b.classList.add("no");
-      setTimeout(loadBattleWord,500);
+      document.querySelectorAll("#btC .cb").forEach(function(x){x.disabled=true;});
+      setTimeout(loadBW,450);
     };})(w.chechen);
     ch.appendChild(b);
   });
 }
 
 function endBattle(){
-  clearInterval(btTimer);
-  var ch=document.getElementById("btChoices");ch.innerHTML="";
+  clearInterval(btTmr);
+  var ch=document.getElementById("btC");ch.innerHTML="";
   var win=btMe>btBot,tie=btMe===btBot;
-  var d=document.createElement("div");d.style.cssText="text-align:center;padding:20px";
-  d.innerHTML='<div style="font-size:36px;margin-bottom:10px">'+(win?"🏆":tie?"🤝":"😔")+'</div>'
-    +'<div style="font-family:\'Unbounded\',sans-serif;font-size:15px;margin-bottom:8px">'+(win?"ТЫ ПОБЕДИЛ!":tie?"НИЧЬЯ!":"БОТ ПОБЕДИЛ")+'</div>'
-    +'<div style="font-size:13px;color:var(--muted);margin-bottom:16px">Ты: '+btMe+' · Бот: '+btBot+'</div>';
-  var b=document.createElement("button");b.className="btn btn-blue";b.style.marginBottom="0";b.textContent="Закрыть";
-  b.onclick=function(){document.getElementById("battleOv").style.display="none";document.body.style.overflow="";};
-  d.appendChild(b);ch.appendChild(d);
+  var d=document.createElement("div");d.style.cssText="text-align:center;padding:16px";
+  d.innerHTML='<div style="font-size:34px;margin-bottom:8px">'+(win?"🏆":tie?"🤝":"😔")+'</div><div style="font-family:\'Unbounded\',sans-serif;font-size:14px;margin-bottom:6px">'+(win?"ТЫ ПОБЕДИЛ!":tie?"НИЧЬЯ!":"БОТ ПОБЕДИЛ")+'</div><div style="font-size:12px;color:var(--muted);margin-bottom:14px">Ты: '+btMe+' · Бот: '+btBot+'</div>';
+  var b=document.createElement("button");b.className="btn bb";b.style.marginBottom="0";b.textContent="Закрыть";b.onclick=xBattle;d.appendChild(b);ch.appendChild(d);
 }
-
-function closeBattle(){
-  clearInterval(btTimer);
-  document.getElementById("battleOv").style.display="none";document.body.style.overflow="";
-}
+function xBattle(){clearInterval(btTmr);document.getElementById("btOv").style.display="none";document.body.style.overflow="";}
 
 // ===== ADMIN =====
-function showAdminLogin(){
-  if(adminUnlocked||isAdmin){showPage("admin");return;}
-  document.getElementById("adminModal").style.display="flex";
-  setTimeout(function(){var p=document.getElementById("adminPw");if(p)p.focus();},100);
-}
+function chkAdm(){var pw=document.getElementById("admPw");if(pw&&pw.value===ADMIN_PASS){admUnlocked=true;isAdm=true;document.getElementById("admMod").style.display="none";sP("admin");}else{if(pw)pw.value="";alert("Неверный пароль");}}
 
-function checkAdmin(){
-  var pw=document.getElementById("adminPw");
-  if(pw&&pw.value===ADMIN_PASS){
-    adminUnlocked=true;isAdmin=true;
-    document.getElementById("adminModal").style.display="none";
-    showPage("admin");
-  } else {
-    if(pw)pw.value="";
-    alert("Неверный пароль");
-  }
-}
-
-function renderAdmin(){
-  var q=(document.getElementById("adminSrch")||{value:""}).value.toLowerCase();
+function rAdmin(){
+  var q=(document.getElementById("aSrch")||{value:""}).value.toLowerCase();
   var f=q?words.filter(function(w){return w.chechen.toLowerCase().includes(q)||w.russian.toLowerCase().includes(q)||(w.category||"").toLowerCase().includes(q);}):words;
-  var cnt=document.getElementById("wCount");if(cnt)cnt.textContent=f.length+(q?" из "+words.length:"");
-  var el=document.getElementById("adminWords");if(!el)return;el.innerHTML="";
+  var cnt=document.getElementById("wCnt");if(cnt)cnt.textContent=f.length+(q?" из "+words.length:"");
+  var el=document.getElementById("aWords");if(!el)return;el.innerHTML="";
   f.forEach(function(w){
     var i=words.indexOf(w);
-    var row=document.createElement("div");row.className="word-row-item";
-    var info=document.createElement("div");info.style.flex="1";
-    info.innerHTML='<div style="font-weight:700;font-size:14px;color:var(--blue)">'+w.chechen+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">'+w.russian+' · '+w.category+'</div>';
-    var sb=document.createElement("button");sb.style.cssText="background:none;border:none;font-size:16px;cursor:pointer;padding:4px";sb.textContent="🔊";
-    (function(t){sb.onclick=function(){speak(t);};})(w.transcription||w.chechen);
-    var db2=document.createElement("button");db2.style.cssText="background:rgba(255,75,75,.1);border:1px solid rgba(255,75,75,.3);color:var(--red);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:700";db2.textContent="✕";
-    (function(ii){db2.onclick=function(){if(confirm("Удалить?"))deleteWord(ii);};})(i);
-    row.appendChild(info);row.appendChild(sb);row.appendChild(db2);el.appendChild(row);
+    var r=document.createElement("div");r.className="wri";
+    var info=document.createElement("div");info.style.flex="1";info.innerHTML='<div style="font-weight:700;font-size:13px;color:var(--blue)">'+w.chechen+'</div><div style="font-size:11px;color:var(--muted)">'+w.russian+' · '+w.category+'</div>';
+    var sb=document.createElement("button");sb.style.cssText="background:none;border:none;font-size:15px;cursor:pointer;padding:3px";sb.textContent="🔊";(function(t){sb.onclick=function(){speak(t);};})(w.transcription||w.chechen);
+    var db2=document.createElement("button");db2.style.cssText="background:rgba(255,75,75,.1);border:1px solid rgba(255,75,75,.3);color:var(--red);border-radius:8px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:700";db2.textContent="✕";
+    (function(ii){db2.onclick=function(){if(confirm("Удалить?"))delW(ii);};})(i);
+    r.appendChild(info);r.appendChild(sb);r.appendChild(db2);el.appendChild(r);
   });
 }
-
-function addWord(){
-  var ch=document.getElementById("nCh"),ru=document.getElementById("nRu"),tr=document.getElementById("nTr"),cat=document.getElementById("nCat");
-  if(!ch||!ch.value.trim()){alert("Введи чеченское слово!");return;}
-  words.push({chechen:ch.value.trim(),russian:ru?ru.value.trim():"",transcription:tr?tr.value.trim():"",category:cat?cat.value.trim():"Другое"});
-  ch.value="";if(ru)ru.value="";if(tr)tr.value="";if(cat)cat.value="";
-  saveWords();renderAdmin();
-}
-
-function deleteWord(i){words.splice(i,1);saveWords();renderAdmin();}
+function addW(){var ch=document.getElementById("nCh"),ru=document.getElementById("nRu"),tr=document.getElementById("nTr"),cat=document.getElementById("nCat");if(!ch||!ch.value.trim()){alert("Введи чеченское слово!");return;}words.push({chechen:ch.value.trim(),russian:ru?ru.value.trim():"",transcription:tr?tr.value.trim():"",category:cat?cat.value.trim():"Другое"});ch.value="";if(ru)ru.value="";if(tr)tr.value="";if(cat)cat.value="";saveWords();rAdmin();}
+function delW(i){words.splice(i,1);saveWords();rAdmin();}
 
 // ===== SETTINGS =====
-function initSettings(){
-  var s=document.getElementById("sndToggle");if(s)s.checked=sndEnabled;
-  var sp=document.getElementById("spkToggle");if(sp)sp.checked=spkEnabled;
-  var ai=document.getElementById("aiToggle");if(ai)ai.checked=localStorage.getItem("ai")!=="false";
-}
-function toggleSound(v){sndEnabled=v;localStorage.setItem("snd",v);}
-function toggleSpeech(v){spkEnabled=v;localStorage.setItem("spk",v);}
-function setGoal(g,b){dailyGoal=g;document.querySelectorAll("#pgSettings .btn-gray").forEach(function(x){x.style.background="";});if(b)b.style.background=b.style.background||"var(--blue)";localStorage.setItem("goal",g);}
-function shareApp(){var t="Учу чеченский в MOTT_bu! https://lorsvu.github.io/Mott-bu-";if(navigator.share)navigator.share({title:"MOTT_bu",text:t,url:"https://lorsvu.github.io/Mott-bu-"});else{try{navigator.clipboard.writeText(t).then(function(){alert("Ссылка скопирована!");});}catch(e){alert(t);}}}
+function sDG(g){goal=g;localStorage.setItem("goal",g);}
 
-function saveStats(){
-  var uid=localStorage.getItem("gUid");
-  if(!uid)return;
-  fDb.ref("users/"+uid).update({name:playerName,country:playerCountry,stats:{games:totGames,score:totScore,words:totWords}}).catch(function(){});
-  fDb.ref("leaderboard/"+uid).set({name:playerName,country:playerCountry,score:totScore,date:Date.now(),verified:true}).catch(function(){});
+// ===== SAVE STATS =====
+function svStats(){
+  var uid=localStorage.getItem("gUid");if(!uid)return;
+  db.ref("users/"+uid).update({name:pName,country:pCountry,stats:{games:tG,score:tS,words:tW}}).catch(function(){});
+  db.ref("leaderboard/"+uid).set({name:pName,country:pCountry,score:tS,date:Date.now(),verified:true}).catch(function(){});
 }
 
 // ===== INIT =====
 (function(){
-  var snd=localStorage.getItem("snd");var spk=localStorage.getItem("spk");var goal=localStorage.getItem("goal");
-  if(snd==="false")sndEnabled=false;
-  if(spk==="false")spkEnabled=false;
-  if(goal)dailyGoal=parseInt(goal);
-  setTimeout(function(){setLang(curLang);},30);
+  if(localStorage.getItem("snd")==="false")snd=false;
+  if(localStorage.getItem("spk")==="false")spk=false;
+  var g=localStorage.getItem("goal");if(g)goal=parseInt(g);
+  setTimeout(function(){sL(curLang);},20);
 
-  // Handle Google redirect result
-  handleRedirect();
+  // 1. Check for OAuth token in URL hash
+  if(location.hash&&location.hash.indexOf("access_token")!==-1){
+    handleOAuthToken();
+    return;
+  }
 
-  // Auto-login after short delay (allow redirect to process first)
-  setTimeout(function(){
-    var reg=document.getElementById("reg");
-    if(reg&&!reg.classList.contains("off")){
-      var n=localStorage.getItem("gName"),c=localStorage.getItem("gCountry");
-      if(n&&c){playerName=n;playerCountry=c;enterApp();}
-    }
-  },2500);
+  // 2. Auto-login from saved session
+  var n=localStorage.getItem("gName"),c=localStorage.getItem("gCountry");
+  if(n&&c){
+    pName=n;pCountry=c;
+    var uid=localStorage.getItem("gUid");
+    var photo=localStorage.getItem("gPhoto")||"";
+    if(uid){googleUser={name:n,uid:uid,photo:photo,email:""};}
+    enterApp();
+  }
 })();
 </script>
 </body>
