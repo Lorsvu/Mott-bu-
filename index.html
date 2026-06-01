@@ -866,6 +866,56 @@ select.text-input option { background:var(--surface); }
       <div id="mistakesContent"></div>
     </div>
 
+    <!-- LEARN TAB -->
+    <div class="tab-page" id="learnTab">
+      <div id="learnCategoryView">
+        <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:14px">ВЫБЕРИ КАТЕГОРИЮ</div>
+        <div id="learnCategoryGrid"></div>
+      </div>
+      <div id="learnCardView" style="display:none">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <button onclick="exitLearnCard()" class="back-btn">←</button>
+          <div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:var(--white)" id="learnCategoryTitle"></div>
+          <div style="margin-left:auto;font-size:12px;color:var(--muted)" id="learnProgress">1/10</div>
+        </div>
+        <!-- Flashcard -->
+        <div id="flashcard" onclick="flipCard()" style="
+          background:var(--card);border:2px solid var(--border);border-radius:24px;
+          padding:28px 20px;text-align:center;margin-bottom:16px;
+          min-height:260px;display:flex;flex-direction:column;
+          align-items:center;justify-content:center;
+          cursor:pointer;box-shadow:0 4px 0 var(--border);
+          transition:transform 0.15s;position:relative;overflow:hidden;
+        ">
+          <div id="cardImage" style="font-size:80px;margin-bottom:12px"></div>
+          <div id="cardImg" style="display:none;margin-bottom:12px">
+            <img id="cardImgEl" style="width:160px;height:120px;object-fit:cover;border-radius:14px;border:2px solid var(--border)" onerror="this.style.display='none'">
+          </div>
+          <div style="font-size:11px;color:var(--muted);font-family:'Unbounded',sans-serif;letter-spacing:2px;margin-bottom:8px" id="cardLang">ЧЕЧЕНСКИЙ</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:28px;font-weight:900;color:var(--white);margin-bottom:6px" id="cardWord"></div>
+          <div style="font-size:13px;color:var(--muted)" id="cardTranscription"></div>
+          <div id="cardTranslation" style="display:none;margin-top:12px">
+            <div style="height:1px;background:var(--border);margin-bottom:12px"></div>
+            <div style="font-size:18px;color:var(--blue);font-weight:700" id="cardRussian"></div>
+          </div>
+          <div style="position:absolute;bottom:12px;right:14px;font-size:11px;color:var(--muted)">👆 Нажми чтобы перевернуть</div>
+        </div>
+        <!-- Controls -->
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          <button onclick="prevCard()" class="btn-secondary" style="flex:1;margin-bottom:0;padding:12px">← Назад</button>
+          <button onclick="speakCurrentCard()" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:12px 16px;cursor:pointer;font-size:18px;box-shadow:0 3px 0 var(--border)">🔊</button>
+          <button onclick="nextCard()" class="btn-primary" style="flex:1;margin-bottom:0;padding:12px">Далее →</button>
+        </div>
+        <!-- Know / Don't know -->
+        <div style="display:flex;gap:10px">
+          <button onclick="markCard(false)" style="flex:1;padding:13px;background:#fff0f0;border:2px solid #ffcdd2;border-radius:14px;color:var(--red);font-family:'Unbounded',sans-serif;font-size:11px;cursor:pointer;box-shadow:0 3px 0 #ffcdd2;">✗ НЕ ЗНАЮ</button>
+          <button onclick="markCard(true)" style="flex:1;padding:13px;background:#f0fff0;border:2px solid #c8e6c9;border-radius:14px;color:var(--green);font-family:'Unbounded',sans-serif;font-size:11px;cursor:pointer;box-shadow:0 3px 0 #c8e6c9;">✓ ЗНАЮ</button>
+        </div>
+        <!-- Progress dots -->
+        <div id="progressDots" style="display:flex;justify-content:center;gap:6px;margin-top:16px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
     <!-- LEAGUES TAB -->
     <div class="tab-page" id="leaguesTab">
       <div style="text-align:center;padding:20px 0">
@@ -1038,6 +1088,10 @@ select.text-input option { background:var(--surface); }
     <button class="bottom-nav-btn" id="bn-search" onclick="showTab('search')">
       <span class="nav-icon">🔍</span>
       <span class="nav-label">ПОИСК</span>
+    </button>
+    <button class="bottom-nav-btn" id="bn-learn" onclick="showTab('learn')">
+      <span class="nav-icon">📖</span>
+      <span class="nav-label">УЧИТЬ</span>
     </button>
     <button class="bottom-nav-btn" id="bn-mistakes" onclick="showTab('mistakes')">
       <span class="nav-icon">📖</span>
@@ -1351,6 +1405,32 @@ let words = [
   {chechen:"К1еза",russian:"Щенок",transcription:"К1еза",category:"Животные"},
   // СЕМЬЯ (доп)
   {chechen:"Йо1аг",russian:"Девочка / Девушка",transcription:"Йо1аг",category:"Семья"},
+
+  // ПРИРОДА ЧЕЧНИ
+  {chechen:"Хи",russian:"Река",transcription:"Хи",category:"Природа Чечни"},
+  {chechen:"Хьун",russian:"Лес",transcription:"Хьун",category:"Природа Чечни"},
+  {chechen:"Аре",russian:"Поле / Равнина",transcription:"Аре",category:"Природа Чечни"},
+  {chechen:"Ирзо",russian:"Луг",transcription:"Ирзо",category:"Природа Чечни"},
+  {chechen:"Ламан бохь",russian:"Вершина горы",transcription:"Ламан бохь",category:"Природа Чечни"},
+  {chechen:"Г1ала",russian:"Крепость",transcription:"Г1ала",category:"Природа Чечни"},
+  {chechen:"Б1ов",russian:"Башня",transcription:"Б1ов",category:"Природа Чечни"},
+  {chechen:"Даймохк",russian:"Родина",transcription:"Даймохк",category:"Природа Чечни"},
+  {chechen:"Дег1аста",russian:"Отчизна",transcription:"Дег1аста",category:"Природа Чечни"},
+  {chechen:"Нохчийчоь",russian:"Чечня",transcription:"Нохчийчоь",category:"Природа Чечни"},
+  {chechen:"Аьрзу",russian:"Орёл",transcription:"Аьрзу",category:"Природа Чечни"},
+  {chechen:"К1ур",russian:"Дым",transcription:"К1ур",category:"Природа Чечни"},
+
+  // ФРАЗЫ ДЛЯ ОБЩЕНИЯ
+  {chechen:"Муха ву хьо?",russian:"Как ты?",transcription:"Муха ву хьо",category:"Фразы"},
+  {chechen:"Дика ву со",russian:"Я хорошо",transcription:"Дика ву со",category:"Фразы"},
+  {chechen:"Хlун цlе йу хьан?",russian:"Как тебя зовут?",transcription:"Хlун цlе йу хьан",category:"Фразы"},
+  {chechen:"Со чечен ву",russian:"Я чеченец",transcription:"Со чечен ву",category:"Фразы"},
+  {chechen:"Баркалла",russian:"Спасибо",transcription:"Баркалла",category:"Фразы"},
+  {chechen:"Дlадовла",russian:"Уходи",transcription:"Дlадовла",category:"Фразы"},
+  {chechen:"Хаза сан",russian:"Мне нравится",transcription:"Хаза сан",category:"Фразы"},
+  {chechen:"Ца хаза сан",russian:"Мне не нравится",transcription:"Ца хаза сан",category:"Фразы"},
+  {chechen:"Lовза",russian:"Играть",transcription:"Ловза",category:"Фразы"},
+  {chechen:"Маршалла хаттар",russian:"Пожалуйста",transcription:"Маршалла хаттар",category:"Фразы"},
 ];
 
 const FB_URL = 'https://mott-bu-d1633-default-rtdb.firebaseio.com';
@@ -1751,6 +1831,7 @@ function showTab(tab) {
   if (tab === 'search') renderSearchTab();
   if (tab === 'settings') initSettingsUI();
   if (tab === 'mistakes') renderMistakesTab();
+  if (tab === 'learn') renderLearnTab();
 }
 
 // Swipe right to go back to game
@@ -2622,6 +2703,193 @@ async function renderLeagues() {
         </div>
       `).join('');
   } catch(e) {}
+}
+
+// ---- LEARN BY CATEGORY ----
+let learnCards = [];
+let learnIndex = 0;
+let learnKnown = [];
+let cardFlipped = false;
+
+const categoryImages = {
+  'Природа': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&q=80',
+  'Природа Чечни': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&q=80',
+  'Семья': 'https://images.unsplash.com/photo-1511895426328-dc8714191011?w=300&q=80',
+  'Еда': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&q=80',
+  'Одежда': 'https://images.unsplash.com/photo-1558171813-fca7e50ab3a8?w=300&q=80',
+  'Животные': 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=300&q=80',
+  'Числа': 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=300&q=80',
+  'Дни недели': 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=300&q=80',
+  'Цвета': 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=300&q=80',
+  'Тело': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&q=80',
+  'Приветствия': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&q=80',
+  'Фразы': 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=300&q=80',
+  'Глаголы': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=300&q=80',
+  'Прилагательные': 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=300&q=80',
+  'Ценности': 'https://images.unsplash.com/photo-1569974498991-d3c12a504f95?w=300&q=80',
+  'Дом': 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=300&q=80',
+};
+
+const categoryEmojis = {
+  'Природа':'🌿','Природа Чечни':'🏔️','Семья':'👨‍👩‍👧',
+  'Еда':'🍽️','Одежда':'👕','Животные':'🐾',
+  'Числа':'🔢','Дни недели':'📅','Цвета':'🎨',
+  'Тело':'🧍','Приветствия':'👋','Фразы':'💬',
+  'Глаголы':'⚡','Прилагательные':'✨','Ценности':'🕊️','Дом':'🏠',
+};
+
+function renderLearnTab() {
+  const categories = [...new Set(words.map(w => w.category))].sort();
+  const grid = document.getElementById('learnCategoryGrid');
+  if (!grid) return;
+  grid.innerHTML = categories.map(cat => {
+    const count = words.filter(w => w.category === cat).length;
+    const emoji = categoryEmojis[cat] || '📚';
+    const img = categoryImages[cat] || '';
+    return `
+      <div onclick="startLearnCategory('${cat}')" style="
+        background:var(--card);border:2px solid var(--border);
+        border-radius:20px;overflow:hidden;margin-bottom:12px;
+        cursor:pointer;box-shadow:0 4px 0 var(--border);
+        display:flex;align-items:center;gap:0;
+        transition:all 0.15s;
+      " ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 var(--border)'" 
+         ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 var(--border)'">
+        <div style="width:80px;height:72px;background:linear-gradient(135deg,var(--blue),var(--blue2));display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;position:relative;overflow:hidden">
+          ${img ? `<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.7" onerror="this.remove()">` : ''}
+          <span style="position:relative;z-index:1">${emoji}</span>
+        </div>
+        <div style="flex:1;padding:14px 16px">
+          <div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:var(--white)">${cat}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">${count} слов</div>
+        </div>
+        <div style="padding-right:16px;color:var(--muted);font-size:18px">›</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function startLearnCategory(cat) {
+  learnCards = words.filter(w => w.category === cat);
+  learnIndex = 0;
+  learnKnown = new Array(learnCards.length).fill(null);
+  cardFlipped = false;
+  document.getElementById('learnCategoryTitle').textContent = cat;
+  document.getElementById('learnCategoryView').style.display = 'none';
+  document.getElementById('learnCardView').style.display = 'block';
+  renderLearnCard();
+}
+
+function exitLearnCard() {
+  document.getElementById('learnCategoryView').style.display = 'block';
+  document.getElementById('learnCardView').style.display = 'none';
+}
+
+function renderLearnCard() {
+  if (learnCards.length === 0) return;
+  const w = learnCards[learnIndex];
+  cardFlipped = false;
+
+  // Update progress
+  document.getElementById('learnProgress').textContent = `${learnIndex+1}/${learnCards.length}`;
+
+  // Image or emoji
+  const img = getWordImage(w.russian);
+  const emoji = getWordEmoji(w.russian);
+  if (img) {
+    document.getElementById('cardImage').style.display = 'none';
+    document.getElementById('cardImg').style.display = 'block';
+    document.getElementById('cardImgEl').src = img;
+    document.getElementById('cardImgEl').style.display = 'block';
+  } else if (emoji) {
+    document.getElementById('cardImage').style.display = 'block';
+    document.getElementById('cardImage').textContent = emoji;
+    document.getElementById('cardImg').style.display = 'none';
+  } else {
+    document.getElementById('cardImage').style.display = 'none';
+    document.getElementById('cardImg').style.display = 'none';
+  }
+
+  document.getElementById('cardLang').textContent = 'ЧЕЧЕНСКИЙ';
+  document.getElementById('cardWord').textContent = w.chechen;
+  document.getElementById('cardTranscription').textContent = w.transcription || '';
+  document.getElementById('cardTranslation').style.display = 'none';
+  document.getElementById('cardRussian').textContent = w.russian;
+
+  // Update flashcard border color based on known status
+  const fc = document.getElementById('flashcard');
+  fc.style.borderColor = learnKnown[learnIndex] === true ? '#c8e6c9' :
+                         learnKnown[learnIndex] === false ? '#ffcdd2' : 'var(--border)';
+
+  // Progress dots
+  document.getElementById('progressDots').innerHTML = learnCards.map((_, i) => `
+    <div style="width:${i===learnIndex?20:8}px;height:8px;border-radius:4px;background:${
+      learnKnown[i]===true?'var(--green)':learnKnown[i]===false?'var(--red)':i===learnIndex?'var(--blue)':'var(--border)'
+    };transition:all 0.3s"></div>
+  `).join('');
+}
+
+function flipCard() {
+  cardFlipped = !cardFlipped;
+  const trans = document.getElementById('cardTranslation');
+  const lang = document.getElementById('cardLang');
+  trans.style.display = cardFlipped ? 'block' : 'none';
+  lang.textContent = cardFlipped ? 'ПЕРЕВОД' : 'ЧЕЧЕНСКИЙ';
+  document.getElementById('flashcard').style.transform = 'scale(0.97)';
+  setTimeout(() => document.getElementById('flashcard').style.transform = '', 150);
+}
+
+function nextCard() {
+  if (learnIndex < learnCards.length - 1) {
+    learnIndex++;
+    renderLearnCard();
+  } else {
+    // Show completion
+    showLearnComplete();
+  }
+}
+
+function prevCard() {
+  if (learnIndex > 0) {
+    learnIndex--;
+    renderLearnCard();
+  }
+}
+
+function markCard(known) {
+  learnKnown[learnIndex] = known;
+  renderLearnCard();
+  setTimeout(() => nextCard(), 400);
+}
+
+function speakCurrentCard() {
+  const w = learnCards[learnIndex];
+  if (w) speak(w.transcription || w.chechen);
+}
+
+function showLearnComplete() {
+  const known = learnKnown.filter(k => k === true).length;
+  const unknown = learnKnown.filter(k => k === false).length;
+  document.getElementById('learnCardView').innerHTML = `
+    <div style="text-align:center;padding:40px 20px">
+      <div style="font-size:64px;margin-bottom:16px">${known >= learnCards.length*0.8 ? '🏆' : '📚'}</div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--white);margin-bottom:8px">
+        ${known >= learnCards.length*0.8 ? 'ОТЛИЧНО!' : 'ПРОДОЛЖАЙ!'}
+      </div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:24px">
+        Знаешь: <b style="color:var(--green)">${known}</b> · 
+        Учить: <b style="color:var(--red)">${unknown}</b> · 
+        Всего: ${learnCards.length}
+      </div>
+      <button onclick="learnIndex=0;learnKnown=new Array(learnCards.length).fill(null);renderLearnCard()" class="btn-primary" style="margin-bottom:10px">
+        🔄 Повторить всё
+      </button>
+      ${unknown > 0 ? `<button onclick="learnCards=learnCards.filter((_,i)=>learnKnown[i]===false);learnIndex=0;learnKnown=new Array(learnCards.length).fill(null);renderLearnCard()" class="btn-secondary" style="margin-bottom:10px">
+        ✗ Повторить незнакомые (${unknown})
+      </button>` : ''}
+      <button onclick="exitLearnCard()" class="btn-secondary">← К категориям</button>
+    </div>
+  `;
 }
 
 // ---- MISTAKES ----
