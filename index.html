@@ -1300,28 +1300,6 @@ const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('admin') === 'true') sessionStorage.setItem('isAdmin', 'true');
 let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
 
-// Auto-login check on page load
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    // Auto-grant admin if your email
-    if (user.email === ADMIN_EMAIL) {
-      isAdmin = true;
-      sessionStorage.setItem('isAdmin', 'true');
-    }
-    const snap = await db.ref(`users/${user.uid}`).get();
-    if (snap.exists()) {
-      const data = snap.val();
-      playerName = data.name || user.displayName || 'Игрок';
-      playerCountry = data.country || '';
-      if (playerCountry) {
-        enterGame();
-        return;
-      }
-    }
-    document.getElementById('regName').value = user.displayName || '';
-  }
-});
-
 const ADMIN_PASS = 'Mott-biyc0707';
 
 let words = [
@@ -1837,6 +1815,8 @@ function getLang() { return LANGS[currentLang] || LANGS.ru; }
 
 // Init language on load
 setTimeout(() => setLang(currentLang), 100);
+
+function selectGoal(el, goal) {
   document.querySelectorAll('.goal-item').forEach(g => g.classList.remove('active'));
   el.classList.add('active');
   dailyGoal = goal;
@@ -3644,26 +3624,6 @@ function closeMainMenu() {
   const m = document.getElementById('mainMenuModal');
   if (m) m.remove();
 }
-  currentMode = mode;
-  score = 0; streak = 0; bestStreak = 0;
-  totalAnswered = 0; correctAnswers = 0;
-  usedWords = []; scrambleSelected = [];
-  answered = false;
-  document.getElementById('gameOverlay').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  document.getElementById('gameArea').style.display = 'block';
-  document.getElementById('resultArea').style.display = 'none';
-  document.getElementById('feedback').className = 'feedback';
-  const aiHint = document.getElementById('aiHint');
-  if (aiHint) { aiHint.style.display = 'none'; aiHint.innerHTML = ''; }
-  document.getElementById('score').textContent = '0';
-  document.getElementById('streak').textContent = '0';
-  document.getElementById('progressFill').style.width = '0%';
-  document.getElementById('progressText').textContent = '0 / ' + dailyGoal;
-  renderCategories();
-  loadNewWord();
-  try { analytics.logEvent('game_start', { mode }); } catch(e) {}
-}
 
 function startGameMode(mode) {
   currentMode = mode;
@@ -3946,6 +3906,34 @@ function restartGame() {
   document.getElementById('resultArea').style.display='none';
   loadNewWord();
 }
+
+// Auto-login - placed at end so all functions are defined
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    // Auto-grant admin if your email
+    if (user.email === ADMIN_EMAIL) {
+      isAdmin = true;
+      sessionStorage.setItem('isAdmin', 'true');
+    }
+    try {
+      const snap = await db.ref(`users/${user.uid}`).get();
+      if (snap.exists()) {
+        const data = snap.val();
+        playerName = data.name || user.displayName || 'Игрок';
+        playerCountry = data.country || '';
+        if (playerCountry) {
+          enterGame();
+          return;
+        }
+      }
+      // Has Google but no country yet - prefill name
+      const nameEl = document.getElementById('regName');
+      if (nameEl) nameEl.value = user.displayName || '';
+    } catch(e) {
+      console.log('Auth state error:', e);
+    }
+  }
+});
 </script>
 <!-- PLAYER PROFILE MODAL -->
 <div id="playerProfileModal" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;max-width:420px;margin:0 auto;">
