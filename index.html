@@ -60,12 +60,13 @@ body {
 /* APP SHELL */
 #appShell {
   position:fixed; inset:0;
-  display:none; flex-direction:column;
+  display:none;
+  flex-direction:column;
   max-width:420px; margin:0 auto;
   background:var(--bg);
 }
 #appShell.visible {
-  display:flex;
+  display:flex !important;
 }
 
 /* FIXED TOP HEADER */
@@ -140,14 +141,6 @@ body {
   z-index:10;
   padding-bottom:max(12px, env(safe-area-inset-bottom));
 }
-.bottom-nav-btn {
-  flex:1; display:flex; flex-direction:column;
-  align-items:center; gap:3px;
-  padding:6px 4px; border:none; background:transparent;
-  cursor:pointer; border-radius:10px; transition:all 0.15s;
-  color:var(--muted);
-}
-.bottom-nav-btn.active { color:var(--blue); }
 .bottom-nav-btn .nav-icon { font-size:22px; line-height:1; }
 .bottom-nav-btn .nav-label {
   font-family:'Unbounded',sans-serif;
@@ -162,7 +155,7 @@ body {
   display:block;
   width:100%;
 }
-#registerScreen.hidden { display:none; }
+#registerScreen.hidden { display:none !important; }
 #registerScreen > div { max-width:420px; margin:0 auto; padding:20px 16px 80px; }
 .reg-content { padding:20px 16px 40px; }
 
@@ -682,6 +675,31 @@ select.text-input option { background:var(--surface); }
 }
 .follow-btn.following { background:var(--surface); color:var(--muted); border:2px solid var(--border); }
 
+/* LANGUAGE BUTTONS */
+.lang-btn {
+  background:var(--card); border:2px solid var(--border);
+  border-radius:14px; padding:12px 8px; text-align:center;
+  cursor:pointer; transition:all 0.15s;
+  box-shadow:0 3px 0 var(--border);
+}
+.lang-btn.active { border-color:var(--blue); background:#e8f4fd; box-shadow:0 3px 0 var(--blue); }
+.lang-btn:active { transform:translateY(2px); box-shadow:none; }
+
+/* BOTTOM NAV BORDERS */
+.bottom-nav-btn {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; gap:3px;
+  padding:6px 4px; border:2px solid transparent;
+  background:transparent; cursor:pointer;
+  border-radius:12px; transition:all 0.15s;
+  color:var(--muted); margin:4px 3px;
+}
+.bottom-nav-btn.active {
+  color:var(--blue);
+  background:#e8f4fd;
+  border-color:var(--blue);
+}
+
 /* ANIMATIONS */
 @keyframes slideIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
@@ -694,98 +712,115 @@ select.text-input option { background:var(--surface); }
 <!-- REGISTER -->
 <div id="registerScreen">
   <div style="max-width:420px;margin:0 auto;padding:20px 16px 80px">
-  <header>
-    <svg class="app-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-      <rect width="512" height="512" rx="100" fill="#070b14"/>
-      <polygon points="0,380 80,220 160,320 220,200 280,300 340,180 400,280 460,160 512,260 512,512 0,512" fill="#0d1525"/>
-      <polygon points="0,420 60,280 120,350 180,240 256,150 332,240 390,300 450,220 512,300 512,512 0,512" fill="#111d33"/>
-      <rect x="206" y="200" width="100" height="160" fill="#1e3a6e" stroke="#2d6be4" stroke-width="2"/>
-      <polygon points="196,200 256,130 316,200" fill="#2d6be4"/>
-      <rect x="236" y="230" width="40" height="30" rx="20" fill="#070b14"/>
-      <rect x="236" y="280" width="40" height="30" rx="20" fill="#070b14"/>
-      <rect x="231" y="330" width="50" height="30" rx="5" fill="#070b14"/>
-      <circle cx="256" cy="256" r="230" fill="none" stroke="#2d6be4" stroke-width="2" opacity="0.3"/>
-      <text x="256" y="478" text-anchor="middle" font-family="serif" font-size="26" font-weight="bold" fill="#00c6ff" letter-spacing="2">МОТТ</text>
-    </svg>
-    <div class="logo-text">MOTT_bu</div>
-    <div class="greeting-chechen">МАРША ДОГ1ИЙЛА!</div>
-    <div class="greeting-sub">Добро пожаловать · Язык горного народа</div>
-    <svg class="ornament-svg" viewBox="0 0 400 20" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,10 Q20,2 40,10 Q60,18 80,10 Q100,2 120,10 Q140,18 160,10 Q180,2 200,10 Q220,18 240,10 Q260,2 280,10 Q300,18 320,10 Q340,2 360,10 Q380,18 400,10" stroke="#2d6be4" stroke-width="1.5" fill="none" opacity="0.6"/>
-      <path d="M0,10 Q20,18 40,10 Q60,2 80,10 Q100,18 120,10 Q140,2 160,10 Q180,18 200,10 Q220,2 240,10 Q260,18 280,10 Q300,2 320,10 Q340,18 360,10 Q380,2 400,10" stroke="#00c6ff" stroke-width="1" fill="none" opacity="0.4"/>
-    </svg>
-  </header>
 
-  <div class="register-card">
-    <div style="text-align:center;margin-bottom:20px">
-      <div style="font-family:'Unbounded',sans-serif;font-size:12px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">ВОЙДИ ЧТОБЫ НАЧАТЬ</div>
-      <button onclick="signInWithGoogle()" style="
-        width:100%;padding:14px 20px;
-        background:white;color:#333;
-        border:none;border-radius:12px;
-        font-family:'Manrope',sans-serif;font-size:15px;font-weight:600;
-        cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;
-        box-shadow:0 2px 12px rgba(0,0,0,0.3);transition:all 0.2s;
-      ">
-        <svg width="20" height="20" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Войти через Google
-      </button>
-    </div>
+  <!-- Logo -->
+  <div style="text-align:center;padding:24px 0 16px">
+    <div style="font-family:'Unbounded',sans-serif;font-size:28px;font-weight:900;color:var(--blue);margin-bottom:4px">MOTT_bu</div>
+    <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:3px" id="regSubtitle">LEARN CHECHEN</div>
+  </div>
 
-    <div style="text-align:center;color:var(--muted);font-size:12px;margin:16px 0">или</div>
-
-    <div class="field-label">Твоё имя</div>
-    <input type="text" class="text-input" id="regName" placeholder="Введи имя...">
-    <div class="field-label">Страна</div>
-    <select class="text-input" id="regCountry">
-      <option value="">Выбери страну</option>
-      <option value="🇷🇺 Россия">🇷🇺 Россия</option>
-      <option value="🇩🇪 Германия">🇩🇪 Германия</option>
-      <option value="🇦🇹 Австрия">🇦🇹 Австрия</option>
-      <option value="🇨🇭 Швейцария">🇨🇭 Швейцария</option>
-      <option value="🇫🇷 Франция">🇫🇷 Франция</option>
-      <option value="🇹🇷 Турция">🇹🇷 Турция</option>
-      <option value="🇦🇿 Азербайджан">🇦🇿 Азербайджан</option>
-      <option value="🇬🇪 Грузия">🇬🇪 Грузия</option>
-      <option value="🇺🇦 Украина">🇺🇦 Украина</option>
-      <option value="🇰🇿 Казахстан">🇰🇿 Казахстан</option>
-      <option value="🇺🇸 США">🇺🇸 США</option>
-      <option value="🇬🇧 Великобритания">🇬🇧 Великобритания</option>
-      <option value="🇸🇦 Саудовская Аравия">🇸🇦 Саудовская Аравия</option>
-      <option value="🌍 Другая">🌍 Другая</option>
-    </select>
-
-    <div class="field-label">Ежедневная цель</div>
-    <div class="goal-grid">
-      <div class="goal-item active" onclick="selectGoal(this,5)">
-        <div class="goal-icon">🌱</div>
-        <div class="goal-name">Легко</div>
-        <div class="goal-desc">5 слов</div>
+  <!-- Language selector -->
+  <div style="margin-bottom:20px">
+    <div style="font-family:'Unbounded',sans-serif;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:10px" id="regLangLabel">YOUR LANGUAGE</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <div onclick="setLang('ru')" id="lang-ru" class="lang-btn active">
+        <div style="font-size:22px">🇷🇺</div>
+        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px;color:var(--white)">РУС</div>
       </div>
-      <div class="goal-item" onclick="selectGoal(this,10)">
-        <div class="goal-icon">⚡</div>
-        <div class="goal-name">Обычно</div>
-        <div class="goal-desc">10 слов</div>
+      <div onclick="setLang('en')" id="lang-en" class="lang-btn">
+        <div style="font-size:22px">🇬🇧</div>
+        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px;color:var(--white)">ENG</div>
       </div>
-      <div class="goal-item" onclick="selectGoal(this,20)">
-        <div class="goal-icon">🔥</div>
-        <div class="goal-name">Серьёзно</div>
-        <div class="goal-desc">20 слов</div>
+      <div onclick="setLang('de')" id="lang-de" class="lang-btn">
+        <div style="font-size:22px">🇩🇪</div>
+        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px;color:var(--white)">DEU</div>
       </div>
-      <div class="goal-item" onclick="selectGoal(this,30)">
-        <div class="goal-icon">👑</div>
-        <div class="goal-name">Интенсив</div>
-        <div class="goal-desc">30 слов</div>
+      <div onclick="setLang('fr')" id="lang-fr" class="lang-btn">
+        <div style="font-size:22px">🇫🇷</div>
+        <div style="font-size:10px;font-family:'Unbounded',sans-serif;margin-top:4px;color:var(--white)">FRA</div>
       </div>
     </div>
   </div>
-  <br>
-  <button class="btn-primary" onclick="startGame()">Начать →</button>
+
+  <!-- Google Sign In -->
+  <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:0 4px 0 var(--border)">
+    <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:14px;text-align:center" id="regLoginLabel">SIGN IN TO START</div>
+    <button id="googleBtn" onclick="signInWithGoogle()" style="
+      width:100%;padding:15px 20px;
+      background:white;color:#333;
+      border:2px solid #e5e5e5;border-radius:14px;
+      font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;
+      box-shadow:0 4px 0 #d0d0d0;position:relative;top:0;
+      transition:top 0.1s,box-shadow 0.1s;
+    " ontouchstart="this.style.top='3px';this.style.boxShadow='0 1px 0 #d0d0d0'"
+       ontouchend="this.style.top='';this.style.boxShadow='0 4px 0 #d0d0d0'">
+      <svg width="20" height="20" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      <span id="googleBtnText">Sign in with Google</span>
+    </button>
+  </div>
+
+  <!-- Divider -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+    <div style="font-size:12px;color:var(--muted)" id="regOrLabel">or without account</div>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+  </div>
+
+  <!-- Guest form -->
+  <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:20px;margin-bottom:16px;box-shadow:0 4px 0 var(--border)">
+    <div class="field-label" id="labelName">YOUR NAME</div>
+    <input type="text" class="text-input" id="regName" placeholder="Enter your name...">
+    <div class="field-label" id="labelCountry">COUNTRY</div>
+    <select class="text-input" id="regCountry">
+      <option value="">Choose country</option>
+      <option value="🇷🇺 Россия">🇷🇺 Russia</option>
+      <option value="🇩🇪 Германия">🇩🇪 Germany</option>
+      <option value="🇦🇹 Австрия">🇦🇹 Austria</option>
+      <option value="🇨🇭 Швейцария">🇨🇭 Switzerland</option>
+      <option value="🇫🇷 Франция">🇫🇷 France</option>
+      <option value="🇹🇷 Турция">🇹🇷 Turkey</option>
+      <option value="🇦🇿 Азербайджан">🇦🇿 Azerbaijan</option>
+      <option value="🇬🇪 Грузия">🇬🇪 Georgia</option>
+      <option value="🇺🇦 Украина">🇺🇦 Ukraine</option>
+      <option value="🇰🇿 Казахстан">🇰🇿 Kazakhstan</option>
+      <option value="🇺🇸 США">🇺🇸 USA</option>
+      <option value="🇬🇧 Великобритания">🇬🇧 UK</option>
+      <option value="🇸🇦 Саудовская Аравия">🇸🇦 Saudi Arabia</option>
+      <option value="🌍 Другая">🌍 Other</option>
+    </select>
+    <div class="field-label" id="labelGoal">DAILY GOAL</div>
+    <div class="goal-grid">
+      <div class="goal-item active" onclick="selectGoal(this,5)">
+        <div class="goal-icon">🌱</div>
+        <div class="goal-name" id="goalEasy">Easy</div>
+        <div class="goal-desc">5 words</div>
+      </div>
+      <div class="goal-item" onclick="selectGoal(this,10)">
+        <div class="goal-icon">⚡</div>
+        <div class="goal-name" id="goalNorm">Normal</div>
+        <div class="goal-desc">10 words</div>
+      </div>
+      <div class="goal-item" onclick="selectGoal(this,20)">
+        <div class="goal-icon">🔥</div>
+        <div class="goal-name" id="goalSer">Serious</div>
+        <div class="goal-desc">20 words</div>
+      </div>
+      <div class="goal-item" onclick="selectGoal(this,30)">
+        <div class="goal-icon">👑</div>
+        <div class="goal-name" id="goalInt">Intense</div>
+        <div class="goal-desc">30 words</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-primary" id="startBtn" onclick="startGame()" style="font-size:15px;padding:17px;letter-spacing:2px">START →</button>
+
   </div>
 </div>
 
@@ -1700,7 +1735,108 @@ function saveMistakes() {
   localStorage.setItem('mistakeWords', JSON.stringify(mistakeWords));
 }
 
-function selectGoal(el, goal) {
+// ---- LANGUAGE SYSTEM ----
+let currentLang = localStorage.getItem('appLang') || 'ru';
+
+const LANGS = {
+  ru: {
+    subtitle: 'УЧИ ЧЕЧЕНСКИЙ',
+    langLabel: 'ТВОЙ ЯЗЫК',
+    loginLabel: 'ВОЙДИ ЧТОБЫ НАЧАТЬ',
+    googleBtn: 'Войти через Google',
+    orLabel: 'или без аккаунта',
+    labelName: 'ТВОЁ ИМЯ',
+    labelCountry: 'СТРАНА',
+    labelGoal: 'ЕЖЕДНЕВНАЯ ЦЕЛЬ',
+    goalEasy: 'Легко', goalNorm: 'Обычно', goalSer: 'Серьёзно', goalInt: 'Интенсив',
+    startBtn: 'НАЧАТЬ →',
+    namePh: 'Введи имя...',
+    // Game UI
+    check: 'Проверить', skip: 'Пропустить →', next: 'Следующее →',
+    correct: '✓ Верно!', wrong: '✗ Правильно:',
+    // Words
+    translate: (w) => w.russian,
+  },
+  en: {
+    subtitle: 'LEARN CHECHEN',
+    langLabel: 'YOUR LANGUAGE',
+    loginLabel: 'SIGN IN TO START',
+    googleBtn: 'Sign in with Google',
+    orLabel: 'or without account',
+    labelName: 'YOUR NAME',
+    labelCountry: 'COUNTRY',
+    labelGoal: 'DAILY GOAL',
+    goalEasy: 'Easy', goalNorm: 'Normal', goalSer: 'Serious', goalInt: 'Intense',
+    startBtn: 'START →',
+    namePh: 'Enter your name...',
+    check: 'Check', skip: 'Skip →', next: 'Next →',
+    correct: '✓ Correct!', wrong: '✗ Answer:',
+    translate: (w) => w.english || w.russian,
+  },
+  de: {
+    subtitle: 'TSCHETSCHENISCH LERNEN',
+    langLabel: 'DEINE SPRACHE',
+    loginLabel: 'ANMELDEN',
+    googleBtn: 'Mit Google anmelden',
+    orLabel: 'oder ohne Konto',
+    labelName: 'DEIN NAME',
+    labelCountry: 'LAND',
+    labelGoal: 'TAGESZIEL',
+    goalEasy: 'Leicht', goalNorm: 'Normal', goalSer: 'Ernst', goalInt: 'Intensiv',
+    startBtn: 'STARTEN →',
+    namePh: 'Gib deinen Namen ein...',
+    check: 'Prüfen', skip: 'Überspringen →', next: 'Weiter →',
+    correct: '✓ Richtig!', wrong: '✗ Antwort:',
+    translate: (w) => w.german || w.russian,
+  },
+  fr: {
+    subtitle: 'APPRENDRE LE TCHÉTCHÈNE',
+    langLabel: 'TA LANGUE',
+    loginLabel: 'CONNECTE-TOI',
+    googleBtn: 'Se connecter avec Google',
+    orLabel: 'ou sans compte',
+    labelName: 'TON NOM',
+    labelCountry: 'PAYS',
+    labelGoal: 'OBJECTIF QUOTIDIEN',
+    goalEasy: 'Facile', goalNorm: 'Normal', goalSer: 'Sérieux', goalInt: 'Intensif',
+    startBtn: 'COMMENCER →',
+    namePh: 'Entre ton nom...',
+    check: 'Vérifier', skip: 'Passer →', next: 'Suivant →',
+    correct: '✓ Correct!', wrong: '✗ Réponse:',
+    translate: (w) => w.french || w.russian,
+  }
+};
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('appLang', lang);
+  // Update active button
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('lang-' + lang)?.classList.add('active');
+  // Update all text
+  const t = LANGS[lang];
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('regSubtitle', t.subtitle);
+  set('regLangLabel', t.langLabel);
+  set('regLoginLabel', t.loginLabel);
+  set('googleBtnText', t.googleBtn);
+  set('regOrLabel', t.orLabel);
+  set('labelName', t.labelName);
+  set('labelCountry', t.labelCountry);
+  set('labelGoal', t.labelGoal);
+  set('goalEasy', t.goalEasy);
+  set('goalNorm', t.goalNorm);
+  set('goalSer', t.goalSer);
+  set('goalInt', t.goalInt);
+  set('startBtn', t.startBtn);
+  const nameEl = document.getElementById('regName');
+  if (nameEl) nameEl.placeholder = t.namePh;
+}
+
+function getLang() { return LANGS[currentLang] || LANGS.ru; }
+
+// Init language on load
+setTimeout(() => setLang(currentLang), 100);
   document.querySelectorAll('.goal-item').forEach(g => g.classList.remove('active'));
   el.classList.add('active');
   dailyGoal = goal;
@@ -1710,12 +1846,12 @@ function selectGoal(el, goal) {
 async function startGame() {
   const name = document.getElementById('regName').value.trim();
   const country = document.getElementById('regCountry').value;
-  if (!name) { alert('Введи своё имя!'); return; }
-  if (!country) { alert('Выбери страну!'); return; }
+  const t = getLang();
+  if (!name) { alert(currentLang==='ru'?'Введи своё имя!':'Enter your name!'); return; }
+  if (!country) { alert(currentLang==='ru'?'Выбери страну!':'Choose your country!'); return; }
   playerName = name; playerCountry = country;
   await saveUserProfile();
-  // Track registration as guest
-  try { analytics.logEvent('sign_up', { method: 'guest', country: country }); } catch(e) {}
+  try { analytics.logEvent('sign_up', { method:'guest', country, lang:currentLang }); } catch(e) {}
   enterGame();
 }
 
