@@ -13,24 +13,112 @@
 <meta name="theme-color" content="#070b14">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCggYrJeGm_gf1laNiFl0VRjgd2M4KNDro",
-    authDomain: "mott-bu-d1633.firebaseapp.com",
-    databaseURL: "https://mott-bu-d1633-default-rtdb.firebaseio.com",
-    projectId: "mott-bu-d1633",
-    storageBucket: "mott-bu-d1633.firebasestorage.app",
-    messagingSenderId: "56719636643",
-    appId: "1:56719636643:web:10e89f71ecd68db243e716"
-  };
-  firebase.initializeApp(firebaseConfig);
-  var auth = firebase.auth();
-  var db = firebase.database();
-  var analytics = firebase.analytics();
+// Firebase REST API - no external scripts needed
+var FB_PROJECT = "mott-bu-d1633";
+var FB_DB_URL = "https://mott-bu-d1633-default-rtdb.firebaseio.com";
+var FB_API_KEY = "AIzaSyCggYrJeGm_gf1laNiFl0VRjgd2M4KNDro";
+var FB_AUTH_DOMAIN = "mott-bu-d1633.firebaseapp.com";
+
+// Simple analytics stub
+var analytics = { logEvent: function() {} };
+
+// Simple auth object using Firebase REST Auth API
+var auth = {
+  _user: null,
+  _callbacks: [],
+  currentUser: null,
+  onAuthStateChanged: function(callback) {
+    this._callbacks.push(callback);
+    // Check localStorage for saved session
+    var saved = localStorage.getItem('fbUser');
+    if (saved) {
+      try {
+        var u = JSON.parse(saved);
+        auth._user = u;
+        auth.currentUser = u;
+        setTimeout(function() { callback(u); }, 100);
+      } catch(e) {
+        callback(null);
+      }
+    } else {
+      setTimeout(function() { callback(null); }, 100);
+    }
+  },
+  signInWithPopup: function() {
+    // Open Google OAuth popup
+    return new Promise(function(resolve, reject) {
+      var width = 500, height = 600;
+      var left = (screen.width - width) / 2;
+      var top = (screen.height - height) / 2;
+      var authUrl = 'https://accounts.google.com/o/oauth2/auth' +
+        '?client_id=56719636643-web.apps.googleusercontent.com' +
+        '&redirect_uri=' + encodeURIComponent(window.location.origin + window.location.pathname) +
+        '&response_type=token' +
+        '&scope=' + encodeURIComponent('email profile');
+      
+      // Use redirect instead of popup for mobile
+      reject({ code: 'auth/popup-not-supported', message: 'Popup not supported on mobile' });
+    });
+  },
+  signOut: function() {
+    auth._user = null;
+    auth.currentUser = null;
+    localStorage.removeItem('fbUser');
+    localStorage.removeItem('fbToken');
+    return Promise.resolve();
+  }
+};
+
+// Simple database using Firebase REST API
+var db = {
+  ref: function(path) {
+    return {
+      _path: path,
+      get: function() {
+        var token = localStorage.getItem('fbToken') || '';
+        var url = FB_DB_URL + '/' + path + '.json' + (token ? '?auth=' + token : '');
+        return fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+          return {
+            exists: function() { return data !== null && data !== undefined; },
+            val: function() { return data; }
+          };
+        }).catch(function() {
+          return { exists: function() { return false; }, val: function() { return null; } };
+        });
+      },
+      set: function(data) {
+        var token = localStorage.getItem('fbToken') || '';
+        var url = FB_DB_URL + '/' + path + '.json' + (token ? '?auth=' + token : '');
+        return fetch(url, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+          headers: { 'Content-Type': 'application/json' }
+        }).then(function(r) { return r.json(); }).catch(function(){});
+      },
+      update: function(data) {
+        var token = localStorage.getItem('fbToken') || '';
+        var url = FB_DB_URL + '/' + path + '.json' + (token ? '?auth=' + token : '');
+        return fetch(url, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+          headers: { 'Content-Type': 'application/json' }
+        }).then(function(r) { return r.json(); }).catch(function(){});
+      },
+      push: function(data) {
+        var token = localStorage.getItem('fbToken') || '';
+        var url = FB_DB_URL + '/' + path + '.json' + (token ? '?auth=' + token : '');
+        return fetch(url, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: { 'Content-Type': 'application/json' }
+        }).then(function(r) { return r.json(); }).catch(function(){});
+      },
+      on: function() {},
+      off: function() {}
+    };
+  }
+};
 </script>
 <style>
 :root {
@@ -710,7 +798,8 @@ select.text-input option { background:var(--surface); }
 <body>
 <script>
 window.onerror = function(msg, src, line, col, err) {
-  console.log('JS Error:', msg, 'Line:', line);
+  console.log('JS Error:', msg, 'Line:', line, 'Col:', col);
+  if (err) console.log('Stack:', err.stack);
   return false;
 };
 </script>
@@ -1300,15 +1389,33 @@ window.onerror = function(msg, src, line, col, err) {
 </div>
 
 <script>
-// Admin — only mottbu560@gmail.com has access automatically
-const ADMIN_EMAIL = 'mottbu560@gmail.com';
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('admin') === 'true') sessionStorage.setItem('isAdmin', 'true');
-let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+var FB_DB_URL = "https://mott-bu-d1633-default-rtdb.firebaseio.com";
+var ADMIN_PASS = "Mott-biyc0707";
+var ADMIN_EMAIL = "mottbu560@gmail.com";
 
-const ADMIN_PASS = 'Mott-biyc0707';
+// Minimal Firebase REST
+var db = {
+  ref: function(p) {
+    var url = FB_DB_URL + "/" + p + ".json";
+    return {
+      get: function() {
+        return fetch(url).then(function(r){return r.json();}).then(function(d){
+          return {exists:function(){return d!==null;},val:function(){return d;}};
+        }).catch(function(){return {exists:function(){return false;},val:function(){return null;}};});
+      },
+      set: function(d) {
+        return fetch(url,{method:"PUT",body:JSON.stringify(d),headers:{"Content-Type":"application/json"}}).catch(function(){});
+      },
+      update: function(d) {
+        return fetch(url,{method:"PATCH",body:JSON.stringify(d),headers:{"Content-Type":"application/json"}}).catch(function(){});
+      }
+    };
+  }
+};
+var auth = {currentUser:null};
+var analytics = {logEvent:function(){}};
 
-let words = [
+var words = [
   // ПРИВЕТСТВИЯ
   {chechen:"Маршалла",russian:"Привет / Мир",transcription:"Маршалла",category:"Приветствия"},
   {chechen:"Дела реза хийла",russian:"Спасибо",transcription:"Дела реза хийла",category:"Приветствия"},
@@ -1469,457 +1576,214 @@ let words = [
   {chechen:"Маршалла хаттар",russian:"Пожалуйста",transcription:"Маршалла хаттар",category:"Фразы"},
 ];
 
-const FB_URL = 'https://mott-bu-d1633-default-rtdb.firebaseio.com';
+// State
+var playerName = "";
+var playerCountry = "";
+var dailyGoal = 10;
+var currentMode = "translate";
+var currentWord = null;
+var score = 0, streak = 0, bestStreak = 0;
+var totalAnswered = 0, correctAnswers = 0;
+var usedWords = [], scrambleSelected = [];
+var answered = false;
+var isAdmin = false;
+var selectedCategory = "Все";
+var soundEnabled = true, speechEnabled = true;
+var currentLang = localStorage.getItem("appLang") || "ru";
+var mistakeWords = [];
+try { mistakeWords = JSON.parse(localStorage.getItem("mistakeWords") || "[]"); } catch(e) {}
+var learnCards = [], learnIndex = 0, learnKnown = [], cardFlipped = false;
+var totalGames = 0, totalScoreAll = 0, totalWordsLearned = 0, dayStreak = 0;
+var adminUnlocked = false;
 
-// Google sign-in - one account per email
-async function signInWithGoogle() {
+// Check admin URL param
+(function(){
   try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    // Force account selection every time
-    provider.setCustomParameters({ prompt: 'select_account' });
-    const result = await auth.signInWithPopup(provider);
-    const user = result.user;
+    var p = new URLSearchParams(window.location.search);
+    if (p.get("admin") === "true") sessionStorage.setItem("isAdmin","true");
+    isAdmin = sessionStorage.getItem("isAdmin") === "true";
+  } catch(e) {}
+})();
 
-    // Check if this email already exists under a different UID
-    const emailSnap = await db.ref('emailIndex/' + user.email.replace(/\./g,'_')).get();
-    if (emailSnap.exists() && emailSnap.val() !== user.uid) {
-      // Already registered with different account - merge or block
-      alert('Этот email уже зарегистрирован. Используй тот же аккаунт Google.');
-      await auth.signOut();
-      return;
-    }
-    // Save email index
-    await db.ref('emailIndex/' + user.email.replace(/\./g,'_')).set(user.uid);
-    // Track Google login
-    try { analytics.logEvent('login', { method: 'google' }); } catch(e) {}
-
-    const snap = await db.ref(`users/${user.uid}`).get();
-    if (snap.exists()) {
-      const data = snap.val();
-      playerName = data.name || user.displayName || 'Игрок';
-      playerCountry = data.country || '';
-      if (playerCountry) {
-        enterGame();
-      } else {
-        document.getElementById('regName').value = playerName;
-        document.getElementById('regCountry').value = '';
-      }
-    } else {
-      document.getElementById('regName').value = user.displayName || '';
-      document.getElementById('regName').disabled = false;
-    }
-  } catch(e) {
-    if (e.code !== 'auth/popup-closed-by-user') {
-      alert('Ошибка входа: ' + (e.message || 'Попробуй снова'));
-    }
-  }
-}
-
-async function saveUserProfile() {
-  const user = auth.currentUser;
-  if (user) {
-    await db.ref(`users/${user.uid}`).set({ name: playerName, country: playerCountry });
-  }
-}
-
-function enterGame() {
-  // Switch from register to app shell
-  document.getElementById('registerScreen').classList.add('hidden');
-  document.getElementById('appShell').style.display = ''; document.getElementById('appShell').classList.add('visible');
-
-  // Track app open
-  try { analytics.logEvent('app_open', { player: playerName, country: playerCountry }); } catch(e) {}
-
-  // Update greeting in top bar
-  const greetEl = document.getElementById('playerGreeting');
-  if (greetEl) greetEl.textContent = playerName ? `Привет, ${playerName}!` : '';
-
-  // Admin button
-  if (isAdmin) {
-    const adminBtn = document.getElementById('bn-admin');
-    if (adminBtn) adminBtn.style.display = 'flex';
-  }
-
-  // Hide social tabs for guests
-  const user = auth.currentUser;
-  const guestHide = ['bn-leaderboard','bn-leagues','bn-search','bn-profile'];
-  guestHide.forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) btn.style.display = user ? 'flex' : 'none';
-  });
-
-  // Trial day check for guests
-  if (!user) {
-    const trialStart = localStorage.getItem('trialStart');
-    const today = new Date().toDateString();
-    if (!trialStart) {
-      localStorage.setItem('trialStart', today);
-      setTimeout(showTrialNotification, 1000);
-    } else if (trialStart !== today) {
-      showTrialOver();
-      return;
-    }
-    showTrialBanner();
-  }
-
-  // Init swipe back
-  initSwipeBack();
-
-  loadWords().then(() => { renderCategories(); renderWordOfDay(); loadNewWord(); checkFriendInvite(); });
-}
-
-function showTrialNotification() {
-  const el = document.createElement('div');
-  el.style.cssText = `
-    position:fixed; top:20px; left:50%; transform:translateX(-50%);
-    background:linear-gradient(135deg,var(--blue),var(--cyan));
-    color:white; padding:14px 24px; border-radius:16px;
-    font-family:'Unbounded',sans-serif; font-size:12px;
-    text-align:center; z-index:200; max-width:320px;
-    box-shadow:0 8px 24px rgba(45,107,228,0.4);
-    animation:slideIn 0.3s ease;
-  `;
-  el.innerHTML = `
-    🎯 ПРОБНЫЙ ДЕНЬ<br>
-    <span style="font-family:'Manrope',sans-serif;font-size:13px;font-weight:400;opacity:0.9">
-      Играй сегодня бесплатно!<br>Завтра нужна регистрация.
-    </span>
-    <br><br>
-    <button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;padding:6px 16px;border-radius:8px;cursor:pointer;font-family:'Manrope',sans-serif;font-size:13px;">
-      Понятно ✓
-    </button>
-  `;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 6000);
-}
-
-function showTrialBanner() {
-  const existing = document.getElementById('trialBanner');
-  if (existing) return;
-  const banner = document.createElement('div');
-  banner.id = 'trialBanner';
-  banner.style.cssText = `
-    background:rgba(45,107,228,0.1); border:1px solid rgba(45,107,228,0.3);
-    border-radius:12px; padding:10px 16px; margin-bottom:16px;
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-  `;
-  banner.innerHTML = `
-    <div style="font-size:12px;color:var(--blue2)">
-      ⏰ <b>Пробный день</b> — зарегистрируйся чтобы продолжить завтра
-    </div>
-    <button onclick="signInWithGoogle()" style="
-      background:linear-gradient(135deg,var(--blue),var(--blue2));
-      color:white;border:none;border-radius:8px;
-      padding:6px 12px;font-size:11px;font-family:'Unbounded',sans-serif;
-      cursor:pointer;white-space:nowrap;
-    ">Войти</button>
-  `;
-  const gameTab = document.getElementById('gameTab');
-  gameTab.insertBefore(banner, gameTab.firstChild);
-}
-
-function showTrialOver() {
-  document.getElementById('registerScreen').classList.add('hidden');
-  document.getElementById('appShell').style.display = ''; document.getElementById('appShell').classList.add('visible');
-  document.getElementById('gameTab').innerHTML = `
-    <div style="text-align:center;padding:40px 20px">
-      <div style="font-size:64px;margin-bottom:16px">🏔️</div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:20px;color:var(--cyan);margin-bottom:12px">
-        ПРОБНЫЙ ДЕНЬ ЗАКОНЧИЛСЯ
-      </div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.6">
-        Ты попробовал MOTT_bu!<br>
-        Зарегистрируйся чтобы продолжить учить<br>чеченский язык и сохранить прогресс.
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px">
-        <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">ПОСЛЕ РЕГИСТРАЦИИ</div>
-        <div style="display:flex;flex-direction:column;gap:10px;text-align:left">
-          <div style="display:flex;align-items:center;gap:10px;font-size:14px">✅ <span>Безлимитные уроки</span></div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:14px">✅ <span>Сохранение прогресса</span></div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:14px">✅ <span>Таблица лидеров</span></div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:14px">✅ <span>Профиль и награды</span></div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:14px">✅ <span>Серия дней</span></div>
-        </div>
-      </div>
-      <button onclick="signInWithGoogle()" style="
-        width:100%;padding:15px 20px;
-        background:white;color:#333;
-        border:none;border-radius:14px;
-        font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;
-        cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;
-        box-shadow:0 4px 20px rgba(0,0,0,0.3);margin-bottom:10px;
-      ">
-        <svg width="20" height="20" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Зарегистрироваться через Google
-      </button>
-    </div>
-  `;
-
-  loadWords().then(() => {});
-}
-
-async function loadWords() {
-  try {
-    const res = await fetch(`${FB_URL}/words.json`);
-    const data = await res.json();
-    if (data && Array.isArray(data) && data.length > 0) {
-      words = data;
-    } else {
-      const saved = localStorage.getItem('chechenWords');
-      if (saved) words = JSON.parse(saved);
-    }
-  } catch(e) {
-    const saved = localStorage.getItem('chechenWords');
-    if (saved) words = JSON.parse(saved);
-  }
-}
-
-async function saveWords() {
-  try {
-    localStorage.setItem('chechenWords', JSON.stringify(words));
-    await fetch(`${FB_URL}/words.json`, {
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(words)
-    });
-  } catch(e) { localStorage.setItem('chechenWords', JSON.stringify(words)); }
-}
-
-let leaderboard = [];
-
-async function loadLeaderboard() {
-  try {
-    const res = await fetch(`${FB_URL}/leaderboard.json`);
-    const data = await res.json();
-    if (data) {
-      // Only show verified registered users
-      leaderboard = Object.values(data)
-        .filter(p => p.verified === true)
-        .sort((a,b) => b.score - a.score);
-    }
-  } catch(e) { console.log('Firebase error:', e); }
-}
-let playerName = '', playerCountry = '';
-let dailyGoal = 5;
-let currentMode = 'translate';
-let currentWord = null;
-let score = 0, streak = 0, bestStreak = 0;
-let totalAnswered = 0, correctAnswers = 0;
-let usedWords = [], scrambleSelected = [];
-let answered = false, adminUnlocked = false;
-let selectedCategory = 'Все';
-let mistakeWords = JSON.parse(localStorage.getItem('mistakeWords') || '[]');
-
-function saveMistakes() {
-  localStorage.setItem('mistakeWords', JSON.stringify(mistakeWords));
-}
-
-// ---- LANGUAGE SYSTEM ----
-let currentLang = localStorage.getItem('appLang') || 'ru';
-
-const LANGS = {
-  ru: {
-    subtitle: 'УЧИ ЧЕЧЕНСКИЙ',
-    langLabel: 'ТВОЙ ЯЗЫК',
-    loginLabel: 'ВОЙДИ ЧТОБЫ НАЧАТЬ',
-    googleBtn: 'Войти через Google',
-    orLabel: 'или без аккаунта',
-    labelName: 'ТВОЁ ИМЯ',
-    labelCountry: 'СТРАНА',
-    labelGoal: 'ЕЖЕДНЕВНАЯ ЦЕЛЬ',
-    goalEasy: 'Легко', goalNorm: 'Обычно', goalSer: 'Серьёзно', goalInt: 'Интенсив',
-    startBtn: 'НАЧАТЬ →',
-    namePh: 'Введи имя...',
-    // Game UI
-    check: 'Проверить', skip: 'Пропустить →', next: 'Следующее →',
-    correct: '✓ Верно!', wrong: '✗ Правильно:',
-    // Words
-    translate: function(w) { return w.russian; },
-  },
-  en: {
-    subtitle: 'LEARN CHECHEN',
-    langLabel: 'YOUR LANGUAGE',
-    loginLabel: 'SIGN IN TO START',
-    googleBtn: 'Sign in with Google',
-    orLabel: 'or without account',
-    labelName: 'YOUR NAME',
-    labelCountry: 'COUNTRY',
-    labelGoal: 'DAILY GOAL',
-    goalEasy: 'Easy', goalNorm: 'Normal', goalSer: 'Serious', goalInt: 'Intense',
-    startBtn: 'START →',
-    namePh: 'Enter your name...',
-    check: 'Check', skip: 'Skip →', next: 'Next →',
-    correct: '✓ Correct!', wrong: '✗ Answer:',
-    translate: function(w) { return w.english || w.russian; },
-  },
-  de: {
-    subtitle: 'TSCHETSCHENISCH LERNEN',
-    langLabel: 'DEINE SPRACHE',
-    loginLabel: 'ANMELDEN',
-    googleBtn: 'Mit Google anmelden',
-    orLabel: 'oder ohne Konto',
-    labelName: 'DEIN NAME',
-    labelCountry: 'LAND',
-    labelGoal: 'TAGESZIEL',
-    goalEasy: 'Leicht', goalNorm: 'Normal', goalSer: 'Ernst', goalInt: 'Intensiv',
-    startBtn: 'STARTEN →',
-    namePh: 'Gib deinen Namen ein...',
-    check: 'Prüfen', skip: 'Überspringen →', next: 'Weiter →',
-    correct: '✓ Richtig!', wrong: '✗ Antwort:',
-    translate: function(w) { return w.german || w.russian; },
-  },
-  fr: {
-    subtitle: 'APPRENDRE LE TCHÉTCHÈNE',
-    langLabel: 'TA LANGUE',
-    loginLabel: 'CONNECTE-TOI',
-    googleBtn: 'Se connecter avec Google',
-    orLabel: 'ou sans compte',
-    labelName: 'TON NOM',
-    labelCountry: 'PAYS',
-    labelGoal: 'OBJECTIF QUOTIDIEN',
-    goalEasy: 'Facile', goalNorm: 'Normal', goalSer: 'Sérieux', goalInt: 'Intensif',
-    startBtn: 'COMMENCER →',
-    namePh: 'Entre ton nom...',
-    check: 'Vérifier', skip: 'Passer →', next: 'Suivant →',
-    correct: '✓ Correct!', wrong: '✗ Réponse:',
-    translate: function(w) { return w.french || w.russian; },
-  }
+// Language strings
+var LANGS = {
+  ru: {sub:"УЧИ ЧЕЧЕНСКИЙ",ll:"ТВОЙ ЯЗЫК",li:"ВОЙДИ ЧТОБЫ НАЧАТЬ",gb:"Войти через Google",or:"или без аккаунта",ln:"ТВОЁ ИМЯ",lc:"СТРАНА",lg:"ЕЖЕДНЕВНАЯ ЦЕЛЬ",ge:"Легко",gn:"Обычно",gs:"Серьёзно",gi:"Интенсив",sb:"НАЧАТЬ",np:"Введи имя..."},
+  en: {sub:"LEARN CHECHEN",ll:"YOUR LANGUAGE",li:"SIGN IN TO START",gb:"Sign in with Google",or:"or without account",ln:"YOUR NAME",lc:"COUNTRY",lg:"DAILY GOAL",ge:"Easy",gn:"Normal",gs:"Serious",gi:"Intense",sb:"START",np:"Enter your name..."},
+  de: {sub:"TSCHETSCHENISCH",ll:"DEINE SPRACHE",li:"ANMELDEN",gb:"Mit Google anmelden",or:"oder ohne Konto",ln:"DEIN NAME",lc:"LAND",lg:"TAGESZIEL",ge:"Leicht",gn:"Normal",gs:"Ernst",gi:"Intensiv",sb:"STARTEN",np:"Name eingeben..."},
+  fr: {sub:"APPRENDRE",ll:"TA LANGUE",li:"CONNECTE-TOI",gb:"Se connecter",or:"ou sans compte",ln:"TON NOM",lc:"PAYS",lg:"OBJECTIF",ge:"Facile",gn:"Normal",gs:"Sérieux",gi:"Intensif",sb:"COMMENCER",np:"Ton prénom..."}
 };
-
-function setLang(lang) {
-  currentLang = lang;
-  localStorage.setItem('appLang', lang);
-  // Update active button
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-  var _lb = document.getElementById('lang-' + lang); if(_lb) _lb.classList.add('active');
-  // Update all text
-  const t = LANGS[lang];
-  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  set('regSubtitle', t.subtitle);
-  set('regLangLabel', t.langLabel);
-  set('regLoginLabel', t.loginLabel);
-  set('googleBtnText', t.googleBtn);
-  set('regOrLabel', t.orLabel);
-  set('labelName', t.labelName);
-  set('labelCountry', t.labelCountry);
-  set('labelGoal', t.labelGoal);
-  set('goalEasy', t.goalEasy);
-  set('goalNorm', t.goalNorm);
-  set('goalSer', t.goalSer);
-  set('goalInt', t.goalInt);
-  set('startBtn', t.startBtn);
-  const nameEl = document.getElementById('regName');
-  if (nameEl) nameEl.placeholder = t.namePh;
-}
 
 function getLang() { return LANGS[currentLang] || LANGS.ru; }
 
-// Init language on load
-setTimeout(() => setLang(currentLang), 100);
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem("appLang", lang);
+  document.querySelectorAll(".lang-btn").forEach(function(b) { b.classList.remove("active"); });
+  var lb = document.getElementById("lang-" + lang);
+  if (lb) lb.classList.add("active");
+  var t = getLang();
+  var map = {
+    regSubtitle: t.sub, regLangLabel: t.ll, regLoginLabel: t.li,
+    googleBtnText: t.gb, regOrLabel: t.or, labelName: t.ln,
+    labelCountry: t.lc, labelGoal: t.lg,
+    goalEasy: t.ge, goalNorm: t.gn, goalSer: t.gs, goalInt: t.gi, startBtn: t.sb
+  };
+  for (var id in map) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = map[id];
+  }
+  var ni = document.getElementById("regName");
+  if (ni) ni.placeholder = t.np;
+}
 
 function selectGoal(el, goal) {
-  document.querySelectorAll('.goal-item').forEach(g => g.classList.remove('active'));
-  el.classList.add('active');
+  document.querySelectorAll(".goal-item").forEach(function(g) { g.classList.remove("active"); });
+  el.classList.add("active");
   dailyGoal = goal;
 }
 
-// ---- REGISTER ----
-async function startGame() {
-  const name = document.getElementById('regName').value.trim();
-  const country = document.getElementById('regCountry').value;
-  const t = getLang();
-  if (!name) { alert(currentLang==='ru'?'Введи своё имя!':'Enter your name!'); return; }
-  if (!country) { alert(currentLang==='ru'?'Выбери страну!':'Choose your country!'); return; }
+function startGame() {
+  var name = document.getElementById("regName").value.trim();
+  var country = document.getElementById("regCountry").value;
+  if (!name) { alert(currentLang === "ru" ? "Введи своё имя!" : "Enter your name!"); return; }
+  if (!country) { alert(currentLang === "ru" ? "Выбери страну!" : "Choose country!"); return; }
   playerName = name; playerCountry = country;
-  await saveUserProfile();
-  try { analytics.logEvent('sign_up', { method:'guest', country, lang:currentLang }); } catch(e) {}
+  localStorage.setItem("guestName", name);
+  localStorage.setItem("guestCountry", country);
   enterGame();
 }
 
-// ---- WORD OF DAY ----
-function renderWordOfDay() {
-  const idx = new Date().getDate() % words.length;
-  const w = words[idx];
-  document.getElementById('wordOfDay').innerHTML = `
-    <div class="wod-card">
-      <div class="wod-label">⭐ Слово дня</div>
-      <div class="wod-word">${w.chechen}</div>
-      <div class="wod-translation">${w.russian} · ${w.category}</div>
-      <button class="speak-btn" onclick="speak('${w.transcription}')">🔊 Слушать</button>
-    </div>
-  `;
+function signInWithGoogle() {
+  alert(currentLang === "ru" ? "Вход через Google временно недоступен. Используй форму ниже." : "Use the form below to continue.");
 }
 
-// ---- TRIAL DAY CHECK ----
-function checkTrialExpired() {
-  const user = auth.currentUser;
-  if (user) return false; // registered users always allowed
+function enterGame() {
+  var reg = document.getElementById("registerScreen");
+  var app = document.getElementById("appShell");
+  if (reg) reg.classList.add("hidden");
+  if (app) { app.style.display = ""; app.classList.add("visible"); }
+  var g = document.getElementById("playerGreeting");
+  if (g) g.textContent = playerName ? "Привет, " + playerName + "!" : "";
+  if (isAdmin) { var ab = document.getElementById("bn-admin"); if (ab) ab.style.display = "flex"; }
+  loadWords().then(function() { renderCategories(); renderWordOfDay(); loadNewWord(); });
+  initSwipeBack();
+}
 
-  const firstPlay = localStorage.getItem('firstPlayDate');
-  const today = new Date().toDateString();
+function loadWords() {
+  return db.ref("words").get().then(function(snap) {
+    if (snap.exists() && snap.val() && Array.isArray(snap.val()) && snap.val().length > 10) {
+      words = snap.val();
+    }
+  }).catch(function() {});
+}
 
-  if (!firstPlay) {
-    localStorage.setItem('firstPlayDate', today);
-    return false; // first day - allow
+function saveWords() {
+  db.ref("words").set(words).catch(function(){});
+}
+
+function showTab(tab) {
+  document.querySelectorAll(".tab-page").forEach(function(p) { p.classList.remove("active"); });
+  var el = document.getElementById(tab + "Tab");
+  if (el) el.classList.add("active");
+  var ca = document.getElementById("contentArea");
+  if (ca) ca.scrollTop = 0;
+  document.querySelectorAll(".bottom-nav-btn").forEach(function(b) { b.classList.remove("active"); });
+  var bn = document.getElementById("bn-" + tab);
+  if (bn) bn.classList.add("active");
+  if (tab === "leaderboard") renderLeaderboard();
+  if (tab === "admin") renderAdminWords();
+  if (tab === "words") renderWordsList();
+  if (tab === "profile") renderProfile();
+  if (tab === "leagues") renderLeagues();
+  if (tab === "search") renderSearchTab();
+  if (tab === "settings") initSettingsUI();
+  if (tab === "mistakes") renderMistakesTab();
+  if (tab === "learn") renderLearnTab();
+}
+
+function initSwipeBack() {
+  var c = document.getElementById("contentArea");
+  if (!c) return;
+  var sx = 0, sy = 0;
+  c.addEventListener("touchstart", function(e) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+  c.addEventListener("touchend", function(e) {
+    var dx = e.changedTouches[0].clientX - sx;
+    var dy = Math.abs(e.changedTouches[0].clientY - sy);
+    if (dx > 80 && dy < 60) {
+      var lc = document.getElementById("learnCardView");
+      if (lc && lc.style.display !== "none") { exitLearnCard(); return; }
+      var at = document.querySelector(".tab-page.active");
+      if (at && at.id === "settingsTab") { showTab("profile"); return; }
+      if (at && at.id !== "gameTab") { showTab("game"); }
+    }
+  }, {passive:true});
+}
+
+function renderProfileTab() { renderProfile(); }
+
+// Badges
+var BADGES = [
+  {icon:"🎯",name:"ПЕРВЫЙ РАЗ",check:function(){return totalGames>=1;}},
+  {icon:"⭐",name:"5 ИГР",check:function(){return totalGames>=5;}},
+  {icon:"🏆",name:"20 ИГР",check:function(){return totalGames>=20;}},
+  {icon:"💯",name:"100 ОЧКОВ",check:function(){return totalScoreAll>=100;}},
+  {icon:"🔥",name:"500 ОЧКОВ",check:function(){return totalScoreAll>=500;}},
+  {icon:"👑",name:"1000 ОЧКОВ",check:function(){return totalScoreAll>=1000;}},
+  {icon:"⚡",name:"СЕРИЯ 3",check:function(){return bestStreak>=3;}},
+  {icon:"🌟",name:"СЕРИЯ 10",check:function(){return bestStreak>=10;}},
+  {icon:"📚",name:"50 СЛОВ",check:function(){return totalWordsLearned>=50;}},
+  {icon:"🏔",name:"ГОРЕЦ",check:function(){return dayStreak>=3;}},
+  {icon:"🐺",name:"ВОЛК",check:function(){return totalScoreAll>=2000;}},
+  {icon:"🦅",name:"ЛЕГЕНДА",check:function(){return totalGames>=50;}}
+];
+
+var LEAGUES = [
+  {id:"bronze",name:"БРОНЗА",icon:"🥉",min:0,max:499},
+  {id:"silver",name:"СЕРЕБРО",icon:"🥈",min:500,max:1999},
+  {id:"gold",name:"ЗОЛОТО",icon:"🥇",min:2000,max:4999},
+  {id:"diamond",name:"БРИЛЛИАНТ",icon:"💎",min:5000,max:999999}
+];
+
+function getCurrentLeague() {
+  for (var i = 0; i < LEAGUES.length; i++) {
+    if (totalScoreAll >= LEAGUES[i].min && totalScoreAll <= LEAGUES[i].max) return LEAGUES[i];
   }
-
-  return firstPlay !== today; // expired if not today
+  return LEAGUES[0];
 }
 
-function showTrialExpiredScreen() {
-  document.getElementById('gameArea').style.display = 'none';
-  document.getElementById('resultArea').style.display = 'none';
-
-  const el = document.createElement('div');
-  el.id = 'trialExpired';
-  el.innerHTML = `
-    <div style="text-align:center;padding:40px 0">
-      <div style="font-size:64px;margin-bottom:16px">🏔️</div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:20px;color:var(--cyan);margin-bottom:8px">ПРОБНЫЙ ДЕНЬ ЗАВЕРШЁН!</div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.6">
-        Ты уже попробовал MOTT_bu!<br>
-        Зарегистрируйся чтобы продолжить учить<br>
-        чеченский язык и сохранить прогресс 😊
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:12px">После регистрации ты получишь:</div>
-        <div style="text-align:left;font-size:14px;line-height:2">
-          ✅ Безлимитный доступ<br>
-          ✅ Сохранение прогресса<br>
-          ✅ Таблица лидеров<br>
-          ✅ Профиль и награды<br>
-          ✅ Серия дней
-        </div>
-      </div>
-      <button onclick="signInWithGoogle()" style="width:100%;padding:14px 20px;background:white;color:#333;border:none;border-radius:12px;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,0.3);margin-bottom:12px">
-        <svg width="20" height="20" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Войти через Google — Бесплатно
-      </button>
-    </div>
-  `;
-
-  const gameTab = document.getElementById('gameTab');
-  const existing = document.getElementById('trialExpired');
-  if (existing) existing.remove();
-  gameTab.appendChild(el);
+// Word of Day
+function renderWordOfDay() {
+  var el = document.getElementById("wordOfDay");
+  if (!el || !words.length) return;
+  var w = words[new Date().getDate() % words.length];
+  var div = document.createElement("div");
+  div.className = "wod-card";
+  var label = document.createElement("div"); label.className = "wod-label"; label.textContent = "⭐ Слово дня";
+  var word = document.createElement("div"); word.className = "wod-word"; word.textContent = w.chechen;
+  var trans = document.createElement("div"); trans.className = "wod-translation"; trans.textContent = w.russian + " · " + w.category;
+  var btn = document.createElement("button"); btn.className = "speak-btn"; btn.textContent = "🔊 Слушать";
+  btn.onclick = function() { speak(w.transcription); };
+  div.appendChild(label); div.appendChild(word); div.appendChild(trans); div.appendChild(btn);
+  el.innerHTML = ""; el.appendChild(div);
 }
 
-// ---- CATEGORIES ----
+// Categories
 function renderCategories() {
-  const cats = ['Все'].concat(Array.from(new Set(words.map(function(w){return w.category;}))));
-  document.getElementById('categoryTabs').innerHTML = cats.map(c => `
-    <button class="cat-tab ${c===selectedCategory?'active':''}" onclick="selectCategory('${c}')">${c}</button>
-  `).join('');
+  var catSet = {};
+  for (var i = 0; i < words.length; i++) catSet[words[i].category] = 1;
+  var cats = ["Все"].concat(Object.keys(catSet));
+  var el = document.getElementById("categoryTabs");
+  if (!el) return;
+  el.innerHTML = "";
+  for (var j = 0; j < cats.length; j++) {
+    (function(cat) {
+      var btn = document.createElement("button");
+      btn.className = "cat-tab" + (cat === selectedCategory ? " active" : "");
+      btn.textContent = cat;
+      btn.onclick = function() { selectCategory(cat); };
+      el.appendChild(btn);
+    })(cats[j]);
+  }
 }
 
 function selectCategory(cat) {
@@ -1930,2016 +1794,767 @@ function selectCategory(cat) {
 }
 
 function getWordPool() {
-  return selectedCategory === 'Все' ? words : words.filter(w => w.category === selectedCategory);
+  if (selectedCategory === "Все") return words;
+  return words.filter(function(w) { return w.category === selectedCategory; });
 }
 
-// ---- NAV ----
-const TAB_TITLES = {
-  game: 'MOTT_bu',
-  leaderboard: '🏆 Таблица лидеров',
-  words: '📚 Слова',
-  leagues: '🥇 Лиги',
-  search: '🔍 Игроки',
-  profile: '👤 Профиль',
-  settings: '⚙️ Настройки',
-  admin: '⚙️ Админ'
-};
-
-function showTab(tab) {
-  // Hide all tab-pages
-  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-  // Show selected
-  const el = document.getElementById(tab + 'Tab');
-  if (el) el.classList.add('active');
-  // Scroll to top
-  const ca = document.getElementById('contentArea');
-  if (ca) ca.scrollTop = 0;
-  // Update bottom nav
-  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
-  const bn = document.getElementById('bn-' + tab);
-  if (bn) bn.classList.add('active');
-  // Update top bar title
-  const topTitle = document.getElementById('topBarTitle');
-  if (topTitle) topTitle.textContent = tab === 'game' ? '' : (TAB_TITLES[tab] || '');
-  // Load data
-  if (tab === 'leaderboard') renderLeaderboard();
-  if (tab === 'admin') renderAdminWords();
-  if (tab === 'words') renderWordsList();
-  if (tab === 'profile') renderProfileTab();
-  if (tab === 'leagues') renderLeagues();
-  if (tab === 'search') renderSearchTab();
-  if (tab === 'settings') initSettingsUI();
-  if (tab === 'mistakes') renderMistakesTab();
-  if (tab === 'learn') renderLearnTab();
-}
-
-// Swipe right to go back to game
-function initSwipeBack() {
-  const content = document.getElementById('contentArea');
-  if (!content) return;
-  let startX = 0, startY = 0;
-  content.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  }, { passive: true });
-  content.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = Math.abs(e.changedTouches[0].clientY - startY);
-    if (dx > 80 && dy < 60) {
-      // If in learn card view - go back to categories
-      const learnCard = document.getElementById('learnCardView');
-      if (learnCard && learnCard.style.display !== 'none') {
-        exitLearnCard(); return;
-      }
-      // If in settings - go back to profile
-      const activeTab = document.querySelector('.tab-page.active');
-      if (activeTab && activeTab.id === 'settingsTab') {
-        showTab('profile'); return;
-      }
-      // From any non-game tab - go to game (only on double-swipe or from non-main tabs)
-      if (activeTab && activeTab.id !== 'gameTab') {
-        showTab('game');
-      }
-    }
-  }, { passive: true });
-}
-
-// alias for new showTab
-function renderProfileTab() { renderProfile(); }
-let totalGames = 0;
-let totalScoreAll = 0;
-let totalWordsLearned = 0;
-let dayStreak = 0;
-let profileAvatar = null;
-
-const BADGES = [
-  { id:'first', icon:'🎯', name:'ПЕРВЫЙ РАЗ', desc:'Сыграть первую игру', check:function(){return totalGames>=1;}},
-  { id:'games5', icon:'⭐', name:'5 ИГР', desc:'Сыграть 5 игр', check:function(){return totalGames>=5;}},
-  { id:'games20', icon:'🏆', name:'20 ИГР', desc:'Сыграть 20 игр', check:function(){return totalGames>=20;}},
-  { id:'score100', icon:'💯', name:'100 ОЧКОВ', desc:'Набрать 100 очков', check:function(){return totalScoreAll>=100;}},
-  { id:'score500', icon:'🔥', name:'500 ОЧКОВ', desc:'Набрать 500 очков', check:function(){return totalScoreAll>=500;}},
-  { id:'score1000', icon:'👑', name:'1000 ОЧКОВ', desc:'Набрать 1000 очков', check:function(){return totalScoreAll>=1000;}},
-  { id:'streak3', icon:'⚡', name:'СЕРИЯ 3', desc:'3 правильных подряд', check:function(){return bestStreak>=3;}},
-  { id:'streak10', icon:'🌟', name:'СЕРИЯ 10', desc:'10 правильных подряд', check:function(){return bestStreak>=10;}},
-  { id:'words50', icon:'📚', name:'50 СЛОВ', desc:'Выучить 50 слов', check:function(){return totalWordsLearned>=50;}},
-  { id:'mountain', icon:'🏔️', name:'ГОРЕЦ', desc:'Сыграть 3 дня подряд', check:function(){return dayStreak>=3;}},
-  { id:'wolf', icon:'🐺', name:'ВОЛК', desc:'Набрать 2000 очков', check:function(){return totalScoreAll>=2000;}},
-  { id:'legend', icon:'🦅', name:'ЛЕГЕНДА', desc:'50 игр', check:function(){return totalGames>=50;}},
-];
-
-async function renderProfile() {
-  const user = auth.currentUser;
-  if (!user) {
-    document.getElementById('profileTab').innerHTML = `
-      <div style="text-align:center;padding:60px 20px">
-        <div style="font-size:56px;margin-bottom:16px">👤</div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--white);margin-bottom:8px">ВОЙДИ В АККАУНТ</div>
-        <div style="font-size:14px;color:var(--muted);margin-bottom:24px">Чтобы видеть профиль, нужна регистрация</div>
-        <button onclick="signInWithGoogle()" style="background:white;color:#333;border:none;border-radius:14px;padding:14px 24px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:10px;margin:0 auto;box-shadow:0 4px 12px rgba(0,0,0,0.15)">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Войти через Google
-        </button>
-      </div>
-    `;
-    return;
-  }
-
-  // Load stats from Firebase
-  try {
-    const snap = await db.ref(`users/${user.uid}/stats`).get();
-    if (snap.exists()) {
-      const s = snap.val();
-      totalGames = s.games || 0;
-      totalScoreAll = s.totalScore || 0;
-      totalWordsLearned = s.wordsLearned || 0;
-      dayStreak = s.dayStreak || 0;
-    }
-    const avatarSnap = await db.ref(`users/${user.uid}/avatar`).get();
-    if (avatarSnap.exists()) profileAvatar = avatarSnap.val();
-    const ageSnap = await db.ref(`users/${user.uid}/age`).get();
-    const age = ageSnap.exists() ? ageSnap.val() : null;
-    const league = getCurrentLeague();
-    const earnedBadges = BADGES.filter(b => b.check());
-    const days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-    const todayIdx = new Date().getDay();
-    const streakDaysHTML = days.map((d,i) => {
-      const cls = i < dayStreak % 7 ? 'done' : i === (todayIdx===0?6:todayIdx-1) ? 'today' : 'empty';
-      return `<div class="streak-day ${cls}">${d}</div>`;
-    }).join('');
-
-    document.getElementById('profileTab').innerHTML = `
-      <!-- Avatar + Name -->
-      <div style="text-align:center;padding:24px 0 16px">
-        <div style="position:relative;display:inline-block">
-          <div id="profileAvatar" style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue2));display:flex;align-items:center;justify-content:center;font-size:44px;overflow:hidden;border:4px solid var(--border);margin:0 auto;">
-            ${profileAvatar ? `<img src="${profileAvatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}
-          </div>
-          <button onclick="document.getElementById('avatarInput').click()" style="position:absolute;bottom:2px;right:2px;background:var(--blue);border:2px solid white;color:white;border-radius:50%;width:28px;height:28px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✏️</button>
-          <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="changeAvatar(this)">
-        </div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--white);margin-top:12px">${playerName}</div>
-        <div style="font-size:14px;color:var(--muted);margin-top:4px">${playerCountry}</div>
-        ${age ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">🎂 ${age} лет</div>` : ''}
-        <div style="font-size:13px;color:var(--blue);margin-top:4px">${league.icon} ${league.name}</div>
-        <button onclick="openEditProfile()" style="margin-top:12px;background:var(--card);border:2px solid var(--border);color:var(--white);border-radius:20px;padding:8px 20px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 0 var(--border)">✏️ Редактировать профиль</button>
-      </div>
-
-      <!-- Followers/Following -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div onclick="showFollowers('${user.uid}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;box-shadow:var(--shadow)">
-          <div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue);font-weight:700" id="followersCount">...</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:1px">ПОДПИСЧИКИ</div>
-        </div>
-        <div onclick="showFollowing('${user.uid}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;box-shadow:var(--shadow)">
-          <div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue);font-weight:700" id="followingCount">...</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:1px">ПОДПИСКИ</div>
-        </div>
-      </div>
-
-      <!-- Streak -->
-      <div style="background:#fffbe6;border:2px solid #ffd000;border-radius:20px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
-        <div style="font-size:44px">🔥</div>
-        <div style="flex:1">
-          <div style="font-family:'Unbounded',sans-serif;font-size:28px;color:var(--gold);font-weight:900">${dayStreak}</div>
-          <div style="font-size:13px;color:#9a7000">дней подряд</div>
-        </div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${streakDaysHTML}</div>
-      </div>
-
-      <!-- Stats -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-        <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow)">
-          <div style="font-size:22px;margin-bottom:4px">⚡</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${totalScoreAll}</div>
-          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px">ОЧКОВ</div>
-        </div>
-        <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow)">
-          <div style="font-size:22px;margin-bottom:4px">🎮</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${totalGames}</div>
-          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px">ИГР</div>
-        </div>
-        <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow)">
-          <div style="font-size:22px;margin-bottom:4px">📚</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${totalWordsLearned}</div>
-          <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px">СЛОВ</div>
-        </div>
-      </div>
-
-      <!-- Badges -->
-      <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow)">
-        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-          <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--white);letter-spacing:1px">🏅 ДОСТИЖЕНИЯ</div>
-          <div style="font-size:12px;color:var(--muted)">${earnedBadges.length}/${BADGES.length}</div>
-        </div>
-        <div style="padding:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-          ${BADGES.map(b => `
-            <div style="text-align:center;padding:10px 6px;border-radius:12px;background:${b.check()?'#fffbe6':'var(--surface)'};border:2px solid ${b.check()?'var(--gold)':'var(--border)'};${b.check()?'':'filter:grayscale(1);opacity:0.5'}" title="${b.desc}">
-              <div style="font-size:24px">${b.icon}</div>
-              <div style="font-size:8px;color:var(--muted);font-family:'Unbounded',sans-serif;margin-top:3px">${b.name}</div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- Меню профиля -->
-      <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow)">
-        <div style="padding:12px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">⚙️ УПРАВЛЕНИЕ</div>
-        <div onclick="showTab('settings')" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-          <div style="font-size:20px">⚙️</div><div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Настройки</div><div style="color:var(--muted)">›</div>
-        </div>
-        <div onclick="openEditProfile()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-          <div style="font-size:20px">✏️</div><div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Редактировать профиль</div><div style="color:var(--muted)">›</div>
-        </div>
-        <div onclick="inviteFriend()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-          <div style="font-size:20px">🔗</div><div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Пригласить друга</div><div style="color:var(--muted)">›</div>
-        </div>
-        <div onclick="window.open('https://t.me/+fgWORPG9sbhmYmIy','_blank')" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-          <div style="font-size:20px">✈️</div><div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Сообщество Telegram</div><div style="color:var(--muted)">›</div>
-        </div>
-        <div onclick="switchAccount()" style="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background=''">
-          <div style="font-size:20px">🔄</div><div style="flex:1;font-size:15px;font-weight:600;color:var(--white)">Сменить аккаунт</div><div style="color:var(--muted)">›</div>
-        </div>
-        <div onclick="deleteAccount()" style="padding:15px 20px;display:flex;align-items:center;gap:12px;cursor:pointer" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background=''">
-          <div style="font-size:20px">🗑️</div><div style="flex:1;font-size:15px;font-weight:600;color:var(--red)">Удалить аккаунт</div><div style="color:var(--muted)">›</div>
-        </div>
-      </div>
-
-      <div style="text-align:center;color:var(--muted);font-size:11px;padding-bottom:24px">MOTT_bu v1.0 · Нохчийн Мотт</div>
-    `;
-  } catch(e) {
-    document.getElementById('profileTab').innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Ошибка загрузки профиля</div>';
-  }
-  // Load follower counts async
-  loadFollowerCounts(user.uid);
-}
-
-async function loadFollowerCounts(uid) {
-  try {
-    const allSnap = await db.ref('users').get();
-    if (!allSnap.exists()) return;
-    const allUsers = allSnap.val();
-    const followersCount = Object.values(allUsers).filter(u => u.following && u.following[uid]).length;
-    const mySnap = await db.ref(`users/${uid}/following`).get();
-    const followingCount = mySnap.exists() ? Object.keys(mySnap.val()).length : 0;
-    const fc = document.getElementById('followersCount');
-    const fgc = document.getElementById('followingCount');
-    if (fc) fc.textContent = followersCount;
-    if (fgc) fgc.textContent = followingCount;
-  } catch(e) {}
-}
-
-async function renderFriends() {
-  const user = auth.currentUser;
-  if (!user) {
-    document.getElementById('friendsList').innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center">Войди через Google чтобы видеть друзей</div>';
-    return;
-  }
-  try {
-    const snap = await db.ref(`users/${user.uid}/friends`).get();
-    if (!snap.exists()) {
-      document.getElementById('friendsList').innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Пока нет друзей 😊<br>Пригласи кого-нибудь!</div>';
-      return;
-    }
-    const friends = snap.val();
-    const friendIds = Object.keys(friends);
-    let html = '';
-    for (const fid of friendIds) {
-      const fsnap = await db.ref(`users/${fid}`).get();
-      if (fsnap.exists()) {
-        const f = fsnap.val();
-        html += `
-          <div class="friend-row">
-            <div class="friend-avatar">${f.avatar ? `<img src="${f.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
-            <div class="friend-info">
-              <div class="friend-name">${f.name||'Игрок'}</div>
-              <div class="friend-score">${f.country||''} · ${(f.stats ? f.stats.totalScore : 0)||0} очков</div>
-            </div>
-          </div>
-        `;
-      }
-    }
-    document.getElementById('friendsList').innerHTML = html || '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Друзья не найдены</div>';
-  } catch(e) {}
-}
-
-function inviteFriend() {
-  const user = auth.currentUser;
-  const inviteLink = user
-    ? `https://lorsvu.github.io/Mott-bu-/?friend=${user.uid}`
-    : `https://lorsvu.github.io/Mott-bu-`;
-  
-  if (navigator.share) {
-    navigator.share({
-      title: 'MOTT_bu — Учи чеченский!',
-      text: `Привет! Я учу чеченский язык в MOTT_bu. Присоединяйся! 🏔️`,
-      url: inviteLink
-    });
-  } else {
-    navigator.clipboard.writeText(inviteLink).then(() => {
-      alert('Ссылка скопирована! Отправь другу 😊');
-    });
-  }
-}
-
-async function changeAvatar(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    profileAvatar = e.target.result;
-    const el = document.getElementById('profileAvatar');
-    el.innerHTML = `<img src="${profileAvatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-    const user = auth.currentUser;
-    if (user) {
-      await db.ref(`users/${user.uid}/avatar`).set(profileAvatar);
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-function openEditProfile() {
-  document.getElementById('editName').value = playerName;
-  document.getElementById('editCountry').value = playerCountry;
-  document.getElementById('editAge').value = '';
-  document.getElementById('editProfileModal').style.display = 'flex';
-}
-
-async function saveProfileEdit() {
-  const name = document.getElementById('editName').value.trim();
-  const country = document.getElementById('editCountry').value;
-  const age = document.getElementById('editAge').value;
-  if (!name) { alert('Введи имя!'); return; }
-  if (!country) { alert('Выбери страну!'); return; }
-  playerName = name; playerCountry = country;
-  const greetEl = document.getElementById('playerGreeting');
-  if (greetEl) greetEl.textContent = `Привет, ${playerName}!`;
-  const user = auth.currentUser;
-  if (user) await db.ref(`users/${user.uid}`).update({ name:playerName, country:playerCountry, age:age||null });
-  document.getElementById('editProfileModal').style.display = 'none';
-  renderProfile(); // re-render profile tab
-}
-
-async function switchAccount() {
-  if (!confirm('Выйти из аккаунта?')) return;
-  try {
-    await auth.signOut();
-    playerName = ''; playerCountry = '';
-    localStorage.removeItem('trialStart');
-    document.getElementById('appShell').classList.remove('visible');
-    document.getElementById('registerScreen').classList.remove('hidden');
-  } catch(e) { alert('Ошибка: ' + e.message); }
-}
-
-async function deleteAccount() {
-  if (!confirm('Удалить аккаунт? Все данные удалятся навсегда!')) return;
-  if (!confirm('Это нельзя отменить. Точно удалить?')) return;
-  try {
-    const user = auth.currentUser;
-    if (user) { await db.ref(`users/${user.uid}`).remove(); await user.delete(); }
-    playerName = ''; playerCountry = '';
-    localStorage.removeItem('trialStart');
-    document.getElementById('appShell').classList.remove('visible');
-    document.getElementById('registerScreen').classList.remove('hidden');
-    alert('Аккаунт удалён.');
-  } catch(e) {
-    if (e.code === 'auth/requires-recent-login') {
-      alert('Нужно заново войти для удаления.');
-      await auth.signOut();
-      document.getElementById('appShell').classList.remove('visible');
-      document.getElementById('registerScreen').classList.remove('hidden');
-    } else { alert('Ошибка: ' + e.message); }
-  }
-}
-
-// Check friend invite on load
-async function checkFriendInvite() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const friendId = urlParams.get('friend');
-  if (friendId && auth.currentUser) {
-    const uid = auth.currentUser.uid;
-    if (uid !== friendId) {
-      await db.ref(`users/${uid}/friends/${friendId}`).set(true);
-      await db.ref(`users/${friendId}/friends/${uid}`).set(true);
-      alert('Друг добавлен! 🎉');
-    }
-  }
-}
-
-// Save game stats to Firebase
-async function saveGameStats() {
-  totalGames++;
-  totalScoreAll += score;
-  totalWordsLearned += correctAnswers;
-  const user = auth.currentUser;
-  if (user) {
-    const today = new Date().toDateString();
-    const lastSnap = await db.ref(`users/${user.uid}/lastPlayed`).get();
-    const last = lastSnap.exists() ? lastSnap.val() : null;
-    if (last !== today) {
-      const yesterday = new Date(Date.now()-86400000).toDateString();
-      dayStreak = last === yesterday ? dayStreak + 1 : 1;
-      await db.ref(`users/${user.uid}/lastPlayed`).set(today);
-    }
-    await db.ref(`users/${user.uid}/stats`).set({
-      games: totalGames,
-      totalScore: totalScoreAll,
-      wordsLearned: totalWordsLearned,
-      dayStreak,
-      bestStreak
-    });
-  }
-}
-
-function initSettingsUI() {
-  // Restore saved settings to toggles
-  const soundEl = document.getElementById('soundToggle');
-  const speechEl = document.getElementById('speechToggle');
-  const aiEl = document.getElementById('aiToggle');
-  if (soundEl) soundEl.checked = soundEnabled;
-  if (speechEl) speechEl.checked = speechEnabled;
-  if (aiEl) aiEl.checked = localStorage.getItem('aiEnabled') !== 'false';
-  // Mark active daily goal
-  document.querySelectorAll('.goal-mini').forEach(btn => {
-    const g = parseInt(btn.textContent);
-    btn.classList.toggle('active', g === dailyGoal);
-  });
-}
-let soundEnabled = true;
-let speechEnabled = true;
-
-function toggleSound(enabled) {
-  soundEnabled = enabled;
-  localStorage.setItem('soundEnabled', enabled);
-}
-
-function toggleSpeech(enabled) {
-  speechEnabled = enabled;
-  localStorage.setItem('speechEnabled', enabled);
-}
-
-function setDailyGoal(goal, btn) {
-  dailyGoal = goal;
-  document.querySelectorAll('.goal-mini').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  localStorage.setItem('dailyGoal', goal);
-}
-
-function showPrivacyPolicy() {
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding:20px 16px;max-width:420px;margin:0 auto';
-  modal.innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <button onclick="this.closest('[style]').remove()" style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:8px 14px;font-size:16px;cursor:pointer">←</button>
-      <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--white)">КОНФИДЕНЦИАЛЬНОСТЬ</div>
-    </div>
-    <div style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:20px;font-size:14px;line-height:1.7;color:var(--white)">
-      <p><b>MOTT_bu</b> — приложение для изучения чеченского языка.</p><br>
-      <p><b>Какие данные мы собираем:</b><br>• Имя и страна (которые вы указали)<br>• Статистика игр (очки, серии)<br>• Google аккаунт (только ID и имя)</p><br>
-      <p><b>Как мы используем данные:</b><br>• Сохранение прогресса<br>• Таблица лидеров<br>• Профиль игрока</p><br>
-      <p><b>Мы НЕ:</b><br>• Не продаём данные<br>• Не используем для рекламы<br>• Не храним пароли</p><br>
-      <p><b>Удаление данных:</b><br>Профиль → Удалить аккаунт.</p><br>
-      <p style="color:var(--muted);font-size:12px">Дата обновления: 2025</p>
-    </div>
-  `;
-  document.body.appendChild(modal);
-}
-
-function showHelp() {
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding:20px 16px;max-width:420px;margin:0 auto';
-  modal.innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <button onclick="this.closest('[style]').remove()" style="background:var(--card);border:2px solid var(--border);border-radius:10px;padding:8px 14px;font-size:16px;cursor:pointer">←</button>
-      <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:var(--white)">СПРАВКА</div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      ${[
-        ['🎮','Как играть','Выбирай режим (Перевод, Выбор или Буквы) и угадывай чеченские слова. Набирай очки и строй серии!'],
-        ['🔥','Серия дней','Играй каждый день чтобы не сломать серию. Как в Duolingo!'],
-        ['🏆','Таблица лидеров','Здесь видны лучшие игроки. Нужна регистрация через Google.'],
-        ['🥇','Лиги','Набирай очки чтобы переходить из Бронзы в Серебро, Золото и Бриллиант.'],
-        ['⚔️','Режим Бой','60 секунд против бота — кто быстрее ответит на больше вопросов!'],
-        ['🤖','AI подсказки','При неправильном ответе AI объясняет слово и помогает запомнить.'],
-        ['👥','Друзья','Ищи других игроков по имени и подписывайся на них.'],
-      ].map(([icon,title,desc]) => `
-        <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;display:flex;gap:12px">
-          <div style="font-size:28px">${icon}</div>
-          <div><div style="font-weight:700;color:var(--white);margin-bottom:4px">${title}</div><div style="font-size:13px;color:var(--muted)">${desc}</div></div>
-        </div>
-      `).join('')}
-      <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;text-align:center">
-        <div style="font-size:14px;color:var(--muted)">Остались вопросы?</div>
-        <button onclick="window.open('https://t.me/+fgWORPG9sbhmYmIy','_blank')" style="margin-top:8px;background:var(--blue);color:white;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;">Написать в Telegram</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-}
-
-function rateApp() {
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.innerHTML = `
-    <div style="background:var(--card);border:2px solid var(--border);border-radius:24px;padding:28px 24px;text-align:center;max-width:340px;width:100%">
-      <div style="font-size:48px;margin-bottom:12px">⭐</div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--white);margin-bottom:8px">НРАВИТСЯ MOTT_bu?</div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:20px">Твоя оценка помогает нам развиваться!</div>
-      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;font-size:36px">
-        ${[1,2,3,4,5].map(n => `<span onclick="selectStar(${n})" id="star${n}" style="cursor:pointer;transition:transform 0.1s" onmouseover="highlightStars(${n})" onmouseout="resetStars()">☆</span>`).join('')}
-      </div>
-      <button onclick="submitRating()" class="btn-primary" style="margin-bottom:8px">Оценить</button>
-      <button onclick="this.closest('[style]').remove()" class="btn-secondary">Позже</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
-}
-
-let selectedRating = 0;
-function selectStar(n) { selectedRating = n; highlightStars(n); }
-function highlightStars(n) {
-  for(let i=1;i<=5;i++) {
-    const s = document.getElementById('star'+i);
-    if(s) s.textContent = i<=n ? '⭐' : '☆';
-  }
-}
-function resetStars() { if(selectedRating>0) highlightStars(selectedRating); else for(let i=1;i<=5;i++){const s=document.getElementById('star'+i);if(s)s.textContent='☆';} }
-async function submitRating() {
-  if (selectedRating === 0) { alert('Выбери оценку!'); return; }
-  const user = auth.currentUser;
-  if (user) await db.ref(`ratings/${user.uid}`).set({ rating: selectedRating, date: Date.now() });
-  document.querySelector('[style*="rgba(0,0,0,0.5)"]').remove();
-  alert(`Спасибо за оценку ${selectedRating}⭐! Это очень помогает 🙏`);
-}
-
-function shareApp() {
-  const text = `🏔️ Учу чеченский язык в MOTT_bu!\nПрисоединяйся: https://lorsvu.github.io/Mott-bu-`;
-  if (navigator.share) {
-    navigator.share({ title:'MOTT_bu — Нохчийн Мотт', text, url:'https://lorsvu.github.io/Mott-bu-' });
-  } else {
-    navigator.clipboard.writeText(text).then(() => alert('Ссылка скопирована! Поделись с друзьями 😊'));
-  }
-}
-
-// ---- PLAYER PROFILE VIEWER ----
-
-async function viewPlayerProfile(uid) {
-  document.getElementById('playerProfileModal').style.display = 'flex';
-  document.getElementById('playerProfileContent').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Загрузка...</div>';
-  try {
-    const snap = await db.ref(`users/${uid}`).get();
-    if (!snap.exists()) return;
-    const u = snap.val();
-    const myUid = (auth.currentUser ? auth.currentUser.uid : null);
-    const followSnap = myUid ? await db.ref(`users/${myUid}/following/${uid}`).get() : null;
-    const isFollowing = (followSnap ? followSnap.exists() : false);
-    const league = LEAGUES.find(l => ((u.stats ? u.stats.totalScore : 0)||0) >= l.min && ((u.stats ? u.stats.totalScore : 0)||0) <= l.max) || LEAGUES[0];
-
-    // Count followers and following
-    const allUsersSnap = await db.ref('users').get();
-    let followersCount = 0, followingCount = 0;
-    if (allUsersSnap.exists()) {
-      const allUsers = allUsersSnap.val();
-      followersCount = Object.values(allUsers).filter(usr => usr.following && usr.following[uid]).length;
-      followingCount = u.following ? Object.keys(u.following).length : 0;
-    }
-
-    document.getElementById('playerProfileContent').innerHTML = `
-      <!-- Header -->
-      <div style="text-align:center;padding:20px 0 16px">
-        <div style="width:86px;height:86px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue2));display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto;overflow:hidden;border:3px solid var(--border)">
-          ${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}
-        </div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:19px;font-weight:900;color:var(--white);margin-top:10px">${u.name||'Игрок'}</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:3px">${u.country||''}</div>
-        ${u.age ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">🎂 ${u.age} лет</div>` : ''}
-        <div style="font-size:13px;color:var(--blue);margin-top:4px">${league.icon} ${league.name}</div>
-        ${myUid && myUid !== uid ? `
-          <button onclick="toggleFollow('${uid}','${myUid}',this)" id="followBtn-${uid}" class="follow-btn ${isFollowing?'following':''}" style="margin-top:12px;padding:10px 28px;font-size:14px">
-            ${isFollowing ? '✓ Подписан' : '+ Подписаться'}
-          </button>
-        ` : ''}
-      </div>
-
-      <!-- Followers/Following row -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div onclick="showFollowers('${uid}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;box-shadow:var(--shadow)">
-          <div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue);font-weight:700">${followersCount}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:1px">ПОДПИСЧИКИ</div>
-        </div>
-        <div onclick="showFollowing('${uid}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;box-shadow:var(--shadow)">
-          <div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue);font-weight:700">${followingCount}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:1px">ПОДПИСКИ</div>
-        </div>
-      </div>
-
-      <!-- Stats -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-        <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
-          <div style="font-size:20px">⚡</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${(u.stats ? u.stats.totalScore : 0)||0}</div>
-          <div style="font-size:10px;color:var(--muted)">ОЧКОВ</div>
-        </div>
-        <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
-          <div style="font-size:20px">🎮</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${(u.stats ? u.stats.games : 0)||0}</div>
-          <div style="font-size:10px;color:var(--muted)">ИГР</div>
-        </div>
-        <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
-          <div style="font-size:20px">🔥</div>
-          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--gold);font-weight:700">${(u.stats ? u.stats.dayStreak : 0)||0}</div>
-          <div style="font-size:10px;color:var(--muted)">СЕРИЯ</div>
-        </div>
-      </div>
-
-      <!-- Badges -->
-      <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow)">
-        <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:12px">🏅 ДОСТИЖЕНИЯ</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-          ${BADGES.map(b => {
-            const s = u.stats || {};
-            const earned =
-              b.id==='first'   ? (s.games||0)>=1 :
-              b.id==='games5'  ? (s.games||0)>=5 :
-              b.id==='games20' ? (s.games||0)>=20 :
-              b.id==='score100'? (s.totalScore||0)>=100 :
-              b.id==='score500'? (s.totalScore||0)>=500 :
-              b.id==='score1000'?(s.totalScore||0)>=1000 :
-              b.id==='wolf'    ? (s.totalScore||0)>=2000 :
-              b.id==='mountain'? (s.dayStreak||0)>=3 :
-              false;
-            return `<div style="text-align:center;padding:8px;border-radius:10px;background:${earned?'#fffbe6':'var(--surface)'};border:1px solid ${earned?'var(--gold)':'var(--border)'};${earned?'':'filter:grayscale(1);opacity:0.5'}">
-              <div style="font-size:22px">${b.icon}</div>
-              <div style="font-size:8px;color:var(--muted);font-family:'Unbounded',sans-serif">${b.name}</div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-    `;
-  } catch(e) {
-    document.getElementById('playerProfileContent').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Ошибка загрузки</div>';
-  }
-}
-
-// Show followers list
-async function showFollowers(uid) {
-  document.getElementById('playerProfileContent').innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <button onclick="viewPlayerProfile('${uid}')" class="back-btn">←</button>
-      <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white)">ПОДПИСЧИКИ</div>
-    </div>
-    <div id="followersList"><div style="text-align:center;padding:20px;color:var(--muted)">Загрузка...</div></div>
-  `;
-  try {
-    const allSnap = await db.ref('users').get();
-    if (!allSnap.exists()) return;
-    const allUsers = allSnap.val();
-    const myUid = (auth.currentUser ? auth.currentUser.uid : null);
-    const followers = Object.entries(allUsers).filter(([fuid, u]) => u.following && u.following[uid]);
-    const followSnaps = myUid ? await db.ref(`users/${myUid}/following`).get() : null;
-    const myFollowing = (followSnaps ? followSnaps.exists() : false) ? followSnaps.val() : {};
-    document.getElementById('followersList').innerHTML = followers.length === 0
-      ? '<div style="text-align:center;padding:20px;color:var(--muted)">Подписчиков пока нет</div>'
-      : followers.map(([fuid, u]) => `
-        <div class="player-card" style="cursor:pointer" onclick="viewPlayerProfile('${fuid}')">
-          <div class="player-avatar">${u.avatar?`<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'👤'}</div>
-          <div class="player-info">
-            <div class="player-name">${u.name||'Игрок'}</div>
-            <div class="player-stats">${u.country||''} · ${(u.stats ? u.stats.totalScore : 0)||0} очков</div>
-          </div>
-          ${myUid && myUid !== fuid ? `<button class="follow-btn ${myFollowing[fuid]?'following':''}" onclick="event.stopPropagation();toggleFollow('${fuid}','${myUid}',this)">${myFollowing[fuid]?'✓':'+'}</button>` : ''}
-        </div>
-      `).join('');
-  } catch(e) {}
-}
-
-// Show following list
-async function showFollowing(uid) {
-  document.getElementById('playerProfileContent').innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-      <button onclick="viewPlayerProfile('${uid}')" class="back-btn">←</button>
-      <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white)">ПОДПИСКИ</div>
-    </div>
-    <div id="followingListModal"><div style="text-align:center;padding:20px;color:var(--muted)">Загрузка...</div></div>
-  `;
-  try {
-    const snap = await db.ref(`users/${uid}/following`).get();
-    if (!snap.exists()) {
-      document.getElementById('followingListModal').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Подписок пока нет</div>';
-      return;
-    }
-    const following = snap.val();
-    const myUid = (auth.currentUser ? auth.currentUser.uid : null);
-    const myFollowSnap = myUid ? await db.ref(`users/${myUid}/following`).get() : null;
-    const myFollowing = (myFollowSnap ? myFollowSnap.exists() : false) ? myFollowSnap.val() : {};
-    let html = '';
-    for (const fuid of Object.keys(following)) {
-      const usnap = await db.ref(`users/${fuid}`).get();
-      if (usnap.exists()) {
-        const u = usnap.val();
-        html += `
-          <div class="player-card" style="cursor:pointer" onclick="viewPlayerProfile('${fuid}')">
-            <div class="player-avatar">${u.avatar?`<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'👤'}</div>
-            <div class="player-info">
-              <div class="player-name">${u.name||'Игрок'}</div>
-              <div class="player-stats">${u.country||''} · ${(u.stats ? u.stats.totalScore : 0)||0} очков</div>
-            </div>
-            ${myUid && myUid !== fuid ? `<button class="follow-btn ${myFollowing[fuid]?'following':''}" onclick="event.stopPropagation();toggleFollow('${fuid}','${myUid}',this)">${myFollowing[fuid]?'✓':'+'}</button>` : ''}
-          </div>
-        `;
-      }
-    }
-    document.getElementById('followingListModal').innerHTML = html || '<div style="text-align:center;padding:20px;color:var(--muted)">Никого нет</div>';
-  } catch(e) {}
-}
-
-// ---- BATTLE MENU ----
-function showBattleMenu() {
-  const user = auth.currentUser;
-  const modal = document.createElement('div');
-  modal.id = 'battleMenuModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0';
-  modal.innerHTML = `
-    <div style="background:var(--bg);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:420px;animation:slideInUp 0.3s ease">
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:36px">⚔️</div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--white);margin-top:8px">ВЫБЕРИ РЕЖИМ БОЯ</div>
-      </div>
-
-      <!-- Bot -->
-      <div onclick="closeBattleMenu();startBattle();" style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:36px">🤖</div>
-        <div style="flex:1">
-          <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--white)">ПРОТИВ БОТА</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px">60 секунд · всегда доступно</div>
-        </div>
-        <div style="color:var(--muted);font-size:20px">›</div>
-      </div>
-
-      <!-- Friends -->
-      <div onclick="${user ? 'closeBattleMenu();startFriendBattle();' : 'alert(\'Нужна регистрация!\')'};" style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);${user?'':'opacity:0.6'}" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:36px">👥</div>
-        <div style="flex:1">
-          <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--white)">С ДРУГОМ</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px">Отправь ссылку другу · нужна регистрация</div>
-        </div>
-        <div style="color:var(--muted);font-size:20px">›</div>
-      </div>
-
-      <!-- Online -->
-      <div onclick="${user ? 'closeBattleMenu();startOnlineBattle();' : 'alert(\'Нужна регистрация!\')'};" style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);${user?'':'opacity:0.6'}" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:36px">🌍</div>
-        <div style="flex:1">
-          <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--white)">ОНЛАЙН ИГРОК</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px">Случайный соперник · нужна регистрация</div>
-        </div>
-        <div style="color:var(--muted);font-size:20px">›</div>
-      </div>
-
-      <button onclick="closeBattleMenu()" style="width:100%;padding:14px;background:var(--surface);border:2px solid var(--border);border-radius:14px;font-family:'Unbounded',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;box-shadow:0 3px 0 var(--border)">ОТМЕНА</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) closeBattleMenu(); });
-}
-
-function closeBattleMenu() {
-  const m = document.getElementById('battleMenuModal');
-  if (m) m.remove();
-}
-
-async function startFriendBattle() {
-  const user = auth.currentUser;
-  if (!user) { alert('Нужна регистрация!'); return; }
-  const battleCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-  await db.ref(`battles/${battleCode}`).set({
-    host: user.uid, hostName: playerName,
-    status: 'waiting', created: Date.now()
-  });
-  const link = `https://lorsvu.github.io/Mott-bu-/?battle=${battleCode}`;
-  if (navigator.share) {
-    navigator.share({ title:'MOTT_bu — Вызов на бой!', text:`${playerName} вызывает тебя на бой! Код: ${battleCode}`, url: link });
-  } else {
-    navigator.clipboard.writeText(link);
-    alert(`Ссылка скопирована!\nОтправь другу:\n${link}`);
-  }
-  // Start waiting screen
-  showWaitingForFriend(battleCode);
-}
-
-function showWaitingForFriend(code) {
-  const modal = document.getElementById('battleModal');
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  document.getElementById('battleChoices').innerHTML = `
-    <div style="text-align:center;padding:20px">
-      <div style="font-size:48px;animation:spin 2s linear infinite">⏳</div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:16px;color:var(--white);margin:16px 0">ОЖИДАНИЕ ДРУГА</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Код боя: <b style="color:var(--blue);font-size:18px">${code}</b></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Отправь код другу чтобы он мог присоединиться</div>
-      <button onclick="closeBattle()" class="btn-secondary">Отмена</button>
-    </div>
-  `;
-  // Listen for opponent
-  db.ref(`battles/${code}/opponent`).on('value', snap => {
-    if (snap.exists()) {
-      db.ref(`battles/${code}/opponent`).off('value');
-      startBattle(); // Start actual battle
-    }
-  });
-}
-
-async function startOnlineBattle() {
-  const user = auth.currentUser;
-  if (!user) { alert('Нужна регистрация!'); return; }
-
-  // Look for existing waiting battle
-  const snap = await db.ref('battles').orderByChild('status').equalTo('waiting').limitToFirst(1).get();
-
-  if (snap.exists()) {
-    const battles = snap.val();
-    const [battleId, battle] = Object.entries(battles)[0];
-    if (battle.host !== user.uid) {
-      // Join this battle
-      await db.ref(`battles/${battleId}`).update({ opponent: user.uid, opponentName: playerName, status: 'active' });
-      startBattle();
-      return;
-    }
-  }
-
-  // Create new battle and wait
-  const battleCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-  await db.ref(`battles/${battleCode}`).set({
-    host: user.uid, hostName: playerName,
-    status: 'waiting', created: Date.now()
-  });
-
-  const modal = document.getElementById('battleModal');
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  document.getElementById('battleWord').textContent = '🌍';
-  document.getElementById('battleHint').textContent = 'Ищем соперника...';
-  document.getElementById('battleChoices').innerHTML = `
-    <div style="text-align:center;padding:20px">
-      <div style="font-size:48px;margin-bottom:12px">🔍</div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:16px;color:var(--white);margin-bottom:8px">ПОИСК СОПЕРНИКА</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Ищем онлайн игрока...</div>
-      <button onclick="db.ref('battles/${battleCode}').remove();closeBattle()" class="btn-secondary">Отмена</button>
-    </div>
-  `;
-  // Listen for opponent
-  db.ref(`battles/${battleCode}/opponent`).on('value', snap => {
-    if (snap.exists()) {
-      db.ref(`battles/${battleCode}/opponent`).off('value');
-      startBattle();
-    }
-  });
-  // Auto-start with bot after 15 seconds
-  setTimeout(async () => {
-    const check = await db.ref(`battles/${battleCode}/status`).get();
-    if (check.exists() && check.val() === 'waiting') {
-      await db.ref(`battles/${battleCode}`).remove();
-      startBattle(); // Start against bot instead
-      alert('Соперник не найден — играешь против бота!');
-    }
-  }, 15000);
-}
-// Load saved settings
-(function loadSettings() {
-  const sound = localStorage.getItem('soundEnabled');
-  const speech = localStorage.getItem('speechEnabled');
-  const goal = localStorage.getItem('dailyGoal');
-  if (sound === 'false') soundEnabled = false;
-  if (speech === 'false') speechEnabled = false;
-  if (goal) dailyGoal = parseInt(goal);
-})();
-const LEAGUES = [
-  { id:'bronze', name:'БРОНЗА', icon:'🥉', color:'#cd7f32', min:0, max:499 },
-  { id:'silver', name:'СЕРЕБРО', icon:'🥈', color:'#c0c0c0', min:500, max:1999 },
-  { id:'gold', name:'ЗОЛОТО', icon:'🥇', color:'#ffd700', min:2000, max:4999 },
-  { id:'diamond', name:'БРИЛЛИАНТ', icon:'💎', color:'#b9f2ff', min:5000, max:Infinity },
-];
-
-function getCurrentLeague() {
-  return LEAGUES.find(l => totalScoreAll >= l.min && totalScoreAll <= l.max) || LEAGUES[0];
-}
-
-async function renderLeagues() {
-  const league = getCurrentLeague();
-  document.getElementById('leagueIcon').textContent = league.icon;
-  document.getElementById('leagueName').textContent = league.name;
-
-  // Highlight current league card
-  LEAGUES.forEach(l => {
-    const el = document.getElementById('league-'+l.id);
-    if (el) el.classList.toggle('active', l.id === league.id);
-  });
-
-  // Load top players for current league
-  try {
-    const res = await fetch(`${FB_URL}/leaderboard.json`);
-    const data = await res.json();
-    if (!data) { document.getElementById('leagueList').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">Пока никого нет</div>'; return; }
-    const players = Object.values(data)
-      .filter(p => p.score >= league.min && p.score <= league.max)
-      .sort((a,b) => b.score - a.score)
-      .slice(0, 10);
-    document.getElementById('leagueList').innerHTML = players.length === 0
-      ? '<div style="padding:20px;text-align:center;color:var(--muted)">В этой лиге пока никого нет</div>'
-      : players.map((p,i) => `
-        <div class="lb-row">
-          <div class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
-          <div class="lb-flag">${(p.country ? p.country.split(' ')[0] : '🌍')}</div>
-          <div class="lb-info"><div class="lb-name">${p.name}</div><div class="lb-country">${p.country||''}</div></div>
-          <div class="lb-score">${p.score}</div>
-        </div>
-      `).join('');
-  } catch(e) {}
-}
-
-// ---- LEARN BY CATEGORY ----
-let learnCards = [];
-let learnIndex = 0;
-let learnKnown = [];
-let cardFlipped = false;
-
-const categoryImages = {
-  'Природа': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&q=80',
-  'Природа Чечни': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&q=80',
-  'Семья': 'https://images.unsplash.com/photo-1511895426328-dc8714191011?w=300&q=80',
-  'Еда': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&q=80',
-  'Одежда': 'https://images.unsplash.com/photo-1558171813-fca7e50ab3a8?w=300&q=80',
-  'Животные': 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=300&q=80',
-  'Числа': 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=300&q=80',
-  'Дни недели': 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=300&q=80',
-  'Цвета': 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=300&q=80',
-  'Тело': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&q=80',
-  'Приветствия': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=300&q=80',
-  'Фразы': 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=300&q=80',
-  'Глаголы': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=300&q=80',
-  'Прилагательные': 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=300&q=80',
-  'Ценности': 'https://images.unsplash.com/photo-1569974498991-d3c12a504f95?w=300&q=80',
-  'Дом': 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=300&q=80',
-};
-
-const categoryEmojis = {
-  'Природа':'🌿','Природа Чечни':'🏔️','Семья':'👨‍👩‍👧',
-  'Еда':'🍽️','Одежда':'👕','Животные':'🐾',
-  'Числа':'🔢','Дни недели':'📅','Цвета':'🎨',
-  'Тело':'🧍','Приветствия':'👋','Фразы':'💬',
-  'Глаголы':'⚡','Прилагательные':'✨','Ценности':'🕊️','Дом':'🏠',
-};
-
-function renderLearnTab() {
-  var catSet = {}; words.forEach(function(w){catSet[w.category]=1;}); var categories = Object.keys(catSet).sort();
-  const grid = document.getElementById('learnCategoryGrid');
-  if (!grid) return;
-  grid.innerHTML = categories.map(cat => {
-    const count = words.filter(w => w.category === cat).length;
-    const emoji = categoryEmojis[cat] || '📚';
-    const img = categoryImages[cat] || '';
-    return `
-      <div onclick="startLearnCategory('${cat}')" style="
-        background:var(--card);border:2px solid var(--border);
-        border-radius:20px;overflow:hidden;margin-bottom:12px;
-        cursor:pointer;box-shadow:0 4px 0 var(--border);
-        display:flex;align-items:center;gap:0;
-        transition:all 0.15s;
-      " ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 var(--border)'" 
-         ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 var(--border)'">
-        <div style="width:80px;height:72px;background:linear-gradient(135deg,var(--blue),var(--blue2));display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;position:relative;overflow:hidden">
-          ${img ? `<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.7" onerror="this.remove()">` : ''}
-          <span style="position:relative;z-index:1">${emoji}</span>
-        </div>
-        <div style="flex:1;padding:14px 16px">
-          <div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:var(--white)">${cat}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px">${count} слов</div>
-        </div>
-        <div style="padding-right:16px;color:var(--muted);font-size:18px">›</div>
-      </div>
-    `;
-  }).join('');
-}
-
-function startLearnCategory(cat) {
-  learnCards = words.filter(w => w.category === cat);
-  learnIndex = 0;
-  learnKnown = new Array(learnCards.length).fill(null);
-  cardFlipped = false;
-  document.getElementById('learnCategoryTitle').textContent = cat;
-  document.getElementById('learnCategoryView').style.display = 'none';
-  document.getElementById('learnCardView').style.display = 'block';
-  renderLearnCard();
-}
-
-function exitLearnCard() {
-  document.getElementById('learnCategoryView').style.display = 'block';
-  document.getElementById('learnCardView').style.display = 'none';
-}
-
-function renderLearnCard() {
-  if (learnCards.length === 0) return;
-  const w = learnCards[learnIndex];
-  cardFlipped = false;
-
-  // Update progress
-  document.getElementById('learnProgress').textContent = `${learnIndex+1}/${learnCards.length}`;
-
-  // Image or emoji
-  const img = getWordImage(w.russian);
-  const emoji = getWordEmoji(w.russian);
-  if (img) {
-    document.getElementById('cardImage').style.display = 'none';
-    document.getElementById('cardImg').style.display = 'block';
-    document.getElementById('cardImgEl').src = img;
-    document.getElementById('cardImgEl').style.display = 'block';
-  } else if (emoji) {
-    document.getElementById('cardImage').style.display = 'block';
-    document.getElementById('cardImage').textContent = emoji;
-    document.getElementById('cardImg').style.display = 'none';
-  } else {
-    document.getElementById('cardImage').style.display = 'none';
-    document.getElementById('cardImg').style.display = 'none';
-  }
-
-  document.getElementById('cardLang').textContent = 'ЧЕЧЕНСКИЙ';
-  document.getElementById('cardWord').textContent = w.chechen;
-  document.getElementById('cardTranscription').textContent = w.transcription || '';
-  document.getElementById('cardTranslation').style.display = 'none';
-  document.getElementById('cardRussian').textContent = w.russian;
-
-  // Update flashcard border color based on known status
-  const fc = document.getElementById('flashcard');
-  fc.style.borderColor = learnKnown[learnIndex] === true ? '#c8e6c9' :
-                         learnKnown[learnIndex] === false ? '#ffcdd2' : 'var(--border)';
-
-  // Progress dots
-  document.getElementById('progressDots').innerHTML = learnCards.map((_, i) => `
-    <div style="width:${i===learnIndex?20:8}px;height:8px;border-radius:4px;background:${
-      learnKnown[i]===true?'var(--green)':learnKnown[i]===false?'var(--red)':i===learnIndex?'var(--blue)':'var(--border)'
-    };transition:all 0.3s"></div>
-  `).join('');
-}
-
-function flipCard() {
-  cardFlipped = !cardFlipped;
-  const trans = document.getElementById('cardTranslation');
-  const lang = document.getElementById('cardLang');
-  trans.style.display = cardFlipped ? 'block' : 'none';
-  lang.textContent = cardFlipped ? 'ПЕРЕВОД' : 'ЧЕЧЕНСКИЙ';
-  document.getElementById('flashcard').style.transform = 'scale(0.97)';
-  setTimeout(() => document.getElementById('flashcard').style.transform = '', 150);
-}
-
-function nextCard() {
-  if (learnIndex < learnCards.length - 1) {
-    learnIndex++;
-    renderLearnCard();
-  } else {
-    // Show completion
-    showLearnComplete();
-  }
-}
-
-function prevCard() {
-  if (learnIndex > 0) {
-    learnIndex--;
-    renderLearnCard();
-  }
-}
-
-function markCard(known) {
-  learnKnown[learnIndex] = known;
-  renderLearnCard();
-  setTimeout(() => nextCard(), 400);
-}
-
-function speakCurrentCard() {
-  const w = learnCards[learnIndex];
-  if (w) speak(w.transcription || w.chechen);
-}
-
-function showLearnComplete() {
-  const known = learnKnown.filter(k => k === true).length;
-  const unknown = learnKnown.filter(k => k === false).length;
-  document.getElementById('learnCardView').innerHTML = `
-    <div style="text-align:center;padding:40px 20px">
-      <div style="font-size:64px;margin-bottom:16px">${known >= learnCards.length*0.8 ? '🏆' : '📚'}</div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--white);margin-bottom:8px">
-        ${known >= learnCards.length*0.8 ? 'ОТЛИЧНО!' : 'ПРОДОЛЖАЙ!'}
-      </div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:24px">
-        Знаешь: <b style="color:var(--green)">${known}</b> · 
-        Учить: <b style="color:var(--red)">${unknown}</b> · 
-        Всего: ${learnCards.length}
-      </div>
-      <button onclick="learnIndex=0;learnKnown=new Array(learnCards.length).fill(null);renderLearnCard()" class="btn-primary" style="margin-bottom:10px">
-        🔄 Повторить всё
-      </button>
-      ${unknown > 0 ? `<button onclick="learnCards=learnCards.filter((_,i)=>learnKnown[i]===false);learnIndex=0;learnKnown=new Array(learnCards.length).fill(null);renderLearnCard()" class="btn-secondary" style="margin-bottom:10px">
-        ✗ Повторить незнакомые (${unknown})
-      </button>` : ''}
-      <button onclick="exitLearnCard()" class="btn-secondary">← К категориям</button>
-    </div>
-  `;
-}
-
-// ---- MISTAKES ----
-function renderMistakesTab() {
-  const container = document.getElementById('mistakesContent');
-  if (!container) return;
-  mistakeWords = JSON.parse(localStorage.getItem('mistakeWords') || '[]');
-
-  if (mistakeWords.length === 0) {
-    container.innerHTML = `
-      <div style="text-align:center;padding:60px 20px">
-        <div style="font-size:56px;margin-bottom:16px">🎉</div>
-        <div style="font-family:'Unbounded',sans-serif;font-size:16px;color:var(--white);margin-bottom:8px">Ошибок нет!</div>
-        <div style="font-size:13px;color:var(--muted)">Слова которые ты не угадал появятся здесь</div>
-      </div>
-    `;
-    return;
-  }
-
-  const sorted = mistakeWords.slice().sort((a,b) => (b.mistakeCount||1) - (a.mistakeCount||1));
-
-  container.innerHTML = `
-    <div style="background:#fff3cd;border:2px solid #ffc107;border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
-      <div style="font-size:24px">⚠️</div>
-      <div>
-        <div style="font-size:14px;font-weight:700;color:#856404">${sorted.length} слов нуждаются в повторении</div>
-        <div style="font-size:12px;color:#856404;margin-top:2px">Учи их чаще чтобы запомнить!</div>
-      </div>
-    </div>
-    <button onclick="practiceMyMistakes()" class="btn-primary" style="margin-bottom:16px">🔄 Повторить ошибки</button>
-    ${sorted.map(w => `
-      <div style="background:var(--card);border:2px solid ${(w.mistakeCount||1)>=3?'var(--red)':'var(--border)'};border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)">
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <div style="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:700;color:var(--white)">${w.chechen}</div>
-            <div style="font-size:10px;background:${(w.mistakeCount||1)>=3?'var(--red)':'var(--gold)'};color:white;padding:2px 6px;border-radius:20px;font-family:'Unbounded',sans-serif">×${w.mistakeCount||1}</div>
-          </div>
-          <div style="font-size:13px;color:var(--muted)">${w.russian} · <span style="color:var(--blue);font-size:11px">${w.category}</span></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${w.transcription}</div>
-        </div>
-        <button onclick="speak('${w.transcription}')" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px">🔊</button>
-      </div>
-    `).join('')}
-  `;
-}
-
-function practiceMyMistakes() {
-  if (mistakeWords.length === 0) { alert('Ошибок нет!'); return; }
-  const practicePool = mistakeWords.slice();
-  words = practicePool;
-  selectedCategory = 'Все';
-  totalAnswered = 0; correctAnswers = 0; score = 0; streak = 0;
-  document.getElementById('gameArea').style.display = 'block';
-  document.getElementById('resultArea').style.display = 'none';
-  showTab('game');
-  renderCategories();
-  loadNewWord();
-}
-
-function clearMistakes() {
-  if (!confirm('Очистить все ошибки?')) return;
-  mistakeWords = [];
-  saveMistakes();
-  renderMistakesTab();
-}
-
-// ---- SEARCH & FOLLOW ----
-async function renderSearchTab() {
-  const user = auth.currentUser;
-  if (!user) {
-    document.getElementById('playersList').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">Войди через Google чтобы искать игроков</div>';
-    return;
-  }
-  // Load all players
-  try {
-    const snap = await db.ref('users').get();
-    if (!snap.exists()) return;
-    const users = snap.val();
-    const followSnap = await db.ref(`users/${user.uid}/following`).get();
-    const following = followSnap.exists() ? followSnap.val() : {};
-
-    const players = Object.entries(users)
-      .filter(([uid]) => uid !== user.uid)
-      .slice(0, 20);
-
-    renderPlayerCards(players, following, user.uid, 'playersList');
-    renderFollowing(players, following, user.uid);
-  } catch(e) {}
-}
-
-function renderPlayerCards(players, following, myUid, containerId) {
-  document.getElementById(containerId).innerHTML = players.map(([uid, u]) => `
-    <div class="player-card">
-      <div class="player-avatar" onclick="viewPlayerProfile('${uid}')" style="cursor:pointer">${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
-      <div class="player-info" onclick="viewPlayerProfile('${uid}')" style="cursor:pointer">
-        <div class="player-name">${u.name||'Игрок'}</div>
-        <div class="player-stats">${u.country||''} · ${(u.stats ? u.stats.totalScore : 0)||0} очков · ${(u.stats ? u.stats.games : 0)||0} игр</div>
-      </div>
-      <button class="follow-btn ${following[uid]?'following':''}" id="follow-${uid}" onclick="toggleFollow('${uid}','${myUid}',this)">
-        ${following[uid] ? '✓' : '+'}
-      </button>
-    </div>
-  `).join('') || '<div style="padding:20px;text-align:center;color:var(--muted)">Игроков не найдено</div>';
-}
-
-function renderFollowing(players, following, myUid) {
-  const followingPlayers = players.filter(([uid]) => following[uid]);
-  document.getElementById('followingList').innerHTML = followingPlayers.length === 0
-    ? '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px">Ты пока ни на кого не подписан</div>'
-    : followingPlayers.map(([uid, u]) => `
-      <div class="player-card">
-        <div class="player-avatar">${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}</div>
-        <div class="player-info">
-          <div class="player-name">${u.name||'Игрок'}</div>
-          <div class="player-stats">${u.country||''} · ${(u.stats ? u.stats.totalScore : 0)||0} очков</div>
-        </div>
-        <button class="follow-btn following" onclick="toggleFollow('${uid}','${myUid}',this)">✓ Подписан</button>
-      </div>
-    `).join('');
-}
-
-async function toggleFollow(targetUid, myUid, btn) {
-  const isFollowing = btn.classList.contains('following');
-  try {
-    if (isFollowing) {
-      await db.ref(`users/${myUid}/following/${targetUid}`).remove();
-      btn.classList.remove('following');
-      btn.textContent = '+ Подписаться';
-    } else {
-      await db.ref(`users/${myUid}/following/${targetUid}`).set(true);
-      btn.classList.add('following');
-      btn.textContent = '✓ Подписан';
-      playCorrect();
-    }
-  } catch(e) {}
-}
-
-async function searchPlayers(query) {
-  const user = auth.currentUser;
-  if (!user) return;
-  if (!query.trim()) { renderSearchTab(); return; }
-  try {
-    const snap = await db.ref('users').get();
-    if (!snap.exists()) return;
-    const users = snap.val();
-    const followSnap = await db.ref(`users/${user.uid}/following`).get();
-    const following = followSnap.exists() ? followSnap.val() : {};
-    const filtered = Object.entries(users)
-      .filter(([uid, u]) => uid !== user.uid && (u.name ? u.name.toLowerCase().includes(query.toLowerCase()) : false));
-    renderPlayerCards(filtered, following, user.uid, 'playersList');
-  } catch(e) {}
-}
-function renderWordsList() {
-  const q = document.getElementById('wordSearch').value.toLowerCase();
-  const filtered = words.filter(w =>
-    w.chechen.toLowerCase().includes(q) || w.russian.toLowerCase().includes(q)
-  );
-  const grouped = {};
-  filtered.forEach(w => { if (!grouped[w.category]) grouped[w.category]=[]; grouped[w.category].push(w); });
-  document.getElementById('wordsListDisplay').innerHTML = Object.entries(grouped).map(([cat, ws]) => `
-    <div style="margin-bottom:16px">
-      <div style="font-family:'Unbounded',sans-serif;font-size:10px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;margin-bottom:8px">${cat}</div>
-      ${ws.map(w => `
-        <div class="word-row">
-          <div class="word-row-text">
-            <div class="word-row-ch">${w.chechen}</div>
-            <div class="word-row-ru">${w.russian}</div>
-          </div>
-          <button class="speak-btn" style="margin-top:0;padding:5px 12px;font-size:12px" onclick="speak('${w.transcription}')">🔊</button>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
-}
-
-// ---- ADMIN ----
-function showAdminLogin() {
-  if (adminUnlocked) { showTab('admin'); return; }
-  document.getElementById('adminModal').style.display = 'flex';
-  setTimeout(() => document.getElementById('adminPassword').focus(), 100);
-}
-function checkAdmin() {
-  if (document.getElementById('adminPassword').value === ADMIN_PASS) {
-    adminUnlocked = true;
-    document.getElementById('adminModal').style.display = 'none';
-    document.getElementById('adminPassword').value = '';
-    showTab('admin');
-  } else { alert('Неверный пароль!'); document.getElementById('adminPassword').value = ''; }
-}
-function closeAdminModal() { document.getElementById('adminModal').style.display = 'none'; }
-function changeColor(v, val) { document.documentElement.style.setProperty(v, val); }
-function addWord() {
-  const ch = document.getElementById('newChechen').value.trim();
-  const ru = document.getElementById('newRussian').value.trim();
-  const tr = document.getElementById('newTranscription').value.trim();
-  const cat = document.getElementById('newCategory').value.trim();
-  if (!ch || !ru) { alert('Заполни хотя бы чеченское и русское!'); return; }
-  words.push({chechen:ch,russian:ru,transcription:tr||ch,category:cat||'Другое'});
-  saveWords();
-  document.getElementById('newChechen').value='';
-  document.getElementById('newRussian').value='';
-  document.getElementById('newTranscription').value='';
-  document.getElementById('newCategory').value='';
-  renderAdminWords(); renderCategories();
-}
-function deleteWord(idx) {
-  if (confirm('Удалить?')) { words.splice(idx,1); saveWords(); renderAdminWords(); renderCategories(); }
-}
-function renderAdminWords() {
-  const searchEl = document.getElementById('adminWordSearch');
-  const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
-  const filtered = query
-    ? words.filter(w =>
-        w.chechen.toLowerCase().includes(query) ||
-        w.russian.toLowerCase().includes(query) ||
-        (w.category||'').toLowerCase().includes(query) ||
-        (w.transcription||'').toLowerCase().includes(query))
-    : words;
-  document.getElementById('wordCountAdmin').textContent = filtered.length + (query ? ` из ${words.length}` : '');
-  document.getElementById('wordList').innerHTML = filtered.map(w => {
-    const i = words.indexOf(w);
-    return `
-    <div class="word-row" id="word-row-${i}">
-      <div class="word-row-text" id="word-display-${i}">
-        <div class="word-row-ch">${w.chechen}</div>
-        <div class="word-row-ru">${w.russian} · <span style="color:var(--blue);font-size:11px">${w.category}</span></div>
-        <div style="font-size:11px;color:var(--muted)">${w.transcription||''}</div>
-      </div>
-      <div id="word-edit-${i}" style="display:none;flex:1">
-        <input value="${w.chechen}" id="edit-ch-${i}" class="small-input" style="width:100%;margin-bottom:4px" placeholder="Чеченское">
-        <input value="${w.russian}" id="edit-ru-${i}" class="small-input" style="width:100%;margin-bottom:4px" placeholder="Русское">
-        <input value="${w.transcription||''}" id="edit-tr-${i}" class="small-input" style="width:100%;margin-bottom:4px" placeholder="Произношение">
-        <input value="${w.category||''}" id="edit-cat-${i}" class="small-input" style="width:100%" placeholder="Категория">
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px">
-        <button onclick="toggleEditWord(${i})" id="edit-btn-${i}" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px">✏️</button>
-        <button onclick="saveEditWord(${i})" id="save-btn-${i}" style="display:none;background:var(--green);color:white;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px">✓</button>
-        <button class="delete-btn" onclick="deleteWord(${i})">✕</button>
-      </div>
-    </div>
-  `}).join('');
-}
-
-function toggleEditWord(i) {
-  const display = document.getElementById(`word-display-${i}`);
-  const edit = document.getElementById(`word-edit-${i}`);
-  const editBtn = document.getElementById(`edit-btn-${i}`);
-  const saveBtn = document.getElementById(`save-btn-${i}`);
-  const isEditing = edit.style.display !== 'none';
-  if (isEditing) {
-    display.style.display = 'block';
-    edit.style.display = 'none';
-    editBtn.style.display = 'block';
-    saveBtn.style.display = 'none';
-  } else {
-    display.style.display = 'none';
-    edit.style.display = 'block';
-    editBtn.style.display = 'none';
-    saveBtn.style.display = 'block';
-  }
-}
-
-function saveEditWord(i) {
-  words[i].chechen = document.getElementById(`edit-ch-${i}`).value.trim() || words[i].chechen;
-  words[i].russian = document.getElementById(`edit-ru-${i}`).value.trim() || words[i].russian;
-  words[i].transcription = document.getElementById(`edit-tr-${i}`).value.trim();
-  words[i].category = document.getElementById(`edit-cat-${i}`).value.trim() || words[i].category;
-  saveWords();
-  renderAdminWords();
-}
-
-// ---- LEADERBOARD ----
-async function renderLeaderboard() {
-  document.getElementById('lbList').innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted)">Загрузка... ⏳</div>';
-  await loadLeaderboard();
-  const sorted = leaderboard.slice(0,10);
-  document.getElementById('lbList').innerHTML = sorted.length===0
-    ? '<div style="padding:24px;text-align:center;color:var(--muted)">Пока никого нет. Будь первым! 🏆</div>'
-    : sorted.map((p,i)=>`
-      <div class="lb-row">
-        <div class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
-        <div class="lb-flag">${p.country.split(' ')[0]}</div>
-        <div class="lb-info"><div class="lb-name">${p.name}</div><div class="lb-country">${p.country}</div></div>
-        <div class="lb-score">${p.score}</div>
-      </div>
-    `).join('');
-}
-async function saveToLeaderboard() {
-  const user = auth.currentUser;
-  if (!user) return; // Only save registered users
-  try {
-    const entry = {
-      name: playerName,
-      country: playerCountry,
-      score,
-      date: Date.now(),
-      verified: true // mark as registered user
-    };
-    await fetch(`${FB_URL}/leaderboard.json`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(entry)
-    });
-  } catch(e) { console.log('Save error:', e); }
-}
-
-// ---- SOUNDS (Duolingo-style) ----
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-let audioCtx = null;
-
-function getAudioCtx() {
-  if (!audioCtx) audioCtx = new AudioCtx();
-  return audioCtx;
-}
-
-function playNote(freq, startTime, duration, vol=0.3, type='sine') {
-  if (!soundEnabled) return;
-  try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const compressor = ctx.createDynamicsCompressor();
-    osc.connect(gain); gain.connect(compressor); compressor.connect(ctx.destination);
-    osc.type = type;
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(0, ctx.currentTime + startTime);
-    gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + startTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
-    osc.start(ctx.currentTime + startTime);
-    osc.stop(ctx.currentTime + startTime + duration + 0.01);
-  } catch(e) {}
-}
-
-function playCorrect() {
-  // Duolingo correct sound - bright cheerful ascending
-  playNote(523, 0, 0.15, 0.25);    // C5
-  playNote(659, 0.1, 0.15, 0.25);  // E5
-  playNote(784, 0.2, 0.25, 0.3);   // G5
-}
-
-function playWrong() {
-  // Duolingo wrong sound - low dull thud
-  playNote(196, 0, 0.1, 0.3, 'square');
-  playNote(185, 0.1, 0.2, 0.2, 'square');
-}
-
-function playStreak() {
-  // Duolingo streak - triumphant fanfare
-  playNote(523, 0, 0.1, 0.25);
-  playNote(659, 0.1, 0.1, 0.25);
-  playNote(784, 0.2, 0.1, 0.25);
-  playNote(1047, 0.3, 0.3, 0.35);
-}
-
-// ---- AI HINTS ----
-async function getAIHint(chechenWord, russianWord) {
-  const hintEl = document.getElementById('aiHint');
-  if (!hintEl) return;
-  hintEl.innerHTML = '<div style="color:var(--muted);font-size:13px">🤖 AI думает...</div>';
-  hintEl.style.display = 'block';
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 150,
-        messages: [{
-          role: 'user',
-          content: `Объясни кратко на русском (2-3 предложения) чеченское слово "${chechenWord}" которое означает "${russianWord}". Расскажи интересный факт или помоги запомнить это слово. Будь дружелюбным и интересным.`
-        }]
-      })
-    });
-    const data = await response.json();
-    const text = (data.content && data.content[0] && data.content[0].text ? data.content[0].text : 'Не удалось получить подсказку');
-    hintEl.innerHTML = `
-      <div style="background:rgba(45,107,228,0.1);border:1px solid rgba(45,107,228,0.3);border-radius:12px;padding:12px 14px;margin-top:12px">
-        <div style="font-size:11px;color:var(--blue2);font-family:'Unbounded',sans-serif;letter-spacing:1px;margin-bottom:6px">🤖 AI ПОДСКАЗКА</div>
-        <div style="font-size:13px;color:var(--white);line-height:1.5">${text}</div>
-      </div>
-    `;
-  } catch(e) {
-    hintEl.innerHTML = '';
-  }
-}
-
-// ---- BATTLE MODE ----
-let battleActive = false;
-let battleOpponent = null;
-let battleTimer = null;
-let battleScore = 0;
-let opponentScore = 0;
-
-function startBattle() {
-  battleActive = true;
-  battleScore = 0;
-  opponentScore = 0;
-  // Lock body scroll
-  document.body.style.overflow = 'hidden';
-  document.getElementById('battleModal').style.display = 'flex';
-  document.getElementById('myScore').textContent = '0';
-  document.getElementById('opponentScore').textContent = '0';
-  renderBattleWord();
-  startBattleTimer();
-}
-
-function renderBattleWord() {
-  if (!battleActive) return;
-  const pool = words;
-  const w = pool[Math.floor(Math.random() * pool.length)];
-  const wrong = pool.filter(x=>x!==w).sort(()=>Math.random()-0.5).slice(0,3);
-  const all = [w].concat(wrong).sort(function(){return Math.random()-0.5;});
-  document.getElementById('battleWord').textContent = w.chechen;
-  document.getElementById('battleHint').textContent = `произносится: ${w.transcription}`;
-  document.getElementById('battleChoices').innerHTML = all.map(x => `
-    <button class="choice-btn" onclick="checkBattleAnswer(this,'${x.chechen}','${w.chechen}')" style="font-size:14px;padding:12px 8px">
-      ${x.russian}
-    </button>
-  `).join('');
-  // Bot answers slower — 4 to 9 seconds
-  const opponentDelay = 4000 + Math.random() * 5000;
-  setTimeout(() => {
-    if (battleActive) {
-      opponentScore++;
-      document.getElementById('opponentScore').textContent = opponentScore;
-      playWrong();
-    }
-  }, opponentDelay);
-}
-
-function checkBattleAnswer(btn, selected, correct) {
-  if (!battleActive) return;
-  document.querySelectorAll('#battleChoices .choice-btn').forEach(b => b.disabled = true);
-  if (selected === correct) {
-    btn.classList.add('correct');
-    battleScore++;
-    document.getElementById('myScore').textContent = battleScore;
-    playCorrect();
-  } else {
-    btn.classList.add('wrong');
-    document.querySelectorAll('#battleChoices .choice-btn').forEach(b => {
-      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${correct}'`)) b.classList.add('correct');
-    });
-    playWrong();
-  }
-  setTimeout(renderBattleWord, 1500);
-}
-
-function startBattleTimer() {
-  let timeLeft = 60;
-  document.getElementById('battleTime').textContent = timeLeft;
-  battleTimer = setInterval(() => {
-    timeLeft--;
-    document.getElementById('battleTime').textContent = timeLeft;
-    if (timeLeft <= 10) document.getElementById('battleTime').style.color = 'var(--red)';
-    if (timeLeft <= 0) {
-      clearInterval(battleTimer);
-      endBattle(false);
-    }
-  }, 1000);
-}
-
-function endBattle(surrendered) {
-  battleActive = false;
-  clearInterval(battleTimer);
-  document.body.style.overflow = '';
-  if (surrendered) opponentScore += 3; // penalty for leaving
-  const won = !surrendered && battleScore > opponentScore;
-  if (won) { score += battleScore * 2; updateStats(); playStreak(); }
-  document.getElementById('battleChoices').innerHTML = `
-    <div style="text-align:center;padding:20px">
-      <div style="font-size:56px">${won ? '🏆' : surrendered ? '🏳️' : '😤'}</div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:${won?'var(--green)':surrendered?'var(--muted)':'var(--red)'};margin:12px 0">
-        ${won ? 'ПОБЕДА!' : surrendered ? 'СДАЛСЯ' : 'ПОРАЖЕНИЕ'}
-      </div>
-      <div style="font-size:14px;color:var(--muted);margin-bottom:4px">Ты: ${battleScore} · Соперник: ${opponentScore}</div>
-      ${won ? `<div style="font-size:13px;color:var(--green);margin-bottom:12px">+${battleScore*2} очков!</div>` : ''}
-      <button class="btn-primary" onclick="closeBattle()" style="margin-top:8px">Закрыть</button>
-    </div>
-  `;
-}
-
-function leaveBattle() {
-  if (confirm('Покинуть бой? Победа отдаётся сопернику.')) {
-    clearInterval(battleTimer);
-    endBattle(true);
-  }
-}
-
-function closeBattle() {
-  battleActive = false;
-  clearInterval(battleTimer);
-  document.body.style.overflow = '';
-  document.getElementById('battleModal').style.display = 'none';
-}
-const wordImageUrls = {
-  'Вода': 'https://images.unsplash.com/photo-1548438294-1ad5d5f4f063?w=300&q=80',
-  'Гора': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&q=80',
-  'Лес': 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=300&q=80',
-  'Солнце': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&q=80',
-  'Снег': 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=300&q=80',
-  'Дождь': 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=300&q=80',
-  'Ночь': 'https://images.unsplash.com/photo-1475274047050-1d0c0975c63e?w=300&q=80',
-  'Собака': 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=300&q=80',
-  'Кошка': 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300&q=80',
-  'Лошадь': 'https://images.unsplash.com/photo-1534773728080-33d31da27ae5?w=300&q=80',
-  'Овца': 'https://images.unsplash.com/photo-1484557985045-edf25e7f197b?w=300&q=80',
-  'Медведь': 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=300&q=80',
-  'Хлеб': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300&q=80',
-  'Мясо': 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=300&q=80',
-  'Молоко': 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=300&q=80',
-  'Яйцо': 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=300&q=80',
-  'Картошка': 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=300&q=80',
-  'Дом': 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=300&q=80',
-  'Дверь': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80',
-  'Стол': 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&q=80',
-  'Рука': 'https://images.unsplash.com/photo-1527525443983-6e60c75fff46?w=300&q=80',
-  'Глаз': 'https://images.unsplash.com/photo-1494869042583-f6c911f04b4c?w=300&q=80',
-  'Рубашка': 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=300&q=80',
-  'Обувь': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&q=80',
-  'Красный': 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=300&q=80',
-  'Жёлтый': 'https://images.unsplash.com/photo-1557800636-894a64c1696f?w=300&q=80',
-  'Зелёный': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=300&q=80',
-};
-
-const wordEmojis = {
-  'Я':'🧑','Ты':'👆','Мы':'👥','Отец':'👨','Мать':'👩',
-  'Брат':'👦','Сестра':'👧','Один':'1️⃣','Два':'2️⃣','Три':'3️⃣',
-  'Четыре':'4️⃣','Пять':'5️⃣','Шесть':'6️⃣','Семь':'7️⃣',
-  'Восемь':'8️⃣','Девять':'9️⃣','Десять':'🔟',
-  'Хороший':'👍','Плохой':'👎','Весёлый':'😄','Грустный':'😢',
-  'Свобода':'🕊️','Уважение':'🙏','Белый':'⬜','Чёрный':'⬛',
-  'Синий':'🟦','Коричневый':'🟫',
-};
-
-function getWordImage(russianWord) {
-  const key = Object.keys(wordImageUrls).find(k => russianWord.includes(k));
-  return key ? wordImageUrls[key] : null;
-}
-
-function getWordEmoji(russianWord) {
-  const key = Object.keys(wordEmojis).find(k => russianWord.includes(k));
-  return key ? wordEmojis[key] : null;
-}
-function speak(text) {
-  if (!speechEnabled || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang='ru-RU'; u.rate=0.8; u.pitch=1;
-  window.speechSynthesis.speak(u);
-}
-
-// ---- GAME ----
-function showMainMenu() {
-  const user = auth.currentUser;
-  const modal = document.createElement('div');
-  modal.id = 'mainMenuModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;display:flex;align-items:flex-end;justify-content:center';
-  modal.innerHTML = `
-    <div style="background:var(--bg);border-radius:24px 24px 0 0;padding:20px 16px 40px;width:100%;max-width:420px;animation:slideInUp 0.3s ease">
-      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px"></div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
-        ${[
-          {icon:'📖',label:'Учить',tab:'learn'},
-          {icon:'📚',label:'Слова',tab:'words'},
-          {icon:'🏆',label:'Топ',tab:'leaderboard'},
-          {icon:'🥇',label:'Лиги',tab:'leagues'},
-          {icon:'🔍',label:'Поиск',tab:'search'},
-          {icon:'❌',label:'Ошибки',tab:'mistakes'},
-          {icon:'⚙️',label:'Настройки',tab:'settings'},
-          isAdmin?{icon:'🛠️',label:'Админ',tab:'admin'}:null,
-        ].filter(Boolean).map(item => `
-          <div onclick="closeMainMenu();showTab('${item.tab}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;box-shadow:0 3px 0 var(--border)">
-            <div style="font-size:24px;margin-bottom:4px">${item.icon}</div>
-            <div style="font-family:'Unbounded',sans-serif;font-size:9px;color:var(--white);letter-spacing:0.5px">${item.label}</div>
-          </div>
-        `).join('')}
-      </div>
-      <button onclick="closeMainMenu()" style="width:100%;padding:14px;background:var(--surface);border:2px solid var(--border);border-radius:14px;font-family:'Unbounded',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;box-shadow:0 3px 0 var(--border)">ЗАКРЫТЬ</button>
-    </div>
-  `;
-  modal.addEventListener('click', e => { if (e.target === modal) closeMainMenu(); });
-  document.body.appendChild(modal);
-}
-
-function closeMainMenu() {
-  const m = document.getElementById('mainMenuModal');
-  if (m) m.remove();
-}
-
+// Game
 function startGameMode(mode) {
   currentMode = mode;
   score = 0; streak = 0; bestStreak = 0;
   totalAnswered = 0; correctAnswers = 0;
-  usedWords = []; scrambleSelected = [];
-  answered = false;
-  document.getElementById('gameOverlay').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  document.getElementById('gameArea').style.display = 'block';
-  document.getElementById('resultArea').style.display = 'none';
-  document.getElementById('feedback').className = 'feedback';
-  const aiHint = document.getElementById('aiHint');
-  if (aiHint) { aiHint.style.display = 'none'; aiHint.innerHTML = ''; }
-  document.getElementById('score').textContent = '0';
-  document.getElementById('streak').textContent = '0';
-  document.getElementById('progressFill').style.width = '0%';
-  document.getElementById('progressText').textContent = '0 / ' + dailyGoal;
+  usedWords = []; scrambleSelected = []; answered = false;
+  var ov = document.getElementById("gameOverlay");
+  if (ov) { ov.style.display = "flex"; document.body.style.overflow = "hidden"; }
+  document.getElementById("gameArea").style.display = "block";
+  document.getElementById("resultArea").style.display = "none";
+  document.getElementById("feedback").className = "feedback";
+  var ah = document.getElementById("aiHint");
+  if (ah) { ah.style.display = "none"; ah.innerHTML = ""; }
+  document.getElementById("score").textContent = "0";
+  document.getElementById("streak").textContent = "0";
+  document.getElementById("progressFill").style.width = "0%";
+  document.getElementById("progressText").textContent = "0 / " + dailyGoal;
   renderCategories();
   loadNewWord();
-  try { analytics.logEvent('game_start', { mode }); } catch(e) {}
 }
 
 function exitGame() {
-  document.getElementById('gameOverlay').style.display = 'none';
-  document.body.style.overflow = '';
-  // Update home screen progress bar
-  const pct = Math.min((totalAnswered / dailyGoal) * 100, 100);
-  const hf = document.getElementById('homeProgressFill');
-  const ht = document.getElementById('homeProgressText');
-  if (hf) hf.style.width = pct + '%';
-  if (ht) ht.textContent = totalAnswered + ' / ' + dailyGoal;
+  var ov = document.getElementById("gameOverlay");
+  if (ov) ov.style.display = "none";
+  document.body.style.overflow = "";
+  var hf = document.getElementById("homeProgressFill");
+  var ht = document.getElementById("homeProgressText");
+  if (hf) hf.style.width = Math.min((totalAnswered/dailyGoal)*100,100) + "%";
+  if (ht) ht.textContent = totalAnswered + " / " + dailyGoal;
 }
 
-function setMode(mode) {
-  currentMode = mode;
-  document.querySelectorAll('.mode-tab').forEach((t,i)=>t.classList.toggle('active',['translate','choice','scramble'][i]===mode));
-  loadNewWord();
-}
+function setMode(m) { currentMode = m; usedWords = []; loadNewWord(); }
 
 function loadNewWord() {
-  answered=false;
-  document.getElementById('feedback').className='feedback';
-  const aiHint = document.getElementById('aiHint');
-  if (aiHint) { aiHint.style.display='none'; aiHint.innerHTML=''; }
-  document.getElementById('actionBtn').textContent='Проверить';
-  document.getElementById('actionBtn').disabled=false;
-  document.getElementById('actionBtn').onclick=handleAction;
-  document.getElementById('gameArea').style.display='block';
-  document.getElementById('resultArea').style.display='none';
-
-  const pool = getWordPool().filter(w=>!usedWords.includes(w));
-  if (pool.length===0) usedWords=[];
-  const p2 = getWordPool().filter(w=>!usedWords.includes(w));
-  if (p2.length===0) return;
-  currentWord = p2[Math.floor(Math.random()*p2.length)];
-  usedWords.push(currentWord);
-  if (usedWords.length>5) usedWords.shift();
-
-  const pct = Math.min((totalAnswered/dailyGoal)*100,100);
-  document.getElementById('progressFill').style.width=pct+'%';
-  document.getElementById('progressText').textContent=totalAnswered+' / '+dailyGoal;
-  renderCard();
+  var pool = getWordPool();
+  if (!pool || !pool.length) return;
+  var unused = pool.filter(function(w) { return usedWords.indexOf(w.chechen) === -1; });
+  if (!unused.length) { usedWords = []; unused = pool; }
+  currentWord = unused[Math.floor(Math.random() * unused.length)];
+  usedWords.push(currentWord.chechen);
+  answered = false;
+  renderGameCard();
 }
 
-function renderCard() {
-  const card = document.getElementById('gameCard');
-  const askChechen = Math.random()>0.4;
+function mkBtn(text, cls, onclick) {
+  var b = document.createElement("button");
+  b.className = cls; b.textContent = text;
+  b.onclick = onclick;
+  return b;
+}
 
-  if (currentMode==='translate') {
-    const img = getWordImage(currentWord.russian);
-    const emoji = !img ? getWordEmoji(currentWord.russian) : null;
-    card.innerHTML=`
-      <div class="question-label">${askChechen?'Чеченское слово':'Русское слово'}</div>
-      ${img ? `<img src="${img}" style="width:100%;height:160px;object-fit:cover;border-radius:12px;margin:8px 0" onerror="this.style.display='none'">` : ''}
-      ${emoji && !img ? `<div style="font-size:56px;text-align:center;margin:8px 0">${emoji}</div>` : ''}
-      <div class="question-word">${askChechen?currentWord.chechen:currentWord.russian}</div>
-      <div class="question-hint">${askChechen?'произносится: '+currentWord.transcription:'переведи на чеченский'}</div>
-      <div class="category-badge">${currentWord.category}</div>
-      <button class="speak-btn" onclick="speak('${currentWord.transcription}')">🔊 Слушать</button>
-      <input type="text" class="translation-input" id="answerInput"
-        placeholder="${askChechen?'Перевод на русский...':'Перевод на чеченский...'}"
-        onkeydown="if(event.key==='Enter') handleAction()">
-    `;
-    card.dataset.askChechen=askChechen; card.dataset.mode='translate';
-    document.getElementById('actionBtn').style.display='block';
-    setTimeout(()=>var _ai=document.getElementById('answerInput');if(_ai)_ai.focus();},100);
+function renderGameCard() {
+  if (!currentWord) return;
+  var card = document.getElementById("gameCard");
+  var actionBtn = document.getElementById("actionBtn");
+  var fb = document.getElementById("feedback");
+  if (!card) return;
+  fb.textContent = ""; fb.className = "feedback";
+  card.innerHTML = "";
 
-  } else if (currentMode==='choice') {
-    const pool = getWordPool();
-    const wrong = pool.filter(w=>w!==currentWord).sort(()=>Math.random()-0.5).slice(0,3);
-    const all = [currentWord].concat(wrong).sort(function(){return Math.random()-0.5;});
-    const img = getWordImage(currentWord.russian);
-    const emoji = !img ? getWordEmoji(currentWord.russian) : null;
-    card.innerHTML=`
-      <div class="question-label">${askChechen?'Переведи на русский':'Переведи на чеченский'}</div>
-      ${img ? `<img src="${img}" style="width:100%;height:140px;object-fit:cover;border-radius:12px;margin:8px 0" onerror="this.style.display='none'">` : ''}
-      ${emoji && !img ? `<div style="font-size:56px;text-align:center;margin:8px 0">${emoji}</div>` : ''}
-      <div class="question-word">${askChechen?currentWord.chechen:currentWord.russian}</div>
-      ${askChechen?`<div class="question-hint">произносится: ${currentWord.transcription}</div>`:''}
-      <div class="category-badge">${currentWord.category}</div>
-      <button class="speak-btn" onclick="speak('${currentWord.transcription}')">🔊 Слушать</button>
-      <div class="choices">
-        ${all.map(w=>`<button class="choice-btn" onclick="checkChoice(this,'${w.chechen}')">${askChechen?w.russian:w.chechen}</button>`).join('')}
-      </div>
-    `;
-    card.dataset.mode='choice';
-    document.getElementById('actionBtn').style.display='none';
+  // Word display (common)
+  var wd = document.createElement("div"); wd.className = "word-display";
+  var cw = document.createElement("div"); cw.className = "chechen-word"; cw.textContent = currentWord.chechen;
+  var tr = document.createElement("div"); tr.className = "transcription"; tr.textContent = currentWord.transcription;
+  var sb = document.createElement("button"); sb.className = "speak-btn"; sb.textContent = "🔊";
+  (function(t){sb.onclick = function(){speak(t);};})(currentWord.transcription);
+  wd.appendChild(cw); wd.appendChild(tr); wd.appendChild(sb);
+  card.appendChild(wd);
 
-  } else {
-    const letters = currentWord.russian.split('').sort(()=>Math.random()-0.5);
-    scrambleSelected=[];
-    card.innerHTML=`
-      <div class="question-label">Составь слово по-русски</div>
-      <div class="question-word">${currentWord.chechen}</div>
-      <div class="question-hint">произносится: ${currentWord.transcription}</div>
-      <div class="category-badge">${currentWord.category}</div>
-      <button class="speak-btn" onclick="speak('${currentWord.transcription}')">🔊 Слушать</button>
-      <div class="scramble-area">
-        <div class="answer-slots" id="answerSlots"></div>
-        <div class="letter-pool">
-          ${letters.map((l,i)=>`<button class="letter-btn" id="lbtn${i}" onclick="addLetter('${l}',${i})">${l}</button>`).join('')}
-        </div>
-      </div>
-    `;
-    card.dataset.mode='scramble';
-    document.getElementById('actionBtn').style.display='block';
+  if (currentMode === "translate") {
+    var inp = document.createElement("input");
+    inp.type = "text"; inp.className = "answer-input"; inp.id = "answerInput";
+    inp.placeholder = "Переведи на русский...";
+    inp.setAttribute("autocomplete","off"); inp.setAttribute("autocorrect","off"); inp.setAttribute("autocapitalize","off");
+    inp.onkeydown = function(e) { if (e.key === "Enter") handleAction(); };
+    card.appendChild(inp);
+    actionBtn.textContent = "Проверить"; actionBtn.style.display = "block";
+    actionBtn.onclick = handleAction;
+    setTimeout(function() { var i = document.getElementById("answerInput"); if (i) i.focus(); }, 100);
+  } else if (currentMode === "choice") {
+    var pool = getWordPool();
+    var wrong = pool.filter(function(w) { return w.chechen !== currentWord.chechen; });
+    wrong.sort(function() { return Math.random()-0.5; }); wrong = wrong.slice(0,3);
+    var all = [currentWord].concat(wrong); all.sort(function() { return Math.random()-0.5; });
+    var ch = document.createElement("div"); ch.className = "choices";
+    for (var i = 0; i < all.length; i++) {
+      (function(w) {
+        var b = document.createElement("button"); b.className = "choice-btn"; b.textContent = w.russian;
+        b.onclick = function() { checkChoice(b, w.chechen); };
+        ch.appendChild(b);
+      })(all[i]);
+    }
+    card.appendChild(ch);
+    actionBtn.style.display = "none";
+  } else if (currentMode === "scramble") {
+    var letters = currentWord.russian.toUpperCase().split("").sort(function(){return Math.random()-0.5;});
+    scrambleSelected = [];
+    var ans = document.createElement("div"); ans.className = "scramble-answer"; ans.id = "scrambleAnswer";
+    var lts = document.createElement("div"); lts.className = "scramble-letters";
+    for (var j = 0; j < letters.length; j++) {
+      (function(l, idx) {
+        var b = document.createElement("button"); b.className = "letter-btn"; b.id = "lbtn" + idx; b.textContent = l;
+        b.onclick = function() { addLetter(l, idx); };
+        lts.appendChild(b);
+      })(letters[j], j);
+    }
+    var clr = document.createElement("button"); clr.className = "btn-secondary"; clr.textContent = "Очистить";
+    clr.style.marginTop = "8px"; clr.onclick = clearScramble;
+    card.appendChild(ans); card.appendChild(lts); card.appendChild(clr);
+    actionBtn.textContent = "Проверить"; actionBtn.style.display = "block";
+    actionBtn.onclick = handleAction;
   }
 }
 
-function addLetter(letter,idx) {
-  scrambleSelected.push({letter,idx});
-  document.getElementById(`lbtn${idx}`).disabled=true;
-  const btn=document.createElement('button');
-  btn.className='letter-slot'; btn.textContent=letter;
-  btn.onclick=()=>{btn.remove();document.getElementById(`lbtn${idx}`).disabled=false;scrambleSelected=scrambleSelected.filter(s=>s.idx!==idx);};
-  document.getElementById('answerSlots').appendChild(btn);
+function addLetter(l, idx) {
+  scrambleSelected.push({letter:l,idx:idx});
+  var b = document.getElementById("lbtn"+idx); if (b) b.disabled = true;
+  var a = document.getElementById("scrambleAnswer");
+  if (a) a.textContent = scrambleSelected.map(function(s){return s.letter;}).join("");
 }
 
-function checkChoice(btn,chechenKey) {
-  if (answered) return; answered=true;
-  const isCorrect=chechenKey===currentWord.chechen;
-  document.querySelectorAll('.choice-btn').forEach(b=>{
-    const k=b.getAttribute('onclick').match(/'([^']+)'\)/)[1];
-    if(k===currentWord.chechen) b.classList.add('correct');
-    else if(b===btn&&!isCorrect) b.classList.add('wrong');
-    b.disabled=true;
-  });
-  handleResult(isCorrect,currentWord.russian);
-  document.getElementById('actionBtn').style.display='block';
-  document.getElementById('actionBtn').textContent='Следующее →';
-  document.getElementById('actionBtn').onclick=()=>{document.getElementById('actionBtn').onclick=handleAction;loadNewWord();};
+function clearScramble() {
+  scrambleSelected = [];
+  document.querySelectorAll(".letter-btn").forEach(function(b){b.disabled=false;});
+  var a = document.getElementById("scrambleAnswer"); if (a) a.textContent = "";
 }
 
 function handleAction() {
-  if (answered) {loadNewWord();return;}
-  const card=document.getElementById('gameCard');
-  if (card.dataset.mode==='translate') {
-    const input=document.getElementById('answerInput');
-    const ua=input.value.trim().toLowerCase();
-    if (!ua) return;
-    const ask=card.dataset.askChechen==='true';
-    const correct=ask?currentWord.russian.toLowerCase():currentWord.chechen.toLowerCase();
-    const ok=ua===correct;
-    input.className='translation-input '+(ok?'correct':'wrong');
-    handleResult(ok,ask?currentWord.russian:currentWord.chechen);
-    answered=true;
-    document.getElementById('actionBtn').textContent='Следующее →';
-  } else if (card.dataset.mode==='scramble') {
-    const ua=scrambleSelected.map(s=>s.letter).join('');
-    const ok=ua.toLowerCase()===currentWord.russian.toLowerCase();
-    handleResult(ok,currentWord.russian);
-    answered=true;
-    document.getElementById('actionBtn').textContent='Следующее →';
+  if (answered) { loadNewWord(); return; }
+  var correct, userAns;
+  if (currentMode === "translate") {
+    var inp = document.getElementById("answerInput");
+    if (!inp || !inp.value.trim()) return;
+    userAns = inp.value.trim().toLowerCase();
+    correct = currentWord.russian.toLowerCase();
+    handleResult(userAns === correct || correct.indexOf(userAns) !== -1, currentWord.russian);
+  } else if (currentMode === "scramble") {
+    userAns = scrambleSelected.map(function(s){return s.letter;}).join("").toLowerCase();
+    correct = currentWord.russian.toLowerCase();
+    handleResult(userAns === correct, currentWord.russian);
   }
+  var ab = document.getElementById("actionBtn");
+  if (ab) { ab.textContent = "Следующее"; ab.onclick = function(){ ab.onclick = handleAction; loadNewWord(); }; }
 }
 
-function handleResult(ok,correctAnswer) {
+function checkChoice(btn, key) {
+  if (answered) return; answered = true;
+  var isOk = key === currentWord.chechen;
+  document.querySelectorAll(".choice-btn").forEach(function(b) {
+    b.disabled = true;
+    if (b === btn && !isOk) b.classList.add("wrong");
+  });
+  if (!isOk) btn.classList.add("wrong");
+  // Find correct button
+  document.querySelectorAll(".choice-btn").forEach(function(b){
+    if (b.onclick && b === btn && isOk) b.classList.add("correct");
+  });
+  // Mark correct answer green
+  var allBtns = document.querySelectorAll(".choice-btn");
+  // Re-check: find button that corresponds to correct word
+  handleResult(isOk, currentWord.russian);
+  var ab = document.getElementById("actionBtn");
+  if (ab) { ab.style.display = "block"; ab.textContent = "Следующее"; ab.onclick = function(){ ab.onclick = handleAction; loadNewWord(); }; }
+}
+
+function skipWord() { loadNewWord(); }
+
+// Sound
+function playCorrect() {
+  if (!soundEnabled) return;
+  try { var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=523;g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.3);o.start(c.currentTime);o.stop(c.currentTime+0.3); } catch(e){}
+}
+function playWrong() {
+  if (!soundEnabled) return;
+  try { var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=220;o.type="sawtooth";g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.3);o.start(c.currentTime);o.stop(c.currentTime+0.3); } catch(e){}
+}
+function playStreak() { playCorrect(); }
+function playNote() {}
+
+function speak(text) {
+  if (!speechEnabled || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = "ru-RU"; u.rate = 0.8;
+  window.speechSynthesis.speak(u);
+}
+
+function saveMistakes() {
+  try { localStorage.setItem("mistakeWords", JSON.stringify(mistakeWords)); } catch(e){}
+}
+
+function handleResult(ok, correctAnswer) {
   totalAnswered++;
-  const fb=document.getElementById('feedback');
+  var fb = document.getElementById("feedback");
   if (ok) {
-    correctAnswers++; streak++;
-    if (streak>bestStreak) bestStreak=streak;
-    score+=10+(streak>=3?streak*5:0);
-    fb.className='feedback correct';
-    if (streak >= 3) playStreak(); else playCorrect();
-    fb.textContent=streak>=3?`🔥 Серия ${streak}! +${10+streak*5} очков`:'✓ Верно! +10 очков';
-    // Remove from mistakes if answered correctly
-    mistakeWords = mistakeWords.filter(w => w.chechen !== currentWord.chechen);
-    saveMistakes();
+    correctAnswers++; streak++; if (streak>bestStreak) bestStreak=streak;
+    score += 10 + (streak>=3 ? streak*5 : 0);
+    fb.className = "feedback correct";
+    fb.textContent = streak>=3 ? "🔥 Серия "+streak+"! +"+(10+streak*5)+" очков" : "✓ Верно! +10 очков";
+    if (streak>=3) playStreak(); else playCorrect();
+    mistakeWords = mistakeWords.filter(function(w){return w.chechen!==currentWord.chechen;});
   } else {
-    streak=0; fb.className='feedback wrong';
-    fb.textContent=`✗ Правильно: ${correctAnswer}`;
+    streak = 0; fb.className = "feedback wrong";
+    fb.textContent = "✗ Правильно: " + correctAnswer;
     playWrong();
-    // Add to mistakes
-    if (!mistakeWords.find(w => w.chechen === currentWord.chechen)) {
-      var mw = {}; for(var k in currentWord){mw[k]=currentWord[k];} mw.mistakeCount=1; mistakeWords.push(mw);
-    } else {
-      mistakeWords.find(w => w.chechen === currentWord.chechen).mistakeCount++;
+    var found = false;
+    for (var i=0;i<mistakeWords.length;i++) {
+      if (mistakeWords[i].chechen===currentWord.chechen) { mistakeWords[i].mistakeCount=(mistakeWords[i].mistakeCount||1)+1; found=true; break; }
     }
-    saveMistakes();
-    // Show AI hint after wrong answer
+    if (!found) { var mw={}; for (var k in currentWord){mw[k]=currentWord[k];} mw.mistakeCount=1; mistakeWords.push(mw); }
     getAIHint(currentWord.chechen, currentWord.russian);
   }
-  updateStats();
-  if (totalAnswered>=dailyGoal) setTimeout(showResults,1500);
+  saveMistakes(); updateStats();
+  if (totalAnswered >= dailyGoal) setTimeout(showResults, 1500);
 }
 
 function updateStats() {
-  const el=document.getElementById('score');
-  el.textContent=score; el.classList.add('pop');
-  setTimeout(()=>el.classList.remove('pop'),300);
-  document.getElementById('streak').textContent=streak>0?`${streak}🔥`:'0';
-  document.getElementById('wordCount').textContent=totalAnswered;
+  var s=document.getElementById("score"); if(s)s.textContent=score;
+  var st=document.getElementById("streak"); if(st)st.textContent=streak;
+  var pct=Math.min((totalAnswered/dailyGoal)*100,100);
+  var pf=document.getElementById("progressFill"); if(pf)pf.style.width=pct+"%";
+  var pt=document.getElementById("progressText"); if(pt)pt.textContent=totalAnswered+" / "+dailyGoal;
+  var ts=document.getElementById("topScore"); if(ts)ts.textContent=score+"⚡";
 }
 
-function skipWord() {streak=0;updateStats();loadNewWord();}
-
 function showResults() {
-  const user = auth.currentUser;
-  if (user) {
-    saveToLeaderboard();
-    saveGameStats();
-  }
-  // Track game completed
-  try {
-    analytics.logEvent('game_completed', {
-      score: score,
-      correct: correctAnswers,
-      total: totalAnswered,
-      mode: currentMode,
-      registered: !!user
-    });
-  } catch(e) {}
-  document.getElementById('gameArea').style.display='none';
-  document.getElementById('resultArea').style.display='block';
-  const acc=Math.round((correctAnswers/totalAnswered)*100);
-  document.getElementById('finalScore').textContent=score;
-  document.getElementById('finalAccuracy').textContent=acc+'%';
-  document.getElementById('finalCorrect').textContent=correctAnswers;
-  document.getElementById('finalStreak').textContent=bestStreak;
-  document.getElementById('resultEmoji').textContent=acc>=80?'🏆':acc>=50?'⭐':'📚';
-  document.getElementById('resultTitle').textContent=acc>=80?'Отлично!':acc>=50?'Хороший результат!':'Учись дальше!';
-  document.getElementById('resultMsg').textContent=acc>=80?'Ты хорошо знаешь чеченский язык!':acc>=50?'Продолжай практиковаться!':'Повторяй слова — и всё получится!';
-  // Show mistakes button if there are mistakes
-  const mistakesBtn = document.getElementById('mistakesBtn');
-  if (mistakesBtn && mistakeWords.length > 0) {
-    mistakesBtn.style.display = 'block';
-    mistakesBtn.textContent = `📖 Повторить ошибки (${mistakeWords.length})`;
-  }
-
-  // Show registration banner for guests
-  if (!user) {
-    const banner = document.createElement('div');
-    banner.style.cssText = 'background:linear-gradient(135deg,rgba(45,107,228,0.2),rgba(0,198,255,0.1));border:1px solid rgba(0,198,255,0.3);border-radius:16px;padding:18px 20px;margin-bottom:16px;text-align:center;';
-    banner.innerHTML = `
-      <div style="font-size:28px;margin-bottom:8px">⚡</div>
-      <div style="font-family:'Unbounded',sans-serif;font-size:13px;color:var(--cyan);margin-bottom:6px">СОХРАНИ ПРОГРЕСС!</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Войди через Google чтобы сохранить результаты и попасть в таблицу лидеров</div>
-      <button onclick="signInWithGoogle()" style="background:white;color:#333;border:none;border-radius:10px;padding:12px 20px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;margin:0 auto;">
-        <svg width="18" height="18" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        Войти через Google
-      </button>
-    `;
-    document.getElementById('resultArea').querySelector('.result-screen').prepend(banner);
-  }
+  document.getElementById("gameArea").style.display="none";
+  document.getElementById("resultArea").style.display="block";
+  var acc=totalAnswered>0?Math.round((correctAnswers/totalAnswered)*100):0;
+  document.getElementById("resultEmoji").textContent=acc>=80?"🏆":acc>=50?"⭐":"📚";
+  document.getElementById("resultTitle").textContent=acc>=80?"Отлично!":acc>=50?"Хороший результат!":"Учись дальше!";
+  document.getElementById("resultMsg").textContent=acc>=80?"Ты хорошо знаешь чеченский!":"Продолжай практиковаться!";
+  document.getElementById("finalScore").textContent=score;
+  document.getElementById("finalAccuracy").textContent=acc+"%";
+  document.getElementById("finalCorrect").textContent=correctAnswers;
+  document.getElementById("finalStreak").textContent=bestStreak;
+  totalScoreAll+=score; totalGames++; totalWordsLearned+=correctAnswers;
+  var mb=document.getElementById("mistakesBtn");
+  if(mb){mb.style.display=mistakeWords.length>0?"block":"none";if(mistakeWords.length>0)mb.textContent="📖 Повторить ошибки ("+mistakeWords.length+")";}
 }
 
 function restartGame() {
-  score=0;streak=0;bestStreak=0;totalAnswered=0;correctAnswers=0;usedWords=[];
-  updateStats();
-  document.getElementById('progressFill').style.width='0%';
-  document.getElementById('progressText').textContent='0 / '+dailyGoal;
-  document.getElementById('gameArea').style.display='block';
-  document.getElementById('resultArea').style.display='none';
+  score=0;streak=0;bestStreak=0;totalAnswered=0;correctAnswers=0;
+  usedWords=[];scrambleSelected=[];answered=false;
+  document.getElementById("progressFill").style.width="0%";
+  document.getElementById("progressText").textContent="0 / "+dailyGoal;
+  document.getElementById("score").textContent="0";
+  document.getElementById("streak").textContent="0";
+  document.getElementById("gameArea").style.display="block";
+  document.getElementById("resultArea").style.display="none";
   loadNewWord();
 }
 
-// Auto-login - placed at end so all functions are defined
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    // Auto-grant admin if your email
-    if (user.email === ADMIN_EMAIL) {
-      isAdmin = true;
-      sessionStorage.setItem('isAdmin', 'true');
-    }
-    try {
-      const snap = await db.ref(`users/${user.uid}`).get();
-      if (snap.exists()) {
-        const data = snap.val();
-        playerName = data.name || user.displayName || 'Игрок';
-        playerCountry = data.country || '';
-        if (playerCountry) {
-          enterGame();
-          return;
-        }
-      }
-      // Has Google but no country yet - prefill name
-      const nameEl = document.getElementById('regName');
-      if (nameEl) nameEl.value = user.displayName || '';
-    } catch(e) {
-      console.log('Auth state error:', e);
-    }
+function getAIHint(chechen, russian) {
+  var el=document.getElementById("aiHint"); if(!el)return;
+  if(localStorage.getItem("aiEnabled")==="false"){el.style.display="none";return;}
+  el.style.display="block";
+  el.innerHTML="";
+  var d=document.createElement("div"); d.className="ai-hint";
+  d.textContent="🤖 " + chechen + " — " + russian;
+  el.appendChild(d);
+}
+
+// Leaderboard
+function renderLeaderboard() {
+  var el=document.getElementById("lbList"); if(!el)return;
+  el.textContent="Загрузка...";
+  db.ref("leaderboard").get().then(function(snap) {
+    el.innerHTML="";
+    if(!snap.exists()||!snap.val()){el.textContent="Нет данных.";return;}
+    var data=snap.val();
+    var entries=[];
+    for(var k in data){if(data[k].verified===true)entries.push(data[k]);}
+    entries.sort(function(a,b){return (b.score||0)-(a.score||0);});
+    if(!entries.length){el.textContent="Зарегистрируйся чтобы попасть в топ!";return;}
+    entries.slice(0,50).forEach(function(p,i){
+      var row=document.createElement("div"); row.className="lb-row";
+      var medal=document.createElement("div"); medal.className="lb-medal"; medal.textContent=i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1)+".";
+      var flag=document.createElement("div"); flag.className="lb-flag"; flag.textContent=p.country?p.country.split(" ")[0]:"🌍";
+      var name=document.createElement("div"); name.className="lb-name"; name.textContent=p.name||"Игрок";
+      var sc=document.createElement("div"); sc.className="lb-score"; sc.textContent=(p.score||0)+" ⚡";
+      row.appendChild(medal); row.appendChild(flag); row.appendChild(name); row.appendChild(sc);
+      el.appendChild(row);
+    });
+  }).catch(function(){el.textContent="Ошибка загрузки.";});
+}
+
+// Words list
+function renderWordsList() {
+  var el=document.getElementById("wordsListDisplay"); if(!el)return;
+  var q=(document.getElementById("wordSearch")?document.getElementById("wordSearch").value:"").toLowerCase();
+  var filtered=q?words.filter(function(w){return w.chechen.toLowerCase().indexOf(q)!==-1||w.russian.toLowerCase().indexOf(q)!==-1;}):words;
+  var catSet={};
+  filtered.forEach(function(w){if(!catSet[w.category])catSet[w.category]=[];catSet[w.category].push(w);});
+  el.innerHTML="";
+  for(var cat in catSet){
+    var div=document.createElement("div"); div.style.cssText="background:var(--card);border:2px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow)";
+    var hdr=document.createElement("div"); hdr.style.cssText="padding:12px 16px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--white);letter-spacing:1px";
+    hdr.textContent=cat+" ("+catSet[cat].length+")";
+    div.appendChild(hdr);
+    catSet[cat].forEach(function(w){
+      var row=document.createElement("div"); row.style.cssText="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px";
+      var info=document.createElement("div"); info.style.flex="1";
+      var ch=document.createElement("div"); ch.style.cssText="font-weight:700;color:var(--white)"; ch.textContent=w.chechen;
+      var ru=document.createElement("div"); ru.style.cssText="font-size:12px;color:var(--muted)"; ru.textContent=w.russian+" · "+w.transcription;
+      info.appendChild(ch); info.appendChild(ru);
+      var sb=document.createElement("button"); sb.style.cssText="background:none;border:none;font-size:18px;cursor:pointer"; sb.textContent="🔊";
+      (function(t){sb.onclick=function(){speak(t);};})(w.transcription);
+      row.appendChild(info); row.appendChild(sb); div.appendChild(row);
+    });
+    el.appendChild(div);
   }
-});
+}
+
+// Mistakes
+function renderMistakesTab() {
+  var c=document.getElementById("mistakesContent"); if(!c)return;
+  c.innerHTML="";
+  if(!mistakeWords.length){
+    var d=document.createElement("div"); d.style.cssText="text-align:center;padding:60px 20px";
+    d.innerHTML="<div style='font-size:56px'>🎉</div><div style='font-size:16px;color:var(--white);margin:16px 0'>Ошибок нет!</div><div style='font-size:13px;color:var(--muted)'>Слова которые ты не угадал появятся здесь</div>";
+    c.appendChild(d); return;
+  }
+  var sorted=mistakeWords.slice().sort(function(a,b){return(b.mistakeCount||1)-(a.mistakeCount||1);});
+  var warn=document.createElement("div"); warn.style.cssText="background:#fff3cd;border:2px solid #ffc107;border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px";
+  warn.innerHTML="<div style='font-size:24px'>⚠️</div><div style='font-size:14px;font-weight:700;color:#856404'>"+sorted.length+" слов нуждаются в повторении</div>";
+  c.appendChild(warn);
+  var pb=document.createElement("button"); pb.className="btn-primary"; pb.style.marginBottom="16px"; pb.textContent="🔄 Повторить ошибки";
+  pb.onclick=practiceMyMistakes; c.appendChild(pb);
+  sorted.forEach(function(w){
+    var row=document.createElement("div"); row.style.cssText="background:var(--card);border:2px solid "+((w.mistakeCount||1)>=3?"var(--red)":"var(--border)")+";border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px";
+    var info=document.createElement("div"); info.style.flex="1";
+    var ch=document.createElement("div"); ch.style.cssText="font-family:'Unbounded',sans-serif;font-size:16px;font-weight:700;color:var(--white)"; ch.textContent=w.chechen+" ×"+(w.mistakeCount||1);
+    var ru=document.createElement("div"); ru.style.cssText="font-size:13px;color:var(--muted)"; ru.textContent=w.russian;
+    info.appendChild(ch); info.appendChild(ru);
+    var sb=document.createElement("button"); sb.style.cssText="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px"; sb.textContent="🔊";
+    (function(t){sb.onclick=function(){speak(t);};})(w.transcription||"");
+    row.appendChild(info); row.appendChild(sb); c.appendChild(row);
+  });
+}
+
+function practiceMyMistakes() {
+  if(!mistakeWords.length){alert("Ошибок нет!");return;}
+  words=mistakeWords.slice(); selectedCategory="Все";
+  startGameMode(currentMode||"translate");
+}
+
+function clearMistakes() {
+  if(!confirm("Очистить все ошибки?"))return;
+  mistakeWords=[]; saveMistakes(); renderMistakesTab();
+}
+
+// Admin
+function showAdminLogin() {
+  if(adminUnlocked||isAdmin){showTab("admin");return;}
+  var p=prompt("Пароль:");
+  if(p===ADMIN_PASS){adminUnlocked=true;isAdmin=true;showTab("admin");}
+  else if(p!==null)alert("Неверный пароль");
+}
+
+function renderAdminWords() {
+  var q=document.getElementById("adminWordSearch")?document.getElementById("adminWordSearch").value.toLowerCase():"";
+  var filtered=q?words.filter(function(w){return w.chechen.toLowerCase().indexOf(q)!==-1||w.russian.toLowerCase().indexOf(q)!==-1||(w.category||"").toLowerCase().indexOf(q)!==-1;}):words;
+  var cnt=document.getElementById("wordCountAdmin"); if(cnt)cnt.textContent=filtered.length+(q?" из "+words.length:"");
+  var list=document.getElementById("wordList"); if(!list)return; list.innerHTML="";
+  filtered.forEach(function(w){
+    var i=words.indexOf(w);
+    var row=document.createElement("div"); row.className="word-row"; row.id="word-row-"+i;
+    var disp=document.createElement("div"); disp.className="word-row-text"; disp.id="word-display-"+i;
+    var ch=document.createElement("div"); ch.className="word-row-ch"; ch.textContent=w.chechen;
+    var ru=document.createElement("div"); ru.className="word-row-ru"; ru.textContent=w.russian+" · "+w.category;
+    var tr=document.createElement("div"); tr.style.cssText="font-size:11px;color:var(--muted)"; tr.textContent=w.transcription||"";
+    disp.appendChild(ch); disp.appendChild(ru); disp.appendChild(tr);
+    var editDiv=document.createElement("div"); editDiv.id="word-edit-"+i; editDiv.style.cssText="display:none;flex:1";
+    ["edit-ch-"+i,"edit-ru-"+i,"edit-tr-"+i,"edit-cat-"+i].forEach(function(id,idx){
+      var inp=document.createElement("input"); inp.className="small-input"; inp.id=id;
+      inp.style.cssText="width:100%;margin-bottom:4px";
+      inp.value=[w.chechen,w.russian,w.transcription||"",w.category||""][idx];
+      editDiv.appendChild(inp);
+    });
+    var btns=document.createElement("div"); btns.style.cssText="display:flex;flex-direction:column;gap:4px;margin-left:8px";
+    var eb=document.createElement("button"); eb.id="edit-btn-"+i; eb.style.cssText="background:var(--blue);color:white;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px"; eb.textContent="✏️";
+    (function(idx){eb.onclick=function(){toggleEditWord(idx);};})(i);
+    var sb=document.createElement("button"); sb.id="save-btn-"+i; sb.style.cssText="display:none;background:var(--green);color:white;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px"; sb.textContent="✓";
+    (function(idx){sb.onclick=function(){saveEditWord(idx);};})(i);
+    var db2=document.createElement("button"); db2.className="delete-btn"; db2.textContent="✕";
+    (function(idx){db2.onclick=function(){deleteWord(idx);};})(i);
+    btns.appendChild(eb); btns.appendChild(sb); btns.appendChild(db2);
+    row.appendChild(disp); row.appendChild(editDiv); row.appendChild(btns);
+    list.appendChild(row);
+  });
+}
+
+function toggleEditWord(i) {
+  var d=document.getElementById("word-display-"+i), e=document.getElementById("word-edit-"+i);
+  var eb=document.getElementById("edit-btn-"+i), sb=document.getElementById("save-btn-"+i);
+  if(!d||!e)return;
+  var isE=e.style.display!=="none";
+  d.style.display=isE?"block":"none"; e.style.display=isE?"none":"block";
+  eb.style.display=isE?"block":"none"; sb.style.display=isE?"none":"block";
+}
+
+function saveEditWord(i) {
+  var ch=document.getElementById("edit-ch-"+i), ru=document.getElementById("edit-ru-"+i);
+  var tr=document.getElementById("edit-tr-"+i), cat=document.getElementById("edit-cat-"+i);
+  if(ch)words[i].chechen=ch.value.trim()||words[i].chechen;
+  if(ru)words[i].russian=ru.value.trim()||words[i].russian;
+  if(tr)words[i].transcription=tr.value.trim();
+  if(cat)words[i].category=cat.value.trim()||words[i].category;
+  saveWords(); renderAdminWords();
+}
+
+function addWord() {
+  var ch=document.getElementById("newChechen"), ru=document.getElementById("newRussian");
+  var tr=document.getElementById("newTranscription"), cat=document.getElementById("newCategory");
+  if(!ch||!ch.value.trim()){alert("Введи чеченское слово!");return;}
+  words.push({chechen:ch.value.trim(),russian:ru?ru.value.trim():"",transcription:tr?tr.value.trim():"",category:cat?cat.value.trim():"Другое"});
+  ch.value=""; if(ru)ru.value=""; if(tr)tr.value=""; if(cat)cat.value="";
+  saveWords(); renderAdminWords();
+}
+
+function deleteWord(i) {
+  if(!confirm("Удалить слово?"))return;
+  words.splice(i,1); saveWords(); renderAdminWords();
+}
+
+function changeColor(v,val) { document.documentElement.style.setProperty(v,val); }
+
+// Settings
+function initSettingsUI() {
+  var s=document.getElementById("soundToggle"); if(s)s.checked=soundEnabled;
+  var sp=document.getElementById("speechToggle"); if(sp)sp.checked=speechEnabled;
+  var ai=document.getElementById("aiToggle"); if(ai)ai.checked=localStorage.getItem("aiEnabled")!=="false";
+}
+function toggleSound(v){soundEnabled=v;localStorage.setItem("soundEnabled",v);}
+function toggleSpeech(v){speechEnabled=v;localStorage.setItem("speechEnabled",v);}
+function setDailyGoal(g,b){dailyGoal=g;document.querySelectorAll(".goal-mini").forEach(function(x){x.classList.remove("active");});if(b)b.classList.add("active");localStorage.setItem("dailyGoal",g);}
+function showPrivacyPolicy(){alert("MOTT_bu хранит только имя и страну. Данные не передаются третьим лицам.");}
+function showHelp(){alert("Выбери режим игры и угадывай чеченские слова!");}
+function rateApp(){alert("Спасибо за оценку! 😊");}
+function shareApp(){var t="Учу чеченский в MOTT_bu! https://lorsvu.github.io/Mott-bu-";if(navigator.share)navigator.share({title:"MOTT_bu",text:t,url:"https://lorsvu.github.io/Mott-bu-"});else{try{navigator.clipboard.writeText(t).then(function(){alert("Ссылка скопирована!");});}catch(e){alert(t);}}}
+function inviteFriend(){shareApp();}
+function openEditProfile(){var n=prompt("Твоё имя:",playerName);if(n&&n.trim()){playerName=n.trim();localStorage.setItem("guestName",playerName);var g=document.getElementById("playerGreeting");if(g)g.textContent="Привет, "+playerName+"!";renderProfile();}}
+function changeAvatar(){}
+
+// Profile
+function renderProfile() {
+  var tab=document.getElementById("profileTab"); if(!tab)return;
+  var league=getCurrentLeague();
+  var days=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+  tab.innerHTML="";
+
+  // Avatar + name
+  var top=document.createElement("div"); top.style.cssText="text-align:center;padding:24px 0 16px";
+  var av=document.createElement("div"); av.style.cssText="width:86px;height:86px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#0090d0);display:flex;align-items:center;justify-content:center;font-size:44px;margin:0 auto;border:4px solid var(--border)"; av.textContent="👤";
+  var nm=document.createElement("div"); nm.style.cssText="font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:var(--white);margin-top:12px"; nm.textContent=playerName;
+  var ct=document.createElement("div"); ct.style.cssText="font-size:14px;color:var(--muted);margin-top:4px"; ct.textContent=playerCountry;
+  var lg=document.createElement("div"); lg.style.cssText="font-size:13px;color:var(--blue);margin-top:4px"; lg.textContent=league.icon+" "+league.name;
+  var eb=document.createElement("button"); eb.style.cssText="margin-top:12px;background:var(--card);border:2px solid var(--border);color:var(--white);border-radius:20px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 0 var(--border)"; eb.textContent="✏️ Редактировать"; eb.onclick=openEditProfile;
+  top.appendChild(av); top.appendChild(nm); top.appendChild(ct); top.appendChild(lg); top.appendChild(eb);
+  tab.appendChild(top);
+
+  // Stats
+  var stats=document.createElement("div"); stats.style.cssText="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px";
+  [{icon:"⚡",val:totalScoreAll,label:"ОЧКОВ"},{icon:"🎮",val:totalGames,label:"ИГР"},{icon:"📚",val:totalWordsLearned,label:"СЛОВ"}].forEach(function(s){
+    var d=document.createElement("div"); d.style.cssText="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow)";
+    d.innerHTML="<div style='font-size:22px;margin-bottom:4px'>"+s.icon+"</div><div style='font-family:Unbounded,sans-serif;font-size:18px;color:var(--blue);font-weight:700'>"+s.val+"</div><div style='font-size:10px;color:var(--muted)'>"+s.label+"</div>";
+    stats.appendChild(d);
+  });
+  tab.appendChild(stats);
+
+  // Menu
+  var menu=document.createElement("div"); menu.style.cssText="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow)";
+  var menuTitle=document.createElement("div"); menuTitle.style.cssText="padding:12px 20px;border-bottom:1px solid var(--border);font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px"; menuTitle.textContent="⚙️ УПРАВЛЕНИЕ";
+  menu.appendChild(menuTitle);
+  [{icon:"⚙️",label:"Настройки",action:function(){showTab("settings");}},{icon:"✏️",label:"Редактировать профиль",action:openEditProfile},{icon:"🔗",label:"Пригласить друга",action:shareApp},{icon:"🔄",label:"Выйти",action:switchAccount}].forEach(function(item){
+    var row=document.createElement("div"); row.style.cssText="padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer"; row.onclick=item.action;
+    var ic=document.createElement("div"); ic.style.cssText="font-size:20px"; ic.textContent=item.icon;
+    var lb=document.createElement("div"); lb.style.cssText="flex:1;font-size:15px;font-weight:600;color:var(--white)"; lb.textContent=item.label;
+    var ar=document.createElement("div"); ar.style.cssText="color:var(--muted)"; ar.textContent="›";
+    row.appendChild(ic); row.appendChild(lb); row.appendChild(ar); menu.appendChild(row);
+  });
+  tab.appendChild(menu);
+  var ft=document.createElement("div"); ft.style.cssText="text-align:center;color:var(--muted);font-size:11px;padding-bottom:24px"; ft.textContent="MOTT_bu v1.0 · Нохчийн Мотт";
+  tab.appendChild(ft);
+}
+
+function switchAccount() {
+  if(!confirm("Выйти?"))return;
+  localStorage.removeItem("guestName"); localStorage.removeItem("guestCountry");
+  playerName=""; playerCountry="";
+  document.getElementById("appShell").classList.remove("visible");
+  document.getElementById("registerScreen").classList.remove("hidden");
+}
+
+// Leagues
+function renderLeagues() {
+  var league=getCurrentLeague();
+  var icon=document.getElementById("leagueIcon"); if(icon)icon.textContent=league.icon;
+  var name=document.getElementById("leagueName"); if(name)name.textContent=league.name;
+  ["bronze","silver","gold","diamond"].forEach(function(id){
+    var c=document.getElementById("league-"+id); if(c)c.style.border=id===league.id?"3px solid var(--blue)":"";
+  });
+  var el=document.getElementById("leagueList"); if(!el)return;
+  el.textContent="Загрузка...";
+  db.ref("leaderboard").get().then(function(snap){
+    el.innerHTML="";
+    if(!snap.exists()||!snap.val()){el.textContent="Нет данных.";return;}
+    var data=snap.val(), entries=[];
+    for(var k in data){var s=data[k].score||0;if(s>=league.min&&s<=league.max)entries.push(data[k]);}
+    entries.sort(function(a,b){return(b.score||0)-(a.score||0);});
+    entries.slice(0,20).forEach(function(p,i){
+      var row=document.createElement("div"); row.style.cssText="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px";
+      var n=document.createElement("div"); n.style.cssText="font-family:'Unbounded',sans-serif;font-size:13px;width:28px"; n.textContent=(i+1)+".";
+      var nm=document.createElement("div"); nm.style.cssText="flex:1;font-size:14px;font-weight:600;color:var(--white)"; nm.textContent=p.name||"Игрок";
+      var sc=document.createElement("div"); sc.style.cssText="font-size:13px;color:var(--blue);font-weight:700"; sc.textContent=(p.score||0)+" ⚡";
+      row.appendChild(n); row.appendChild(nm); row.appendChild(sc); el.appendChild(row);
+    });
+    if(!entries.length){var d=document.createElement("div");d.style.cssText="padding:20px;text-align:center;color:var(--muted)";d.textContent="Нет игроков в этой лиге";el.appendChild(d);}
+  }).catch(function(){el.textContent="Ошибка загрузки.";});
+}
+
+// Search
+function renderSearchTab() {
+  var el=document.getElementById("playersList"); if(!el)return;
+  el.innerHTML="";
+  var d=document.createElement("div"); d.style.cssText="padding:20px;text-align:center;color:var(--muted)";
+  d.textContent="Поиск доступен после регистрации через Google";
+  el.appendChild(d);
+}
+function searchPlayers(){}
+function toggleFollow(){}
+function viewPlayerProfile(){}
+function showFollowers(){}
+function showFollowing(){}
+function loadLeaderboard(){return Promise.resolve();}
+
+// Learn tab
+var categoryEmojis={"Природа":"🌿","Природа Чечни":"🏔","Семья":"👨‍👩‍👧","Еда":"🍽","Одежда":"👕","Животные":"🐾","Числа":"🔢","Дни недели":"📅","Цвета":"🎨","Тело":"🧍","Приветствия":"👋","Фразы":"💬","Глаголы":"⚡","Прилагательные":"✨","Ценности":"🕊","Дом":"🏠"};
+
+function renderLearnTab() {
+  var catSet={};
+  words.forEach(function(w){catSet[w.category]=1;});
+  var cats=Object.keys(catSet).sort();
+  var grid=document.getElementById("learnCategoryGrid"); if(!grid)return;
+  grid.innerHTML="";
+  cats.forEach(function(cat){
+    var cnt=words.filter(function(w){return w.category===cat;}).length;
+    var emoji=categoryEmojis[cat]||"📚";
+    var div=document.createElement("div");
+    div.style.cssText="background:var(--card);border:2px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:12px;cursor:pointer;box-shadow:0 4px 0 var(--border);display:flex;align-items:center";
+    var ic=document.createElement("div"); ic.style.cssText="width:80px;height:72px;background:linear-gradient(135deg,var(--blue),#0090d0);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0"; ic.textContent=emoji;
+    var info=document.createElement("div"); info.style.cssText="flex:1;padding:14px 16px";
+    var nm=document.createElement("div"); nm.style.cssText="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:var(--white)"; nm.textContent=cat;
+    var cn=document.createElement("div"); cn.style.cssText="font-size:12px;color:var(--muted);margin-top:3px"; cn.textContent=cnt+" слов";
+    var ar=document.createElement("div"); ar.style.cssText="padding-right:16px;color:var(--muted);font-size:18px"; ar.textContent="›";
+    info.appendChild(nm); info.appendChild(cn);
+    div.appendChild(ic); div.appendChild(info); div.appendChild(ar);
+    (function(c){div.onclick=function(){startLearnCategory(c);};})(cat);
+    div.addEventListener("touchstart",function(){this.style.transform="translateY(3px)";},{passive:true});
+    div.addEventListener("touchend",function(){this.style.transform="";},{passive:true});
+    grid.appendChild(div);
+  });
+}
+
+function startLearnCategory(cat) {
+  learnCards=words.filter(function(w){return w.category===cat;});
+  learnIndex=0; learnKnown=learnCards.map(function(){return null;}); cardFlipped=false;
+  var title=document.getElementById("learnCategoryTitle"); if(title)title.textContent=cat;
+  document.getElementById("learnCategoryView").style.display="none";
+  document.getElementById("learnCardView").style.display="block";
+  renderLearnCard();
+}
+
+function exitLearnCard() {
+  document.getElementById("learnCategoryView").style.display="block";
+  document.getElementById("learnCardView").style.display="none";
+}
+
+function renderLearnCard() {
+  if(!learnCards.length)return;
+  var w=learnCards[learnIndex]; cardFlipped=false;
+  var prog=document.getElementById("learnProgress"); if(prog)prog.textContent=(learnIndex+1)+"/"+learnCards.length;
+  var fc=document.getElementById("flashcard"); if(!fc)return;
+  fc.style.borderColor=learnKnown[learnIndex]===true?"#c8e6c9":learnKnown[learnIndex]===false?"#ffcdd2":"var(--border)";
+  document.getElementById("cardImage").textContent=categoryEmojis[w.category]||"📚";
+  document.getElementById("cardImage").style.display="block";
+  document.getElementById("cardImg").style.display="none";
+  document.getElementById("cardLang").textContent="ЧЕЧЕНСКИЙ";
+  document.getElementById("cardWord").textContent=w.chechen;
+  document.getElementById("cardTranscription").textContent=w.transcription||"";
+  document.getElementById("cardTranslation").style.display="none";
+  document.getElementById("cardRussian").textContent=w.russian;
+  var dots=document.getElementById("progressDots"); if(!dots)return;
+  dots.innerHTML="";
+  learnCards.forEach(function(_,i){
+    var d=document.createElement("div");
+    d.style.cssText="width:"+(i===learnIndex?20:8)+"px;height:8px;border-radius:4px;background:"+(learnKnown[i]===true?"var(--green)":learnKnown[i]===false?"var(--red)":i===learnIndex?"var(--blue)":"var(--border)")+";transition:all 0.3s";
+    dots.appendChild(d);
+  });
+}
+
+function flipCard() {
+  cardFlipped=!cardFlipped;
+  document.getElementById("cardTranslation").style.display=cardFlipped?"block":"none";
+  document.getElementById("cardLang").textContent=cardFlipped?"ПЕРЕВОД":"ЧЕЧЕНСКИЙ";
+}
+
+function nextCard() {
+  if(learnIndex<learnCards.length-1){learnIndex++;renderLearnCard();}
+  else showLearnComplete();
+}
+
+function prevCard() {
+  if(learnIndex>0){learnIndex--;renderLearnCard();}
+}
+
+function markCard(known) {
+  learnKnown[learnIndex]=known; renderLearnCard();
+  setTimeout(nextCard,400);
+}
+
+function speakCurrentCard() {
+  if(learnCards[learnIndex])speak(learnCards[learnIndex].transcription||learnCards[learnIndex].chechen);
+}
+
+function showLearnComplete() {
+  var known=learnKnown.filter(function(k){return k===true;}).length;
+  var unknown=learnKnown.filter(function(k){return k===false;}).length;
+  var cv=document.getElementById("learnCardView"); if(!cv)return;
+  cv.innerHTML="";
+  var d=document.createElement("div"); d.style.cssText="text-align:center;padding:40px 20px";
+  var em=document.createElement("div"); em.style.cssText="font-size:64px;margin-bottom:16px"; em.textContent=known>=learnCards.length*0.8?"🏆":"📚";
+  var ti=document.createElement("div"); ti.style.cssText="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--white);margin-bottom:8px"; ti.textContent=known>=learnCards.length*0.8?"ОТЛИЧНО!":"ПРОДОЛЖАЙ!";
+  var st=document.createElement("div"); st.style.cssText="font-size:14px;color:var(--muted);margin-bottom:24px"; st.textContent="Знаешь: "+known+" · Учить: "+unknown;
+  var b1=document.createElement("button"); b1.className="btn-primary"; b1.style.marginBottom="10px"; b1.textContent="🔄 Повторить всё";
+  b1.onclick=function(){learnIndex=0;learnKnown=learnCards.map(function(){return null;});renderLearnCard();};
+  var b2=document.createElement("button"); b2.className="btn-secondary"; b2.textContent="← К категориям"; b2.onclick=exitLearnCard;
+  d.appendChild(em); d.appendChild(ti); d.appendChild(st); d.appendChild(b1); d.appendChild(b2);
+  cv.appendChild(d);
+}
+
+// Battle
+function showBattleMenu() {
+  var modal=document.createElement("div"); modal.id="battleMenuModal";
+  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0";
+  var sheet=document.createElement("div"); sheet.style.cssText="background:var(--bg);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:420px";
+  var title=document.createElement("div"); title.style.cssText="text-align:center;margin-bottom:20px"; title.innerHTML="<div style='font-size:36px'>⚔️</div>";
+  var h=document.createElement("div"); h.style.cssText="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--white);text-align:center;margin-bottom:16px"; h.textContent="ВЫБЕРИ РЕЖИМ БОЯ";
+  var botBtn=document.createElement("div"); botBtn.style.cssText="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer";
+  var botIc=document.createElement("div"); botIc.style.fontSize="36px"; botIc.textContent="🤖";
+  var botInfo=document.createElement("div"); botInfo.style.flex="1";
+  var botT=document.createElement("div"); botT.style.cssText="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--white)"; botT.textContent="ПРОТИВ БОТА";
+  var botD=document.createElement("div"); botD.style.cssText="font-size:12px;color:var(--muted)"; botD.textContent="60 секунд · всегда доступно";
+  botInfo.appendChild(botT); botInfo.appendChild(botD);
+  botBtn.appendChild(botIc); botBtn.appendChild(botInfo);
+  botBtn.onclick=function(){closeBattleMenu();startBattle();};
+  var cancelBtn=document.createElement("button"); cancelBtn.style.cssText="width:100%;padding:14px;background:var(--surface);border:2px solid var(--border);border-radius:14px;font-family:'Unbounded',sans-serif;font-size:12px;color:var(--muted);cursor:pointer"; cancelBtn.textContent="ОТМЕНА"; cancelBtn.onclick=closeBattleMenu;
+  sheet.appendChild(title); sheet.appendChild(h); sheet.appendChild(botBtn); sheet.appendChild(cancelBtn);
+  modal.appendChild(sheet);
+  modal.addEventListener("click",function(e){if(e.target===modal)closeBattleMenu();});
+  document.body.appendChild(modal);
+}
+
+function closeBattleMenu(){var m=document.getElementById("battleMenuModal");if(m)m.remove();}
+
+var battleTimer=null, battleTimeLeft=60, battleScore=0, botScore2=0, battleWord=null;
+
+function startBattle() {
+  var bm=document.getElementById("battleModal"); if(bm){bm.style.display="flex";document.body.style.overflow="hidden";}
+  battleTimeLeft=60; battleScore=0; botScore2=0;
+  var te=document.getElementById("battleTimer"); if(te)te.textContent=60;
+  var pe=document.getElementById("battlePlayerScore"); if(pe)pe.textContent=0;
+  var be=document.getElementById("battleBotScore"); if(be)be.textContent=0;
+  loadBattleWord();
+  battleTimer=setInterval(function(){
+    battleTimeLeft--;
+    if(te)te.textContent=battleTimeLeft;
+    if(Math.random()<0.15){botScore2++;if(be)be.textContent=botScore2;}
+    if(battleTimeLeft<=0){clearInterval(battleTimer);endBattle();}
+  },1000);
+}
+
+function loadBattleWord() {
+  battleWord=words[Math.floor(Math.random()*words.length)];
+  var we=document.getElementById("battleWord"); if(we)we.textContent=battleWord.chechen;
+  var he=document.getElementById("battleHint"); if(he)he.textContent=battleWord.transcription;
+  var ce=document.getElementById("battleChoices"); if(!ce)return;
+  var wrong=words.filter(function(w){return w.chechen!==battleWord.chechen;});
+  wrong.sort(function(){return Math.random()-0.5;}); wrong=wrong.slice(0,3);
+  var all=[battleWord].concat(wrong); all.sort(function(){return Math.random()-0.5;});
+  ce.innerHTML="";
+  all.forEach(function(w){
+    var b=document.createElement("button"); b.className="choice-btn"; b.textContent=w.russian;
+    (function(key){b.onclick=function(){checkBattleAnswer(b,key);};})(w.chechen);
+    ce.appendChild(b);
+  });
+}
+
+function checkBattleAnswer(btn,key) {
+  if(key===battleWord.chechen){battleScore++;var pe=document.getElementById("battlePlayerScore");if(pe)pe.textContent=battleScore;btn.style.background="var(--green)";}
+  else btn.style.background="var(--red)";
+  setTimeout(loadBattleWord,600);
+}
+
+function endBattle() {
+  clearInterval(battleTimer);
+  var ce=document.getElementById("battleChoices"); if(!ce)return;
+  ce.innerHTML="";
+  var d=document.createElement("div"); d.style.cssText="text-align:center;padding:20px";
+  var em=document.createElement("div"); em.style.fontSize="36px"; em.textContent=battleScore>botScore2?"🏆":"😔";
+  var ti=document.createElement("div"); ti.style.cssText="font-family:'Unbounded',sans-serif;font-size:16px;color:var(--white);margin:12px 0"; ti.textContent=battleScore>botScore2?"ТЫ ПОБЕДИЛ!":battleScore===botScore2?"НИЧЬЯ!":"БОТ ПОБЕДИЛ";
+  var sc=document.createElement("div"); sc.style.cssText="font-size:14px;color:var(--muted);margin-bottom:16px"; sc.textContent="Ты: "+battleScore+" · Бот: "+botScore2;
+  var b=document.createElement("button"); b.className="btn-primary"; b.textContent="Закрыть"; b.onclick=function(){var m=document.getElementById("battleModal");if(m)m.style.display="none";document.body.style.overflow="";clearInterval(battleTimer);};
+  d.appendChild(em); d.appendChild(ti); d.appendChild(sc); d.appendChild(b); ce.appendChild(d);
+}
+
+function closeBattle(){var m=document.getElementById("battleModal");if(m)m.style.display="none";document.body.style.overflow="";clearInterval(battleTimer);}
+
+// Main menu
+function showMainMenu() {
+  var modal=document.createElement("div"); modal.id="mainMenuModal";
+  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;display:flex;align-items:flex-end;justify-content:center";
+  var sheet=document.createElement("div"); sheet.style.cssText="background:var(--bg);border-radius:24px 24px 0 0;padding:20px 16px 40px;width:100%;max-width:420px";
+  var bar=document.createElement("div"); bar.style.cssText="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px";
+  var grid=document.createElement("div"); grid.style.cssText="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px";
+  var items=[{icon:"📖",label:"Учить",tab:"learn"},{icon:"📚",label:"Слова",tab:"words"},{icon:"🏆",label:"Топ",tab:"leaderboard"},{icon:"🥇",label:"Лиги",tab:"leagues"},{icon:"❌",label:"Ошибки",tab:"mistakes"},{icon:"⚙️",label:"Настройки",tab:"settings"}];
+  if(isAdmin)items.push({icon:"🛠",label:"Админ",tab:"admin"});
+  items.forEach(function(item){
+    var d=document.createElement("div"); d.style.cssText="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;box-shadow:0 3px 0 var(--border)";
+    var ic=document.createElement("div"); ic.style.cssText="font-size:24px;margin-bottom:4px"; ic.textContent=item.icon;
+    var lb=document.createElement("div"); lb.style.cssText="font-family:'Unbounded',sans-serif;font-size:9px;color:var(--white)"; lb.textContent=item.label;
+    d.appendChild(ic); d.appendChild(lb);
+    (function(t){d.onclick=function(){closeMainMenu();showTab(t);};})(item.tab);
+    grid.appendChild(d);
+  });
+  var cb=document.createElement("button"); cb.style.cssText="width:100%;padding:14px;background:var(--surface);border:2px solid var(--border);border-radius:14px;font-family:'Unbounded',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;box-shadow:0 3px 0 var(--border)"; cb.textContent="ЗАКРЫТЬ"; cb.onclick=closeMainMenu;
+  sheet.appendChild(bar); sheet.appendChild(grid); sheet.appendChild(cb); modal.appendChild(sheet);
+  modal.addEventListener("click",function(e){if(e.target===modal)closeMainMenu();});
+  document.body.appendChild(modal);
+}
+
+function closeMainMenu(){var m=document.getElementById("mainMenuModal");if(m)m.remove();}
+
+// Init
+(function(){
+  var sound=localStorage.getItem("soundEnabled");
+  var speech=localStorage.getItem("speechEnabled");
+  var goal=localStorage.getItem("dailyGoal");
+  if(sound==="false")soundEnabled=false;
+  if(speech==="false")speechEnabled=false;
+  if(goal)dailyGoal=parseInt(goal);
+  setTimeout(function(){setLang(currentLang);},50);
+  var sn=localStorage.getItem("guestName");
+  var sc=localStorage.getItem("guestCountry");
+  if(sn&&sc){playerName=sn;playerCountry=sc;setTimeout(function(){enterGame();},100);}
+})();
 </script>
 <!-- PLAYER PROFILE MODAL -->
 <div id="playerProfileModal" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;max-width:420px;margin:0 auto;">
