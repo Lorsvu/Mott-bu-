@@ -1739,7 +1739,7 @@ const LANGS = {
     check: 'Проверить', skip: 'Пропустить →', next: 'Следующее →',
     correct: '✓ Верно!', wrong: '✗ Правильно:',
     // Words
-    translate: (w) => w.russian,
+    translate: function(w) { return w.russian; },
   },
   en: {
     subtitle: 'LEARN CHECHEN',
@@ -1755,7 +1755,7 @@ const LANGS = {
     namePh: 'Enter your name...',
     check: 'Check', skip: 'Skip →', next: 'Next →',
     correct: '✓ Correct!', wrong: '✗ Answer:',
-    translate: (w) => w.english || w.russian,
+    translate: function(w) { return w.english || w.russian; },
   },
   de: {
     subtitle: 'TSCHETSCHENISCH LERNEN',
@@ -1771,7 +1771,7 @@ const LANGS = {
     namePh: 'Gib deinen Namen ein...',
     check: 'Prüfen', skip: 'Überspringen →', next: 'Weiter →',
     correct: '✓ Richtig!', wrong: '✗ Antwort:',
-    translate: (w) => w.german || w.russian,
+    translate: function(w) { return w.german || w.russian; },
   },
   fr: {
     subtitle: 'APPRENDRE LE TCHÉTCHÈNE',
@@ -1787,7 +1787,7 @@ const LANGS = {
     namePh: 'Entre ton nom...',
     check: 'Vérifier', skip: 'Passer →', next: 'Suivant →',
     correct: '✓ Correct!', wrong: '✗ Réponse:',
-    translate: (w) => w.french || w.russian,
+    translate: function(w) { return w.french || w.russian; },
   }
 };
 
@@ -1916,7 +1916,7 @@ function showTrialExpiredScreen() {
 
 // ---- CATEGORIES ----
 function renderCategories() {
-  const cats = ['Все', ...new Set(words.map(w => w.category))];
+  const cats = ['Все'].concat(Array.from(new Set(words.map(function(w){return w.category;}))));
   document.getElementById('categoryTabs').innerHTML = cats.map(c => `
     <button class="cat-tab ${c===selectedCategory?'active':''}" onclick="selectCategory('${c}')">${c}</button>
   `).join('');
@@ -2013,18 +2013,18 @@ let dayStreak = 0;
 let profileAvatar = null;
 
 const BADGES = [
-  { id:'first', icon:'🎯', name:'ПЕРВЫЙ РАЗ', desc:'Сыграть первую игру', check:()=>totalGames>=1 },
-  { id:'games5', icon:'⭐', name:'5 ИГР', desc:'Сыграть 5 игр', check:()=>totalGames>=5 },
-  { id:'games20', icon:'🏆', name:'20 ИГР', desc:'Сыграть 20 игр', check:()=>totalGames>=20 },
-  { id:'score100', icon:'💯', name:'100 ОЧКОВ', desc:'Набрать 100 очков', check:()=>totalScoreAll>=100 },
-  { id:'score500', icon:'🔥', name:'500 ОЧКОВ', desc:'Набрать 500 очков', check:()=>totalScoreAll>=500 },
-  { id:'score1000', icon:'👑', name:'1000 ОЧКОВ', desc:'Набрать 1000 очков', check:()=>totalScoreAll>=1000 },
-  { id:'streak3', icon:'⚡', name:'СЕРИЯ 3', desc:'3 правильных подряд', check:()=>bestStreak>=3 },
-  { id:'streak10', icon:'🌟', name:'СЕРИЯ 10', desc:'10 правильных подряд', check:()=>bestStreak>=10 },
-  { id:'words50', icon:'📚', name:'50 СЛОВ', desc:'Выучить 50 слов', check:()=>totalWordsLearned>=50 },
-  { id:'mountain', icon:'🏔️', name:'ГОРЕЦ', desc:'Сыграть 3 дня подряд', check:()=>dayStreak>=3 },
-  { id:'wolf', icon:'🐺', name:'ВОЛК', desc:'Набрать 2000 очков', check:()=>totalScoreAll>=2000 },
-  { id:'legend', icon:'🦅', name:'ЛЕГЕНДА', desc:'50 игр', check:()=>totalGames>=50 },
+  { id:'first', icon:'🎯', name:'ПЕРВЫЙ РАЗ', desc:'Сыграть первую игру', check:function(){return totalGames>=1;}},
+  { id:'games5', icon:'⭐', name:'5 ИГР', desc:'Сыграть 5 игр', check:function(){return totalGames>=5;}},
+  { id:'games20', icon:'🏆', name:'20 ИГР', desc:'Сыграть 20 игр', check:function(){return totalGames>=20;}},
+  { id:'score100', icon:'💯', name:'100 ОЧКОВ', desc:'Набрать 100 очков', check:function(){return totalScoreAll>=100;}},
+  { id:'score500', icon:'🔥', name:'500 ОЧКОВ', desc:'Набрать 500 очков', check:function(){return totalScoreAll>=500;}},
+  { id:'score1000', icon:'👑', name:'1000 ОЧКОВ', desc:'Набрать 1000 очков', check:function(){return totalScoreAll>=1000;}},
+  { id:'streak3', icon:'⚡', name:'СЕРИЯ 3', desc:'3 правильных подряд', check:function(){return bestStreak>=3;}},
+  { id:'streak10', icon:'🌟', name:'СЕРИЯ 10', desc:'10 правильных подряд', check:function(){return bestStreak>=10;}},
+  { id:'words50', icon:'📚', name:'50 СЛОВ', desc:'Выучить 50 слов', check:function(){return totalWordsLearned>=50;}},
+  { id:'mountain', icon:'🏔️', name:'ГОРЕЦ', desc:'Сыграть 3 дня подряд', check:function(){return dayStreak>=3;}},
+  { id:'wolf', icon:'🐺', name:'ВОЛК', desc:'Набрать 2000 очков', check:function(){return totalScoreAll>=2000;}},
+  { id:'legend', icon:'🦅', name:'ЛЕГЕНДА', desc:'50 игр', check:function(){return totalGames>=50;}},
 ];
 
 async function renderProfile() {
@@ -2890,7 +2890,7 @@ const categoryEmojis = {
 };
 
 function renderLearnTab() {
-  const categories = [...new Set(words.map(w => w.category))].sort();
+  var catSet = {}; words.forEach(function(w){catSet[w.category]=1;}); var categories = Object.keys(catSet).sort();
   const grid = document.getElementById('learnCategoryGrid');
   if (!grid) return;
   grid.innerHTML = categories.map(cat => {
@@ -3060,7 +3060,7 @@ function renderMistakesTab() {
     return;
   }
 
-  const sorted = [...mistakeWords].sort((a,b) => (b.mistakeCount||1) - (a.mistakeCount||1));
+  const sorted = mistakeWords.slice().sort((a,b) => (b.mistakeCount||1) - (a.mistakeCount||1));
 
   container.innerHTML = `
     <div style="background:#fff3cd;border:2px solid #ffc107;border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
@@ -3089,7 +3089,7 @@ function renderMistakesTab() {
 
 function practiceMyMistakes() {
   if (mistakeWords.length === 0) { alert('Ошибок нет!'); return; }
-  const practicePool = [...mistakeWords];
+  const practicePool = mistakeWords.slice();
   words = practicePool;
   selectedCategory = 'Все';
   totalAnswered = 0; correctAnswers = 0; score = 0; streak = 0;
@@ -3452,7 +3452,7 @@ function renderBattleWord() {
   const pool = words;
   const w = pool[Math.floor(Math.random() * pool.length)];
   const wrong = pool.filter(x=>x!==w).sort(()=>Math.random()-0.5).slice(0,3);
-  const all = [w,...wrong].sort(()=>Math.random()-0.5);
+  const all = [w].concat(wrong).sort(function(){return Math.random()-0.5;});
   document.getElementById('battleWord').textContent = w.chechen;
   document.getElementById('battleHint').textContent = `произносится: ${w.transcription}`;
   document.getElementById('battleChoices').innerHTML = all.map(x => `
@@ -3721,7 +3721,7 @@ function renderCard() {
   } else if (currentMode==='choice') {
     const pool = getWordPool();
     const wrong = pool.filter(w=>w!==currentWord).sort(()=>Math.random()-0.5).slice(0,3);
-    const all = [currentWord,...wrong].sort(()=>Math.random()-0.5);
+    const all = [currentWord].concat(wrong).sort(function(){return Math.random()-0.5;});
     const img = getWordImage(currentWord.russian);
     const emoji = !img ? getWordEmoji(currentWord.russian) : null;
     card.innerHTML=`
@@ -3826,7 +3826,7 @@ function handleResult(ok,correctAnswer) {
     playWrong();
     // Add to mistakes
     if (!mistakeWords.find(w => w.chechen === currentWord.chechen)) {
-      mistakeWords.push({...currentWord, mistakeCount: 1});
+      var mw = {}; for(var k in currentWord){mw[k]=currentWord[k];} mw.mistakeCount=1; mistakeWords.push(mw);
     } else {
       mistakeWords.find(w => w.chechen === currentWord.chechen).mistakeCount++;
     }
