@@ -849,9 +849,9 @@ select.text-input option { background:var(--surface); }
       <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <div style="font-family:'Unbounded',sans-serif;font-size:10px;color:var(--muted);letter-spacing:1px">🎯 ЦЕЛЬ ДНЯ</div>
-          <div style="font-size:11px;color:var(--blue);font-weight:700" id="progressText">0 / 20</div>
+          <div style="font-size:11px;color:var(--blue);font-weight:700" id="homeProgressText">0 / 20</div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div class="progress-bar"><div class="progress-fill" id="homeProgressFill" style="width:0%"></div></div>
       </div>
 
       <!-- Mode Grid 2x2 -->
@@ -1999,9 +1999,21 @@ function initSwipeBack() {
   content.addEventListener('touchend', e => {
     const dx = e.changedTouches[0].clientX - startX;
     const dy = Math.abs(e.changedTouches[0].clientY - startY);
-    const activeTab = document.querySelector('.tab-page.active');
-    if (dx > 80 && dy < 60 && activeTab && activeTab.id !== 'gameTab') {
-      showTab('game');
+    if (dx > 80 && dy < 60) {
+      // If in learn card view - go back to categories
+      const learnCard = document.getElementById('learnCardView');
+      if (learnCard && learnCard.style.display !== 'none') {
+        exitLearnCard(); return;
+      }
+      // If in settings - go back to profile
+      const activeTab = document.querySelector('.tab-page.active');
+      if (activeTab && activeTab.id === 'settingsTab') {
+        showTab('profile'); return;
+      }
+      // From any non-game tab - go to game (only on double-swipe or from non-main tabs)
+      if (activeTab && activeTab.id !== 'gameTab') {
+        showTab('game');
+      }
     }
   }, { passive: true });
 }
@@ -3653,9 +3665,37 @@ function closeMainMenu() {
   try { analytics.logEvent('game_start', { mode }); } catch(e) {}
 }
 
+function startGameMode(mode) {
+  currentMode = mode;
+  score = 0; streak = 0; bestStreak = 0;
+  totalAnswered = 0; correctAnswers = 0;
+  usedWords = []; scrambleSelected = [];
+  answered = false;
+  document.getElementById('gameOverlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('gameArea').style.display = 'block';
+  document.getElementById('resultArea').style.display = 'none';
+  document.getElementById('feedback').className = 'feedback';
+  const aiHint = document.getElementById('aiHint');
+  if (aiHint) { aiHint.style.display = 'none'; aiHint.innerHTML = ''; }
+  document.getElementById('score').textContent = '0';
+  document.getElementById('streak').textContent = '0';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressText').textContent = '0 / ' + dailyGoal;
+  renderCategories();
+  loadNewWord();
+  try { analytics.logEvent('game_start', { mode }); } catch(e) {}
+}
+
 function exitGame() {
   document.getElementById('gameOverlay').style.display = 'none';
   document.body.style.overflow = '';
+  // Update home screen progress bar
+  const pct = Math.min((totalAnswered / dailyGoal) * 100, 100);
+  const hf = document.getElementById('homeProgressFill');
+  const ht = document.getElementById('homeProgressText');
+  if (hf) hf.style.width = pct + '%';
+  if (ht) ht.textContent = totalAnswered + ' / ' + dailyGoal;
 }
 
 function setMode(mode) {
