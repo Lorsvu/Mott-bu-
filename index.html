@@ -981,7 +981,7 @@ select.text-input option { background:var(--surface); }
     </div>
 
     <!-- ADMIN TAB -->
-    <div class="tab-page" id="adminTab" style="display:none">
+    <div class="tab-page" id="adminTab">
       <div class="admin-section">
         <div class="admin-title">🎨 Цвета</div>
         <div class="color-grid">
@@ -1294,12 +1294,26 @@ let words = [
 
 const FB_URL = 'https://mott-bu-d1633-default-rtdb.firebaseio.com';
 
-// Google sign-in
+// Google sign-in - one account per email
 async function signInWithGoogle() {
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
+    // Force account selection every time
+    provider.setCustomParameters({ prompt: 'select_account' });
     const result = await auth.signInWithPopup(provider);
     const user = result.user;
+
+    // Check if this email already exists under a different UID
+    const emailSnap = await db.ref('emailIndex/' + user.email.replace(/\./g,'_')).get();
+    if (emailSnap.exists() && emailSnap.val() !== user.uid) {
+      // Already registered with different account - merge or block
+      alert('Этот email уже зарегистрирован. Используй тот же аккаунт Google.');
+      await auth.signOut();
+      return;
+    }
+    // Save email index
+    await db.ref('emailIndex/' + user.email.replace(/\./g,'_')).set(user.uid);
+
     const snap = await db.ref(`users/${user.uid}`).get();
     if (snap.exists()) {
       const data = snap.val();
@@ -1316,7 +1330,9 @@ async function signInWithGoogle() {
       document.getElementById('regName').disabled = false;
     }
   } catch(e) {
-    alert('Ошибка входа. Попробуй без аккаунта.');
+    if (e.code !== 'auth/popup-closed-by-user') {
+      alert('Ошибка входа: ' + (e.message || 'Попробуй снова'));
+    }
   }
 }
 
@@ -3293,14 +3309,12 @@ function restartGame() {
 }
 </script>
 <!-- PLAYER PROFILE MODAL -->
-<div class="modal-overlay" id="playerProfileModal" style="display:none;align-items:flex-start;padding:0">
-  <div style="width:100%;min-height:100vh;background:var(--bg);max-width:420px;margin:0 auto;overflow-y:auto">
-    <div class="slide-header" style="position:sticky;top:0;z-index:5">
-      <button onclick="document.getElementById('playerProfileModal').style.display='none'" class="back-btn">←</button>
-      <div class="slide-header-title">ПРОФИЛЬ ИГРОКА</div>
-    </div>
-    <div id="playerProfileContent" style="padding:16px"></div>
+<div id="playerProfileModal" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;max-width:420px;margin:0 auto;">
+  <div class="slide-header" style="position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--border)">
+    <button onclick="document.getElementById('playerProfileModal').style.display='none'" class="back-btn">←</button>
+    <div class="slide-header-title">ПРОФИЛЬ ИГРОКА</div>
   </div>
+  <div id="playerProfileContent" style="padding:16px 16px 40px"></div>
 </div>
 
 </body>
