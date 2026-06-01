@@ -628,6 +628,29 @@ select.text-input option { background:var(--surface); }
 }
 .btn-secondary:active { top:2px; box-shadow:0 2px 0 var(--border); }
 
+.mode-card {
+  background:var(--card); border:2px solid var(--border);
+  border-radius:18px; padding:16px 12px; text-align:center;
+  cursor:pointer; box-shadow:0 4px 0 var(--border);
+  transition:transform 0.1s, box-shadow 0.1s;
+  user-select:none;
+}
+.mode-card:active { transform:translateY(3px); box-shadow:0 1px 0 var(--border); }
+.mode-card-icon {
+  width:48px; height:48px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px; margin:0 auto 8px;
+}
+.mode-card-name {
+  font-family:'Unbounded',sans-serif; font-size:11px;
+  font-weight:900; color:var(--white); margin-bottom:3px;
+  letter-spacing:0.5px;
+}
+.mode-card-desc { font-size:10px; color:var(--muted); line-height:1.3; }
+
+/* LEARN CARD */
+#flashcard:active { transform:scale(0.97); }
+
 /* LEAGUE CSS */
   background:var(--card); border:2px solid var(--border);
   border-radius:14px; padding:12px 8px; text-align:center;
@@ -773,8 +796,9 @@ select.text-input option { background:var(--surface); }
   <div id="topBar">
     <div class="top-bar-logo">MOTT_bu</div>
     <div style="font-size:11px;color:var(--muted);font-family:'Unbounded',sans-serif" id="playerGreeting"></div>
-    <div id="topBarRight" style="display:flex;align-items:center;gap:8px">
+    <div style="display:flex;align-items:center;gap:8px">
       <div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--blue)" id="topScore">0⚡</div>
+      <button onclick="showMainMenu()" style="background:transparent;border:none;cursor:pointer;padding:4px;color:var(--muted);font-size:20px;line-height:1">⋯</button>
     </div>
   </div>
 
@@ -787,57 +811,42 @@ select.text-input option { background:var(--surface); }
       <div id="wordOfDay"></div>
 
       <!-- Daily Goal Progress -->
-      <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">ЦЕЛЬ ДНЯ</div>
-          <div style="font-size:12px;color:var(--blue);font-weight:700" id="progressText">0 / 20</div>
+      <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-family:'Unbounded',sans-serif;font-size:10px;color:var(--muted);letter-spacing:1px">🎯 ЦЕЛЬ ДНЯ</div>
+          <div style="font-size:11px;color:var(--blue);font-weight:700" id="progressText">0 / 20</div>
         </div>
         <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
       </div>
 
-      <!-- Mode Selection (like Duolingo units) -->
-      <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:12px">ВЫБЕРИ РЕЖИМ</div>
+      <!-- Mode Grid 2x2 -->
+      <div style="font-family:'Unbounded',sans-serif;font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:10px">РЕЖИМЫ ИГРЫ</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
 
-      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
-        <!-- Translate Mode -->
-        <div onclick="startGameMode('translate')" style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;box-shadow:0 4px 0 var(--border);transition:all 0.15s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 var(--border)'" ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 var(--border)'">
-          <div style="width:52px;height:52px;background:linear-gradient(135deg,#4CAF50,#81C784);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">✍️</div>
-          <div style="flex:1">
-            <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white);margin-bottom:3px">ПЕРЕВОД</div>
-            <div style="font-size:12px;color:var(--muted)">Переведи слово с чеченского</div>
-          </div>
-          <div style="color:var(--muted);font-size:20px">›</div>
+        <div onclick="startGameMode('translate')" class="mode-card" style="--mc:#4CAF50">
+          <div class="mode-card-icon" style="background:linear-gradient(135deg,#4CAF50,#81C784)">✍️</div>
+          <div class="mode-card-name">ПЕРЕВОД</div>
+          <div class="mode-card-desc">Напиши перевод</div>
         </div>
 
-        <!-- Choice Mode -->
-        <div onclick="startGameMode('choice')" style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;box-shadow:0 4px 0 var(--border);transition:all 0.15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 var(--border)'" ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 var(--border)'">
-          <div style="width:52px;height:52px;background:linear-gradient(135deg,#2196F3,#64B5F6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🎯</div>
-          <div style="flex:1">
-            <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white);margin-bottom:3px">ВЫБОР</div>
-            <div style="font-size:12px;color:var(--muted)">Выбери правильный перевод</div>
-          </div>
-          <div style="color:var(--muted);font-size:20px">›</div>
+        <div onclick="startGameMode('choice')" class="mode-card" style="--mc:#2196F3">
+          <div class="mode-card-icon" style="background:linear-gradient(135deg,#2196F3,#64B5F6)">🎯</div>
+          <div class="mode-card-name">ВЫБОР</div>
+          <div class="mode-card-desc">Выбери из 4 вариантов</div>
         </div>
 
-        <!-- Scramble Mode -->
-        <div onclick="startGameMode('scramble')" style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;box-shadow:0 4px 0 var(--border);transition:all 0.15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 var(--border)'" ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 var(--border)'">
-          <div style="width:52px;height:52px;background:linear-gradient(135deg,#FF9800,#FFB74D);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🔤</div>
-          <div style="flex:1">
-            <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white);margin-bottom:3px">БУКВЫ</div>
-            <div style="font-size:12px;color:var(--muted)">Собери слово из букв</div>
-          </div>
-          <div style="color:var(--muted);font-size:20px">›</div>
+        <div onclick="startGameMode('scramble')" class="mode-card" style="--mc:#FF9800">
+          <div class="mode-card-icon" style="background:linear-gradient(135deg,#FF9800,#FFB74D)">🔤</div>
+          <div class="mode-card-name">БУКВЫ</div>
+          <div class="mode-card-desc">Собери из букв</div>
         </div>
 
-        <!-- Battle Mode -->
-        <div onclick="showBattleMenu()" style="background:linear-gradient(135deg,#fff0f0,#ffe8e8);border:2px solid #ffcdd2;border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;box-shadow:0 4px 0 #ffcdd2;transition:all 0.15s" ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 #ffcdd2'" ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 #ffcdd2'">
-          <div style="width:52px;height:52px;background:linear-gradient(135deg,#f44336,#EF9A9A);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">⚔️</div>
-          <div style="flex:1">
-            <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--red);margin-bottom:3px">БОЙ</div>
-            <div style="font-size:12px;color:#c62828">60 секунд против соперника</div>
-          </div>
-          <div style="color:var(--red);font-size:20px">›</div>
+        <div onclick="showBattleMenu()" class="mode-card" style="--mc:#f44336;background:#fff8f8;border-color:#ffcdd2">
+          <div class="mode-card-icon" style="background:linear-gradient(135deg,#f44336,#EF9A9A)">⚔️</div>
+          <div class="mode-card-name" style="color:var(--red)">БОЙ</div>
+          <div class="mode-card-desc">60 сек. vs соперник</div>
         </div>
+
       </div>
     </div>
 
@@ -882,11 +891,15 @@ select.text-input option { background:var(--surface); }
         <div id="flashcard" onclick="flipCard()" style="
           background:var(--card);border:2px solid var(--border);border-radius:24px;
           padding:28px 20px;text-align:center;margin-bottom:16px;
-          min-height:260px;display:flex;flex-direction:column;
+          min-height:240px;display:flex;flex-direction:column;
           align-items:center;justify-content:center;
-          cursor:pointer;box-shadow:0 4px 0 var(--border);
-          transition:transform 0.15s;position:relative;overflow:hidden;
-        ">
+          cursor:pointer;box-shadow:0 5px 0 var(--border);
+          transition:transform 0.1s,box-shadow 0.1s;
+          position:relative;overflow:hidden;
+          -webkit-tap-highlight-color:transparent;
+        " ontouchstart="this.style.transform='scale(0.97)';this.style.boxShadow='0 2px 0 var(--border)'"
+           ontouchend="this.style.transform='';this.style.boxShadow='0 5px 0 var(--border)'"
+        >
           <div id="cardImage" style="font-size:80px;margin-bottom:12px"></div>
           <div id="cardImg" style="display:none;margin-bottom:12px">
             <img id="cardImgEl" style="width:160px;height:120px;object-fit:cover;border-radius:14px;border:2px solid var(--border)" onerror="this.style.display='none'">
@@ -1246,16 +1259,20 @@ select.text-input option { background:var(--surface); }
 </div>
 
 <script>
-// Check admin access - save to sessionStorage to survive redirects
+// Admin — only mottbu560@gmail.com has access automatically
+const ADMIN_EMAIL = 'mottbu560@gmail.com';
 const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('admin') === 'true') {
-  sessionStorage.setItem('isAdmin', 'true');
-}
-const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+if (urlParams.get('admin') === 'true') sessionStorage.setItem('isAdmin', 'true');
+let isAdmin = sessionStorage.getItem('isAdmin') === 'true';
 
 // Auto-login check on page load
 auth.onAuthStateChanged(async (user) => {
   if (user) {
+    // Auto-grant admin if your email
+    if (user.email === ADMIN_EMAIL) {
+      isAdmin = true;
+      sessionStorage.setItem('isAdmin', 'true');
+    }
     const snap = await db.ref(`users/${user.uid}`).get();
     if (snap.exists()) {
       const data = snap.val();
@@ -3443,7 +3460,42 @@ function speak(text) {
 }
 
 // ---- GAME ----
-function startGameMode(mode) {
+function showMainMenu() {
+  const user = auth.currentUser;
+  const modal = document.createElement('div');
+  modal.id = 'mainMenuModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;display:flex;align-items:flex-end;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:24px 24px 0 0;padding:20px 16px 40px;width:100%;max-width:420px;animation:slideInUp 0.3s ease">
+      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px"></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+        ${[
+          {icon:'📖',label:'Учить',tab:'learn'},
+          {icon:'📚',label:'Слова',tab:'words'},
+          {icon:'🏆',label:'Топ',tab:'leaderboard'},
+          {icon:'🥇',label:'Лиги',tab:'leagues'},
+          {icon:'🔍',label:'Поиск',tab:'search'},
+          {icon:'❌',label:'Ошибки',tab:'mistakes'},
+          {icon:'⚙️',label:'Настройки',tab:'settings'},
+          isAdmin?{icon:'🛠️',label:'Админ',tab:'admin'}:null,
+        ].filter(Boolean).map(item => `
+          <div onclick="closeMainMenu();showTab('${item.tab}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;box-shadow:0 3px 0 var(--border)">
+            <div style="font-size:24px;margin-bottom:4px">${item.icon}</div>
+            <div style="font-family:'Unbounded',sans-serif;font-size:9px;color:var(--white);letter-spacing:0.5px">${item.label}</div>
+          </div>
+        `).join('')}
+      </div>
+      <button onclick="closeMainMenu()" style="width:100%;padding:14px;background:var(--surface);border:2px solid var(--border);border-radius:14px;font-family:'Unbounded',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;box-shadow:0 3px 0 var(--border)">ЗАКРЫТЬ</button>
+    </div>
+  `;
+  modal.addEventListener('click', e => { if (e.target === modal) closeMainMenu(); });
+  document.body.appendChild(modal);
+}
+
+function closeMainMenu() {
+  const m = document.getElementById('mainMenuModal');
+  if (m) m.remove();
+}
   currentMode = mode;
   score = 0; streak = 0; bestStreak = 0;
   totalAnswered = 0; correctAnswers = 0;
