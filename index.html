@@ -162,6 +162,8 @@ body {
 
 @keyframes pageIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 @keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
+@keyframes slideInUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
 /* SWIPE TO GO BACK */
 .slide-screen { user-select:none; }
@@ -827,7 +829,7 @@ select.text-input option { background:var(--surface); }
         <div id="aiHint" style="display:none"></div>
         <button class="btn-primary" id="actionBtn" onclick="handleAction()">Проверить</button>
         <button class="btn-secondary" onclick="skipWord()">Пропустить →</button>
-        <button onclick="startBattle()" style="width:100%;padding:12px;background:#fff0f0;border:2px solid #ffcdd2;border-radius:14px;color:var(--red);font-family:'Unbounded',sans-serif;font-size:11px;cursor:pointer;letter-spacing:1px;margin-top:4px;box-shadow:0 3px 0 #ffcdd2;">⚔️ СЫГРАТЬ БОЙ</button>
+        <button onclick="showBattleMenu()" style="width:100%;padding:12px;background:#fff0f0;border:2px solid #ffcdd2;border-radius:14px;color:var(--red);font-family:'Unbounded',sans-serif;font-size:11px;cursor:pointer;letter-spacing:1px;margin-top:4px;box-shadow:0 3px 0 #ffcdd2;">⚔️ СЫГРАТЬ БОЙ</button>
       </div>
       <div id="resultArea" style="display:none">
         <div class="result-screen">
@@ -1038,6 +1040,10 @@ select.text-input option { background:var(--surface); }
     <button class="bottom-nav-btn" id="bn-profile" onclick="showTab('profile')">
       <span class="nav-icon">👤</span>
       <span class="nav-label">ПРОФИЛЬ</span>
+    </button>
+    <button class="bottom-nav-btn" id="bn-admin" style="display:none" onclick="showAdminLogin()">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">АДМИН</span>
     </button>
   </div>
 
@@ -1491,7 +1497,10 @@ async function loadLeaderboard() {
     const res = await fetch(`${FB_URL}/leaderboard.json`);
     const data = await res.json();
     if (data) {
-      leaderboard = Object.values(data).sort((a,b)=>b.score-a.score);
+      // Only show verified registered users
+      leaderboard = Object.values(data)
+        .filter(p => p.verified === true)
+        .sort((a,b) => b.score - a.score);
     }
   } catch(e) { console.log('Firebase error:', e); }
 }
@@ -1751,6 +1760,18 @@ async function renderProfile() {
         <button onclick="openEditProfile()" style="margin-top:12px;background:var(--card);border:2px solid var(--border);color:var(--white);border-radius:20px;padding:8px 20px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 0 var(--border)">✏️ Редактировать профиль</button>
       </div>
 
+      <!-- Followers/Following -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div onclick="showFollowers('${user.uid}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;box-shadow:var(--shadow)">
+          <div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue);font-weight:700" id="followersCount">...</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:1px">ПОДПИСЧИКИ</div>
+        </div>
+        <div onclick="showFollowing('${user.uid}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;box-shadow:var(--shadow)">
+          <div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue);font-weight:700" id="followingCount">...</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:1px">ПОДПИСКИ</div>
+        </div>
+      </div>
+
       <!-- Streak -->
       <div style="background:#fffbe6;border:2px solid #ffd000;border-radius:20px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
         <div style="font-size:44px">🔥</div>
@@ -1824,6 +1845,23 @@ async function renderProfile() {
   } catch(e) {
     document.getElementById('profileTab').innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Ошибка загрузки профиля</div>';
   }
+  // Load follower counts async
+  loadFollowerCounts(user.uid);
+}
+
+async function loadFollowerCounts(uid) {
+  try {
+    const allSnap = await db.ref('users').get();
+    if (!allSnap.exists()) return;
+    const allUsers = allSnap.val();
+    const followersCount = Object.values(allUsers).filter(u => u.following && u.following[uid]).length;
+    const mySnap = await db.ref(`users/${uid}/following`).get();
+    const followingCount = mySnap.exists() ? Object.keys(mySnap.val()).length : 0;
+    const fc = document.getElementById('followersCount');
+    const fgc = document.getElementById('followingCount');
+    if (fc) fc.textContent = followersCount;
+    if (fgc) fgc.textContent = followingCount;
+  } catch(e) {}
 }
 
 async function renderFriends() {
@@ -2184,8 +2222,327 @@ async function viewPlayerProfile(uid) {
   } catch(e) { document.getElementById('playerProfileContent').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Ошибка загрузки</div>'; }
 }
 
-// Load saved settings
-(function loadSettings() {
+async function viewPlayerProfile(uid) {
+  document.getElementById('playerProfileModal').style.display = 'flex';
+  document.getElementById('playerProfileContent').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Загрузка...</div>';
+  try {
+    const snap = await db.ref(`users/${uid}`).get();
+    if (!snap.exists()) return;
+    const u = snap.val();
+    const myUid = auth.currentUser?.uid;
+    const followSnap = myUid ? await db.ref(`users/${myUid}/following/${uid}`).get() : null;
+    const isFollowing = followSnap?.exists();
+    const league = LEAGUES.find(l => (u.stats?.totalScore||0) >= l.min && (u.stats?.totalScore||0) <= l.max) || LEAGUES[0];
+
+    // Count followers and following
+    const allUsersSnap = await db.ref('users').get();
+    let followersCount = 0, followingCount = 0;
+    if (allUsersSnap.exists()) {
+      const allUsers = allUsersSnap.val();
+      followersCount = Object.values(allUsers).filter(usr => usr.following && usr.following[uid]).length;
+      followingCount = u.following ? Object.keys(u.following).length : 0;
+    }
+
+    document.getElementById('playerProfileContent').innerHTML = `
+      <!-- Header -->
+      <div style="text-align:center;padding:20px 0 16px">
+        <div style="width:86px;height:86px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue2));display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto;overflow:hidden;border:3px solid var(--border)">
+          ${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}
+        </div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:19px;font-weight:900;color:var(--white);margin-top:10px">${u.name||'Игрок'}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px">${u.country||''}</div>
+        ${u.age ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">🎂 ${u.age} лет</div>` : ''}
+        <div style="font-size:13px;color:var(--blue);margin-top:4px">${league.icon} ${league.name}</div>
+        ${myUid && myUid !== uid ? `
+          <button onclick="toggleFollow('${uid}','${myUid}',this)" id="followBtn-${uid}" class="follow-btn ${isFollowing?'following':''}" style="margin-top:12px;padding:10px 28px;font-size:14px">
+            ${isFollowing ? '✓ Подписан' : '+ Подписаться'}
+          </button>
+        ` : ''}
+      </div>
+
+      <!-- Followers/Following row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div onclick="showFollowers('${uid}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;box-shadow:var(--shadow)">
+          <div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue);font-weight:700">${followersCount}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:1px">ПОДПИСЧИКИ</div>
+        </div>
+        <div onclick="showFollowing('${uid}')" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;box-shadow:var(--shadow)">
+          <div style="font-family:'Unbounded',sans-serif;font-size:22px;color:var(--blue);font-weight:700">${followingCount}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:1px">ПОДПИСКИ</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+        <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:20px">⚡</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${u.stats?.totalScore||0}</div>
+          <div style="font-size:10px;color:var(--muted)">ОЧКОВ</div>
+        </div>
+        <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:20px">🎮</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--blue);font-weight:700">${u.stats?.games||0}</div>
+          <div style="font-size:10px;color:var(--muted)">ИГР</div>
+        </div>
+        <div style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:20px">🔥</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:18px;color:var(--gold);font-weight:700">${u.stats?.dayStreak||0}</div>
+          <div style="font-size:10px;color:var(--muted)">СЕРИЯ</div>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow)">
+        <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:12px">🏅 ДОСТИЖЕНИЯ</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          ${BADGES.map(b => {
+            const s = u.stats || {};
+            const earned =
+              b.id==='first'   ? (s.games||0)>=1 :
+              b.id==='games5'  ? (s.games||0)>=5 :
+              b.id==='games20' ? (s.games||0)>=20 :
+              b.id==='score100'? (s.totalScore||0)>=100 :
+              b.id==='score500'? (s.totalScore||0)>=500 :
+              b.id==='score1000'?(s.totalScore||0)>=1000 :
+              b.id==='wolf'    ? (s.totalScore||0)>=2000 :
+              b.id==='mountain'? (s.dayStreak||0)>=3 :
+              false;
+            return `<div style="text-align:center;padding:8px;border-radius:10px;background:${earned?'#fffbe6':'var(--surface)'};border:1px solid ${earned?'var(--gold)':'var(--border)'};${earned?'':'filter:grayscale(1);opacity:0.5'}">
+              <div style="font-size:22px">${b.icon}</div>
+              <div style="font-size:8px;color:var(--muted);font-family:'Unbounded',sans-serif">${b.name}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('playerProfileContent').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Ошибка загрузки</div>';
+  }
+}
+
+// Show followers list
+async function showFollowers(uid) {
+  document.getElementById('playerProfileContent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <button onclick="viewPlayerProfile('${uid}')" class="back-btn">←</button>
+      <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white)">ПОДПИСЧИКИ</div>
+    </div>
+    <div id="followersList"><div style="text-align:center;padding:20px;color:var(--muted)">Загрузка...</div></div>
+  `;
+  try {
+    const allSnap = await db.ref('users').get();
+    if (!allSnap.exists()) return;
+    const allUsers = allSnap.val();
+    const myUid = auth.currentUser?.uid;
+    const followers = Object.entries(allUsers).filter(([fuid, u]) => u.following && u.following[uid]);
+    const followSnaps = myUid ? await db.ref(`users/${myUid}/following`).get() : null;
+    const myFollowing = followSnaps?.exists() ? followSnaps.val() : {};
+    document.getElementById('followersList').innerHTML = followers.length === 0
+      ? '<div style="text-align:center;padding:20px;color:var(--muted)">Подписчиков пока нет</div>'
+      : followers.map(([fuid, u]) => `
+        <div class="player-card" style="cursor:pointer" onclick="viewPlayerProfile('${fuid}')">
+          <div class="player-avatar">${u.avatar?`<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'👤'}</div>
+          <div class="player-info">
+            <div class="player-name">${u.name||'Игрок'}</div>
+            <div class="player-stats">${u.country||''} · ${u.stats?.totalScore||0} очков</div>
+          </div>
+          ${myUid && myUid !== fuid ? `<button class="follow-btn ${myFollowing[fuid]?'following':''}" onclick="event.stopPropagation();toggleFollow('${fuid}','${myUid}',this)">${myFollowing[fuid]?'✓':'+'}</button>` : ''}
+        </div>
+      `).join('');
+  } catch(e) {}
+}
+
+// Show following list
+async function showFollowing(uid) {
+  document.getElementById('playerProfileContent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <button onclick="viewPlayerProfile('${uid}')" class="back-btn">←</button>
+      <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white)">ПОДПИСКИ</div>
+    </div>
+    <div id="followingListModal"><div style="text-align:center;padding:20px;color:var(--muted)">Загрузка...</div></div>
+  `;
+  try {
+    const snap = await db.ref(`users/${uid}/following`).get();
+    if (!snap.exists()) {
+      document.getElementById('followingListModal').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Подписок пока нет</div>';
+      return;
+    }
+    const following = snap.val();
+    const myUid = auth.currentUser?.uid;
+    const myFollowSnap = myUid ? await db.ref(`users/${myUid}/following`).get() : null;
+    const myFollowing = myFollowSnap?.exists() ? myFollowSnap.val() : {};
+    let html = '';
+    for (const fuid of Object.keys(following)) {
+      const usnap = await db.ref(`users/${fuid}`).get();
+      if (usnap.exists()) {
+        const u = usnap.val();
+        html += `
+          <div class="player-card" style="cursor:pointer" onclick="viewPlayerProfile('${fuid}')">
+            <div class="player-avatar">${u.avatar?`<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:'👤'}</div>
+            <div class="player-info">
+              <div class="player-name">${u.name||'Игрок'}</div>
+              <div class="player-stats">${u.country||''} · ${u.stats?.totalScore||0} очков</div>
+            </div>
+            ${myUid && myUid !== fuid ? `<button class="follow-btn ${myFollowing[fuid]?'following':''}" onclick="event.stopPropagation();toggleFollow('${fuid}','${myUid}',this)">${myFollowing[fuid]?'✓':'+'}</button>` : ''}
+          </div>
+        `;
+      }
+    }
+    document.getElementById('followingListModal').innerHTML = html || '<div style="text-align:center;padding:20px;color:var(--muted)">Никого нет</div>';
+  } catch(e) {}
+}
+
+// ---- BATTLE MENU ----
+function showBattleMenu() {
+  const user = auth.currentUser;
+  const modal = document.createElement('div');
+  modal.id = 'battleMenuModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:420px;animation:slideInUp 0.3s ease">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:36px">⚔️</div>
+        <div style="font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--white);margin-top:8px">ВЫБЕРИ РЕЖИМ БОЯ</div>
+      </div>
+
+      <!-- Bot -->
+      <div onclick="closeBattleMenu();startBattle();" style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow)" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:36px">🤖</div>
+        <div style="flex:1">
+          <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--white)">ПРОТИВ БОТА</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">60 секунд · всегда доступно</div>
+        </div>
+        <div style="color:var(--muted);font-size:20px">›</div>
+      </div>
+
+      <!-- Friends -->
+      <div onclick="${user ? 'closeBattleMenu();startFriendBattle();' : 'alert(\'Нужна регистрация!\')'};" style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);${user?'':'opacity:0.6'}" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:36px">👥</div>
+        <div style="flex:1">
+          <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--white)">С ДРУГОМ</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Отправь ссылку другу · нужна регистрация</div>
+        </div>
+        <div style="color:var(--muted);font-size:20px">›</div>
+      </div>
+
+      <!-- Online -->
+      <div onclick="${user ? 'closeBattleMenu();startOnlineBattle();' : 'alert(\'Нужна регистрация!\')'};" style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);${user?'':'opacity:0.6'}" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:36px">🌍</div>
+        <div style="flex:1">
+          <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:var(--white)">ОНЛАЙН ИГРОК</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Случайный соперник · нужна регистрация</div>
+        </div>
+        <div style="color:var(--muted);font-size:20px">›</div>
+      </div>
+
+      <button onclick="closeBattleMenu()" style="width:100%;padding:14px;background:var(--surface);border:2px solid var(--border);border-radius:14px;font-family:'Unbounded',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;box-shadow:0 3px 0 var(--border)">ОТМЕНА</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeBattleMenu(); });
+}
+
+function closeBattleMenu() {
+  const m = document.getElementById('battleMenuModal');
+  if (m) m.remove();
+}
+
+async function startFriendBattle() {
+  const user = auth.currentUser;
+  if (!user) { alert('Нужна регистрация!'); return; }
+  const battleCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+  await db.ref(`battles/${battleCode}`).set({
+    host: user.uid, hostName: playerName,
+    status: 'waiting', created: Date.now()
+  });
+  const link = `https://lorsvu.github.io/Mott-bu-/?battle=${battleCode}`;
+  if (navigator.share) {
+    navigator.share({ title:'MOTT_bu — Вызов на бой!', text:`${playerName} вызывает тебя на бой! Код: ${battleCode}`, url: link });
+  } else {
+    navigator.clipboard.writeText(link);
+    alert(`Ссылка скопирована!\nОтправь другу:\n${link}`);
+  }
+  // Start waiting screen
+  showWaitingForFriend(battleCode);
+}
+
+function showWaitingForFriend(code) {
+  const modal = document.getElementById('battleModal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('battleChoices').innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <div style="font-size:48px;animation:spin 2s linear infinite">⏳</div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:16px;color:var(--white);margin:16px 0">ОЖИДАНИЕ ДРУГА</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Код боя: <b style="color:var(--blue);font-size:18px">${code}</b></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Отправь код другу чтобы он мог присоединиться</div>
+      <button onclick="closeBattle()" class="btn-secondary">Отмена</button>
+    </div>
+  `;
+  // Listen for opponent
+  db.ref(`battles/${code}/opponent`).on('value', snap => {
+    if (snap.exists()) {
+      db.ref(`battles/${code}/opponent`).off('value');
+      startBattle(); // Start actual battle
+    }
+  });
+}
+
+async function startOnlineBattle() {
+  const user = auth.currentUser;
+  if (!user) { alert('Нужна регистрация!'); return; }
+
+  // Look for existing waiting battle
+  const snap = await db.ref('battles').orderByChild('status').equalTo('waiting').limitToFirst(1).get();
+
+  if (snap.exists()) {
+    const battles = snap.val();
+    const [battleId, battle] = Object.entries(battles)[0];
+    if (battle.host !== user.uid) {
+      // Join this battle
+      await db.ref(`battles/${battleId}`).update({ opponent: user.uid, opponentName: playerName, status: 'active' });
+      startBattle();
+      return;
+    }
+  }
+
+  // Create new battle and wait
+  const battleCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+  await db.ref(`battles/${battleCode}`).set({
+    host: user.uid, hostName: playerName,
+    status: 'waiting', created: Date.now()
+  });
+
+  const modal = document.getElementById('battleModal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('battleWord').textContent = '🌍';
+  document.getElementById('battleHint').textContent = 'Ищем соперника...';
+  document.getElementById('battleChoices').innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <div style="font-size:48px;margin-bottom:12px">🔍</div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:16px;color:var(--white);margin-bottom:8px">ПОИСК СОПЕРНИКА</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Ищем онлайн игрока...</div>
+      <button onclick="db.ref('battles/${battleCode}').remove();closeBattle()" class="btn-secondary">Отмена</button>
+    </div>
+  `;
+  // Listen for opponent
+  db.ref(`battles/${battleCode}/opponent`).on('value', snap => {
+    if (snap.exists()) {
+      db.ref(`battles/${battleCode}/opponent`).off('value');
+      startBattle();
+    }
+  });
+  // Auto-start with bot after 15 seconds
+  setTimeout(async () => {
+    const check = await db.ref(`battles/${battleCode}/status`).get();
+    if (check.exists() && check.val() === 'waiting') {
+      await db.ref(`battles/${battleCode}`).remove();
+      startBattle(); // Start against bot instead
+      alert('Соперник не найден — играешь против бота!');
+    }
+  }, 15000);
+}
   const sound = localStorage.getItem('soundEnabled');
   const speech = localStorage.getItem('speechEnabled');
   const goal = localStorage.getItem('dailyGoal');
@@ -2909,5 +3266,16 @@ function restartGame() {
   loadNewWord();
 }
 </script>
+<!-- PLAYER PROFILE MODAL -->
+<div class="modal-overlay" id="playerProfileModal" style="display:none;align-items:flex-start;padding:0">
+  <div style="width:100%;min-height:100vh;background:var(--bg);max-width:420px;margin:0 auto;overflow-y:auto">
+    <div class="slide-header" style="position:sticky;top:0;z-index:5">
+      <button onclick="document.getElementById('playerProfileModal').style.display='none'" class="back-btn">←</button>
+      <div class="slide-header-title">ПРОФИЛЬ ИГРОКА</div>
+    </div>
+    <div id="playerProfileContent" style="padding:16px"></div>
+  </div>
+</div>
+
 </body>
 </html>
