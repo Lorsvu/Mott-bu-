@@ -781,60 +781,62 @@ select.text-input option { background:var(--surface); }
   <!-- SCROLLABLE CONTENT -->
   <div id="contentArea">
 
-    <!-- GAME TAB -->
+    <!-- GAME TAB (Home Screen) -->
     <div class="tab-page active" id="gameTab">
+      <!-- Word of Day -->
       <div id="wordOfDay"></div>
-      <div class="score-bar">
-        <div class="score-item">
-          <div class="score-label">Очки</div>
-          <div class="score-value" id="score">0</div>
-        </div>
-        <div class="score-divider"></div>
-        <div class="score-item">
-          <div class="score-label">Серия</div>
-          <div class="score-value" id="streak">0🔥</div>
-        </div>
-        <div class="score-divider"></div>
-        <div class="score-item">
-          <div class="score-label">Слов</div>
-          <div class="score-value" id="wordCount">0</div>
-        </div>
-      </div>
-      <div class="mode-tabs">
-        <button class="mode-tab active" onclick="setMode('translate')">Перевод</button>
-        <button class="mode-tab" onclick="setMode('choice')">Выбор</button>
-        <button class="mode-tab" onclick="setMode('scramble')">Буквы</button>
-      </div>
-      <div class="category-tabs" id="categoryTabs"></div>
-      <div class="progress-wrap">
-        <div class="progress-info">
-          <span class="progress-label">Прогресс</span>
-          <span class="progress-label" id="progressText">0 / 20</span>
+
+      <!-- Daily Goal Progress -->
+      <div style="background:var(--card);border:2px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px">ЦЕЛЬ ДНЯ</div>
+          <div style="font-size:12px;color:var(--blue);font-weight:700" id="progressText">0 / 20</div>
         </div>
         <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
       </div>
-      <div id="gameArea">
-        <div class="game-card" id="gameCard"></div>
-        <div class="feedback" id="feedback"></div>
-        <div id="aiHint" style="display:none"></div>
-        <button class="btn-primary" id="actionBtn" onclick="handleAction()">Проверить</button>
-        <button class="btn-secondary" onclick="skipWord()">Пропустить →</button>
-        <button onclick="showBattleMenu()" style="width:100%;padding:12px;background:#fff0f0;border:2px solid #ffcdd2;border-radius:14px;color:var(--red);font-family:'Unbounded',sans-serif;font-size:11px;cursor:pointer;letter-spacing:1px;margin-top:4px;box-shadow:0 3px 0 #ffcdd2;">⚔️ СЫГРАТЬ БОЙ</button>
-      </div>
-      <div id="resultArea" style="display:none">
-        <div class="result-screen">
-          <div class="result-emoji" id="resultEmoji">🏆</div>
-          <div class="result-title" id="resultTitle"></div>
-          <p style="color:var(--muted);font-size:15px;margin-bottom:4px" id="resultMsg"></p>
-          <div class="result-stats">
-            <div class="result-stat"><div class="result-stat-value" id="finalScore">0</div><div class="result-stat-label">Очков</div></div>
-            <div class="result-stat"><div class="result-stat-value" id="finalAccuracy">0%</div><div class="result-stat-label">Точность</div></div>
-            <div class="result-stat"><div class="result-stat-value" id="finalCorrect">0</div><div class="result-stat-label">Правильно</div></div>
-            <div class="result-stat"><div class="result-stat-value" id="finalStreak">0</div><div class="result-stat-label">Серия</div></div>
+
+      <!-- Mode Selection (like Duolingo units) -->
+      <div style="font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:12px">ВЫБЕРИ РЕЖИМ</div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+        <!-- Translate Mode -->
+        <div onclick="startGameMode('translate')" style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;box-shadow:0 4px 0 var(--border);transition:all 0.15s;position:relative;overflow:hidden" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 var(--border)'" ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 var(--border)'">
+          <div style="width:52px;height:52px;background:linear-gradient(135deg,#4CAF50,#81C784);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">✍️</div>
+          <div style="flex:1">
+            <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white);margin-bottom:3px">ПЕРЕВОД</div>
+            <div style="font-size:12px;color:var(--muted)">Переведи слово с чеченского</div>
           </div>
-          <button class="btn-primary" onclick="restartGame()">Играть снова</button>
-          <button class="btn-secondary" onclick="showTab('leaderboard')">🏆 Таблица лидеров</button>
-          <button class="btn-secondary" onclick="showTab('mistakes')" id="mistakesBtn" style="display:none">📖 Повторить ошибки</button>
+          <div style="color:var(--muted);font-size:20px">›</div>
+        </div>
+
+        <!-- Choice Mode -->
+        <div onclick="startGameMode('choice')" style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;box-shadow:0 4px 0 var(--border);transition:all 0.15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 var(--border)'" ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 var(--border)'">
+          <div style="width:52px;height:52px;background:linear-gradient(135deg,#2196F3,#64B5F6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🎯</div>
+          <div style="flex:1">
+            <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white);margin-bottom:3px">ВЫБОР</div>
+            <div style="font-size:12px;color:var(--muted)">Выбери правильный перевод</div>
+          </div>
+          <div style="color:var(--muted);font-size:20px">›</div>
+        </div>
+
+        <!-- Scramble Mode -->
+        <div onclick="startGameMode('scramble')" style="background:var(--card);border:2px solid var(--border);border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;box-shadow:0 4px 0 var(--border);transition:all 0.15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 var(--border)'" ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 var(--border)'">
+          <div style="width:52px;height:52px;background:linear-gradient(135deg,#FF9800,#FFB74D);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🔤</div>
+          <div style="flex:1">
+            <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--white);margin-bottom:3px">БУКВЫ</div>
+            <div style="font-size:12px;color:var(--muted)">Собери слово из букв</div>
+          </div>
+          <div style="color:var(--muted);font-size:20px">›</div>
+        </div>
+
+        <!-- Battle Mode -->
+        <div onclick="showBattleMenu()" style="background:linear-gradient(135deg,#fff0f0,#ffe8e8);border:2px solid #ffcdd2;border-radius:20px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;box-shadow:0 4px 0 #ffcdd2;transition:all 0.15s" ontouchstart="this.style.transform='translateY(3px)';this.style.boxShadow='0 1px 0 #ffcdd2'" ontouchend="this.style.transform='';this.style.boxShadow='0 4px 0 #ffcdd2'">
+          <div style="width:52px;height:52px;background:linear-gradient(135deg,#f44336,#EF9A9A);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">⚔️</div>
+          <div style="flex:1">
+            <div style="font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--red);margin-bottom:3px">БОЙ</div>
+            <div style="font-size:12px;color:#c62828">60 секунд против соперника</div>
+          </div>
+          <div style="color:var(--red);font-size:20px">›</div>
         </div>
       </div>
     </div>
@@ -994,10 +996,6 @@ select.text-input option { background:var(--surface); }
         </div>
       </div>
       <div class="admin-section">
-        <div class="admin-title">🔍 Поиск слов</div>
-        <input class="text-input" id="adminWordSearch" placeholder="Поиск по словам..." oninput="renderAdminWords()" style="margin-bottom:12px;border:2px solid var(--border)">
-      </div>
-      <div class="admin-section">
         <div class="admin-title">➕ Добавить слово</div>
         <div class="add-word-form">
           <div class="form-row">
@@ -1013,6 +1011,10 @@ select.text-input option { background:var(--surface); }
       </div>
       <div class="admin-section">
         <div class="admin-title">📚 Все слова (<span id="wordCountAdmin">0</span>)</div>
+        <div style="position:relative;margin-bottom:12px">
+          <input class="text-input" id="adminWordSearch" placeholder="🔍 Поиск по чеченскому, русскому, категории..." oninput="renderAdminWords()" style="border:2px solid var(--border);padding-right:40px">
+          <button onclick="document.getElementById('adminWordSearch').value='';renderAdminWords()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px">✕</button>
+        </div>
         <div id="wordList"></div>
       </div>
     </div>
@@ -1053,6 +1055,63 @@ select.text-input option { background:var(--surface); }
 
 </div><!-- end appShell -->
 
+
+<!-- FULLSCREEN GAME OVERLAY -->
+<div id="gameOverlay" style="display:none;position:fixed;inset:0;z-index:150;background:var(--bg);flex-direction:column;max-width:420px;margin:0 auto;">
+
+  <!-- Game Header -->
+  <div style="flex-shrink:0;background:var(--surface);border-bottom:2px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;">
+    <button onclick="exitGame()" style="background:var(--bg);border:2px solid var(--border);border-radius:10px;padding:8px 12px;font-size:16px;cursor:pointer;box-shadow:0 2px 0 var(--border);line-height:1;">✕</button>
+    <div style="flex:1">
+      <div class="progress-bar" style="height:8px;border-radius:6px;">
+        <div class="progress-fill" id="progressFill" style="width:0%;height:8px;border-radius:6px;"></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="display:flex;align-items:center;gap:4px;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--red)">❤️ <span id="livesCount">3</span></div>
+      <div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--gold)">⚡<span id="score">0</span></div>
+    </div>
+  </div>
+
+  <!-- Category tabs -->
+  <div style="flex-shrink:0;overflow-x:auto;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);white-space:nowrap;scrollbar-width:none;">
+    <div class="category-tabs" id="categoryTabs"></div>
+  </div>
+
+  <!-- Scrollable game content -->
+  <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;-webkit-overflow-scrolling:touch;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--muted)" id="progressText">0 / 20</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--gold)">🔥 <span id="streak">0</span></div>
+    </div>
+
+    <div id="gameArea">
+      <div class="game-card" id="gameCard"></div>
+      <div class="feedback" id="feedback"></div>
+      <div id="aiHint" style="display:none"></div>
+      <button class="btn-primary" id="actionBtn" onclick="handleAction()">Проверить</button>
+      <button class="btn-secondary" onclick="skipWord()">Пропустить →</button>
+    </div>
+
+    <div id="resultArea" style="display:none">
+      <div class="result-screen">
+        <div class="result-emoji" id="resultEmoji">🏆</div>
+        <div class="result-title" id="resultTitle"></div>
+        <p style="color:var(--muted);font-size:15px;margin-bottom:12px" id="resultMsg"></p>
+        <div class="result-stats">
+          <div class="result-stat"><div class="result-stat-value" id="finalScore">0</div><div class="result-stat-label">Очков</div></div>
+          <div class="result-stat"><div class="result-stat-value" id="finalAccuracy">0%</div><div class="result-stat-label">Точность</div></div>
+          <div class="result-stat"><div class="result-stat-value" id="finalCorrect">0</div><div class="result-stat-label">Правильно</div></div>
+          <div class="result-stat"><div class="result-stat-value" id="finalStreak">0</div><div class="result-stat-label">Серия</div></div>
+        </div>
+        <button class="btn-primary" onclick="restartGame()">Играть снова 🔄</button>
+        <button class="btn-secondary" onclick="exitGame()">← На главную</button>
+        <button class="btn-secondary" onclick="exitGame();showTab('leaderboard')">🏆 Таблица лидеров</button>
+        <button class="btn-secondary" onclick="exitGame();showTab('mistakes')" id="mistakesBtn" style="display:none">📖 Повторить ошибки</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- BATTLE MODAL -->
 <div class="modal-overlay" id="battleModal" style="display:none;align-items:flex-start;padding:0">
@@ -2785,15 +2844,53 @@ function renderAdminWords() {
   document.getElementById('wordList').innerHTML = filtered.map(w => {
     const i = words.indexOf(w);
     return `
-    <div class="word-row">
-      <div class="word-row-text">
+    <div class="word-row" id="word-row-${i}">
+      <div class="word-row-text" id="word-display-${i}">
         <div class="word-row-ch">${w.chechen}</div>
         <div class="word-row-ru">${w.russian} · <span style="color:var(--blue);font-size:11px">${w.category}</span></div>
         <div style="font-size:11px;color:var(--muted)">${w.transcription||''}</div>
       </div>
-      <button class="delete-btn" onclick="deleteWord(${i})">✕</button>
+      <div id="word-edit-${i}" style="display:none;flex:1">
+        <input value="${w.chechen}" id="edit-ch-${i}" class="small-input" style="width:100%;margin-bottom:4px" placeholder="Чеченское">
+        <input value="${w.russian}" id="edit-ru-${i}" class="small-input" style="width:100%;margin-bottom:4px" placeholder="Русское">
+        <input value="${w.transcription||''}" id="edit-tr-${i}" class="small-input" style="width:100%;margin-bottom:4px" placeholder="Произношение">
+        <input value="${w.category||''}" id="edit-cat-${i}" class="small-input" style="width:100%" placeholder="Категория">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px">
+        <button onclick="toggleEditWord(${i})" id="edit-btn-${i}" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px">✏️</button>
+        <button onclick="saveEditWord(${i})" id="save-btn-${i}" style="display:none;background:var(--green);color:white;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px">✓</button>
+        <button class="delete-btn" onclick="deleteWord(${i})">✕</button>
+      </div>
     </div>
   `}).join('');
+}
+
+function toggleEditWord(i) {
+  const display = document.getElementById(`word-display-${i}`);
+  const edit = document.getElementById(`word-edit-${i}`);
+  const editBtn = document.getElementById(`edit-btn-${i}`);
+  const saveBtn = document.getElementById(`save-btn-${i}`);
+  const isEditing = edit.style.display !== 'none';
+  if (isEditing) {
+    display.style.display = 'block';
+    edit.style.display = 'none';
+    editBtn.style.display = 'block';
+    saveBtn.style.display = 'none';
+  } else {
+    display.style.display = 'none';
+    edit.style.display = 'block';
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'block';
+  }
+}
+
+function saveEditWord(i) {
+  words[i].chechen = document.getElementById(`edit-ch-${i}`).value.trim() || words[i].chechen;
+  words[i].russian = document.getElementById(`edit-ru-${i}`).value.trim() || words[i].russian;
+  words[i].transcription = document.getElementById(`edit-tr-${i}`).value.trim();
+  words[i].category = document.getElementById(`edit-cat-${i}`).value.trim() || words[i].category;
+  saveWords();
+  renderAdminWords();
 }
 
 // ---- LEADERBOARD ----
@@ -3078,6 +3175,33 @@ function speak(text) {
 }
 
 // ---- GAME ----
+function startGameMode(mode) {
+  currentMode = mode;
+  score = 0; streak = 0; bestStreak = 0;
+  totalAnswered = 0; correctAnswers = 0;
+  usedWords = []; scrambleSelected = [];
+  answered = false;
+  document.getElementById('gameOverlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('gameArea').style.display = 'block';
+  document.getElementById('resultArea').style.display = 'none';
+  document.getElementById('feedback').className = 'feedback';
+  const aiHint = document.getElementById('aiHint');
+  if (aiHint) { aiHint.style.display = 'none'; aiHint.innerHTML = ''; }
+  document.getElementById('score').textContent = '0';
+  document.getElementById('streak').textContent = '0';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressText').textContent = '0 / ' + dailyGoal;
+  renderCategories();
+  loadNewWord();
+  try { analytics.logEvent('game_start', { mode }); } catch(e) {}
+}
+
+function exitGame() {
+  document.getElementById('gameOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
 function setMode(mode) {
   currentMode = mode;
   document.querySelectorAll('.mode-tab').forEach((t,i)=>t.classList.toggle('active',['translate','choice','scramble'][i]===mode));
